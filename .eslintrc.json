@@ -20,6 +20,9 @@
         "@typescript-eslint"
     ],
     "rules": {
-        "no-use-before-define": "off"
+        "no-use-before-define": "off",
+        "react/prop-types": "off",
+        "object-curly-newline": "off",
+        "no-undef": "off"
     }
 }

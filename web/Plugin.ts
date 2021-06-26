@@ -2,32 +2,30 @@ import { pages, Page, update } from './App'
 
 let flag = 0
 export default class Plugin {
-  // eslint-disable-next-line no-undef
   #io: SocketIOClient.Socket
 
-  // eslint-disable-next-line no-undef
   constructor (io: SocketIOClient.Socket, public readonly namespace: string) {
     this.#io = io
   }
 
-  // eslint-disable-next-line no-undef
-  public addPage (...args: Page[]) {
+  public addPages (...args: Page[]) {
     if (!args.length) return
     (pages[this.namespace] || (pages[this.namespace] = [])).push(...args)
     update(++flag)
+    return this
   }
 
-  on (event: string, fn: Function) {
+  public on (event: string, fn: Function) {
     this.#io.on(this.namespace + ':' + event, fn)
     return this
   }
 
-  once (event: string, fn: Function) {
+  public once (event: string, fn: Function) {
     this.#io.once(this.namespace + ':' + event, fn)
     return this
   }
 
-  emit (event: string, data?: any, ack?: (data?: any) => any) {
+  public emit (event: string, data?: any, ack?: (data?: any) => any) {
     const name = this.namespace + ':' + event
     const a = typeof data !== 'undefined'
     const b = typeof ack === 'function'
@@ -37,17 +35,17 @@ export default class Plugin {
     return this
   }
 
-  off (event: string, fn?: Function) {
+  public off (event: string, fn?: Function) {
     this.#io.removeListener(this.namespace + ':' + event, fn)
     return this
   }
 
-  hasListeners (event: string) {
+  public hasListeners (event: string) {
     this.#io.hasListeners(this.namespace + ':' + event)
     return this
   }
 
-  switchPage (page: string) {
+  public switchPage (page: string) {
     this.#io.emit('switchPage', { page, namespace: this.namespace })
     return this
   }

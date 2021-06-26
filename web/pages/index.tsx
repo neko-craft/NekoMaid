@@ -5,6 +5,6 @@ import Plugin from '../Plugin'
 
 import Console from './Console'
 
-export default (p: Plugin) => p.addPage(
-  { component: Console, path: 'console', icon: <DoubleArrow />, title: '终端' }
+export default (p: Plugin) => p.addPages(
+  { component: Console, path: 'console', icon: <DoubleArrow />, title: '终端', noPadding: true }
 )
