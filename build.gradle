@@ -1,0 +1,48 @@
+plugins {
+    id 'java'
+    id 'idea'
+}
+
+group 'cn.apisium.nekomaid'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'papermc'
+        url = 'https://papermc.io/repo/repository/maven-public/'
+    }
+    maven {
+        name = 'sonatype'
+        url = 'https://oss.sonatype.org/content/groups/public/'
+    }
+}
+
+dependencies {
+    compileOnly 'org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT'
+    compileOnly 'org.spigotmc:spigot-api:1.17-R0.1-SNAPSHOT'
+    compileOnly 'org.apache.logging.log4j:log4j-core:2.14.1'
+    compileOnly 'org.jetbrains:annotations:21.0.1'
+    compileOnly 'io.netty:netty-all:4.1.65.Final'
+    implementation 'javax.activation:activation:1.1.1'
+    implementation ('com.corundumstudio.socketio:netty-socketio:1.7.18') {
+        exclude group: 'org.slf4j'
+        exclude group: 'io.netty'
+    }
+
+    annotationProcessor 'org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT'
+
+    jar {
+        from {
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+        }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "GBK"
+}

@@ -1,22 +1,19 @@
 package cn.apisium.nekomaid;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.stream.ChunkedFile;
 import io.netty.util.CharsetUtil;
-import io.netty.util.internal.SystemPropertyUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -31,25 +28,6 @@ public class StaticHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
     public static final int HTTP_CACHE_SECONDS = 60;
 
     private FullHttpRequest request;
-    private static final HashMap<String, AbstractMap.SimpleEntry<ByteBuf, Long>> resources = new HashMap<>();
-
-    static {
-        try {
-            var file = new JarFile(StaticHandler.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-            file.stream().forEach(it -> {
-                var name = it.getName();
-                if (name.startsWith("resources/")) {
-                    try (var is = file.getInputStream(it)) {
-                        resources.put(name, new AbstractMap.SimpleEntry<>(Unpooled.copiedBuffer(is.readAllBytes()), it.getTime()));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
@@ -59,30 +37,27 @@ public class StaticHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
             return;
         }
 
-        if (!GET.equals(request.method())) {
-            sendError(ctx, METHOD_NOT_ALLOWED);
-            return;
-        }
+        if (!GET.equals(request.method())) return;
 
         final var keepAlive = HttpUtil.isKeepAlive(request);
         final var uri = request.uri();
         final var path = sanitizeUri(uri.endsWith("/") ? uri + "index.html" : uri);
 
-        if (path == null) {
-            sendError(ctx, FORBIDDEN);
-            return;
-        }
+        if (path == null) return;
         RandomAccessFile raf = null;
-        System.out.println(path);
         long fileLength, modifyTime;
-        var cached = resources.get(path);
+        var cached = NekoMaid.INSTANCE.pluginStaticFiles.get(path);
         if (cached == null) {
             File file = null;
-            for (var dir : NekoMaid.INSTANCE.pluginStaticPaths.values()) {
-                var tmp = new File(dir, path);
-                if (!tmp.isHidden() && tmp.isFile()) {
-                    file = tmp;
-                    break;
+            var result = path.split(File.separator.equals("\\") ? "\\\\" : File.separator, 2);
+            if (result.length == 2) {
+                var list = NekoMaid.INSTANCE.pluginStaticPaths.get(result[0]);
+                if (list != null) for (var dir : list) {
+                    var tmp = new File(dir, result[1]);
+                    if (!tmp.isHidden() && tmp.isFile()) {
+                        file = tmp;
+                        break;
+                    }
                 }
             }
 
@@ -97,13 +72,12 @@ public class StaticHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
             try {
                 raf = new RandomAccessFile(file, "r");
             } catch (FileNotFoundException ignore) {
-                sendError(ctx, NOT_FOUND);
                 return;
             }
             fileLength = raf.length();
         } else {
             modifyTime = cached.getValue();
-            fileLength = cached.getKey().arrayOffset();
+            fileLength = cached.getKey().length;
         }
 
         var response = new DefaultHttpResponse(HTTP_1_1, OK);
@@ -120,10 +94,9 @@ public class StaticHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
 
         ctx.write(response);
 
-        ChannelFuture lastContentFuture;
-        ctx.write(raf == null ? cached.getKey() : new DefaultFileRegion(raf.getChannel(), 0, fileLength),
-                ctx.newProgressivePromise());
-        lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+        ctx.write(raf == null ? Unpooled.wrappedBuffer(cached.getKey())
+                : new ChunkedFile(raf, 0, fileLength, 8192), ctx.newProgressivePromise());
+        var lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 
         if (!keepAlive) lastContentFuture.addListener(ChannelFutureListener.CLOSE);
     }
@@ -144,7 +117,7 @@ public class StaticHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
 
             var ifModifiedSinceDateSeconds = ifModifiedSinceDate.getTime() / 1000;
             var fileLastModifiedSeconds = time / 1000;
-            if (ifModifiedSinceDateSeconds == fileLastModifiedSeconds) return true;
+            return ifModifiedSinceDateSeconds == fileLastModifiedSeconds;
         }
         return false;
     }
@@ -169,15 +142,15 @@ public class StaticHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
         }
 
         // Convert to absolute path.
-        return SystemPropertyUtil.get("user.dir") + File.separator + uri;
+        return uri.substring(1);
     }
 
-    private void sendRedirect(ChannelHandlerContext ctx, String newUri) {
-        FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, FOUND, Unpooled.EMPTY_BUFFER);
-        response.headers().set(HttpHeaderNames.LOCATION, newUri);
-
-        sendAndCleanupConnection(ctx, response);
-    }
+//    private void sendRedirect(ChannelHandlerContext ctx, String newUri) {
+//        FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, FOUND, Unpooled.EMPTY_BUFFER);
+//        response.headers().set(HttpHeaderNames.LOCATION, newUri);
+//
+//        sendAndCleanupConnection(ctx, response);
+//    }
 
     private void sendError(ChannelHandlerContext ctx, HttpResponseStatus status) {
         var response = new DefaultFullHttpResponse(
@@ -232,7 +205,6 @@ public class StaticHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
     }
 
     private static void setContentTypeHeader(HttpResponse response, String ext) {
-        var mimeTypesMap = new MimetypesFileTypeMap();
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, mimeTypesMap.getContentType(ext));
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(ext));
     }
 }

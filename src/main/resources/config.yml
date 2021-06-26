@@ -1,0 +1,5 @@
+token: ~
+
+port: 11451
+hostname: 127.0.0.1
+listenHostname: 0.0.0.0

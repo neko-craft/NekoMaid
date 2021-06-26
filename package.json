@@ -1,0 +1,60 @@
+{
+  "name": "nekomaid",
+  "version": "0.0.0",
+  "description": "A plugin can use Web to manage your server.",
+  "main": "index.js",
+  "scripts": {
+    "test": "eslint",
+    "start": "parcel web/index.html",
+    "build": "parcel build web/index.html --public-url . --no-source-maps"
+  },
+  "targets": {
+    "main": false
+  },
+  "engines": {
+    "browsers": "Chrome 69"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neko-craft/NekoMaid.git"
+  },
+  "keywords": [
+    "minecraft"
+  ],
+  "author": "Shirasawa",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/neko-craft/NekoMaid/issues"
+  },
+  "homepage": "https://github.com/neko-craft/NekoMaid#readme",
+  "dependencies": {
+    "@fontsource/roboto": "^4.4.5",
+    "@material-ui/core": "^4.11.4",
+    "@material-ui/icons": "^4.11.2",
+    "@material-ui/lab": "^4.0.0-alpha.58",
+    "babel-plugin-transform-imports": "^2.0.0",
+    "parcel": "^2.0.0-nightly.725",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-router-dom": "^5.2.0",
+    "reqwq": "^0.4.0",
+    "socket.io-client": "^2.4.0",
+    "styled-components": "^5.3.0",
+    "typescript": "^4.3.4"
+  },
+  "devDependencies": {
+    "@types/react": "^17.0.11",
+    "@types/react-dom": "^17.0.8",
+    "@types/react-router-dom": "^5.1.7",
+    "@types/socket.io": "^3.0.2",
+    "@types/socket.io-client": "^1.4.36",
+    "@typescript-eslint/eslint-plugin": "^4.27.0",
+    "@typescript-eslint/parser": "^4.27.0",
+    "eslint": "^7.29.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.23.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "eslint-plugin-react": "^7.24.0"
+  }
+}

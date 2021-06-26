@@ -1,0 +1,31 @@
+import React, { useState } from 'react'
+import Autocomplete from '@material-ui/lab/Autocomplete'
+import { Dialog, DialogTitle, DialogContent, DialogContentText, TextField, DialogActions, Button } from '@material-ui/core'
+
+const ServerSwitch: React.FC = () => {
+  const [value, setValue] = useState<string>('')
+  let error = false
+  // eslint-disable-next-line no-new
+  try { if (value) new URL(value.startsWith('http://') ? value : 'http://' + value) } catch { error = true }
+  return <Dialog open>
+    <DialogTitle>连接到服务器</DialogTitle>
+    <DialogContent>
+      <Autocomplete
+        freeSolo
+        inputValue={value}
+        onInputChange={(_: any, v: string) => setValue(v)}
+        noOptionsText='你还没有连接过任何服务器!'
+        style={{ width: '100%', maxWidth: 500 }}
+        options={JSON.parse(localStorage.getItem('NekoMaid:servers') || '[]')}
+        getOptionLabel={(option: any) => option.address}
+        renderInput={(props: any) => <TextField {...props} error={error} label='服务器地址' helperText={error ? '请输入正确的连接地址!' : undefined} />}
+      />
+      <DialogContentText>请选择或输入要连接的服务器地址.</DialogContentText>
+    </DialogContent>
+    <DialogActions>
+      <Button color='primary' disabled={error} onClick={() => (location.search = '?' + encodeURIComponent(value))}>连接</Button>
+    </DialogActions>
+  </Dialog>
+}
+
+export default ServerSwitch
