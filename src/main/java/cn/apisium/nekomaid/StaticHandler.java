@@ -3,12 +3,9 @@ package cn.apisium.nekomaid;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.stream.ChunkedFile;
 import io.netty.util.CharsetUtil;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.RandomAccessFile;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
@@ -39,66 +36,27 @@ public class StaticHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
 
         if (!GET.equals(request.method())) return;
 
-        final var keepAlive = HttpUtil.isKeepAlive(request);
         final var uri = request.uri();
         final var path = sanitizeUri(uri.endsWith("/") ? uri + "index.html" : uri);
 
         if (path == null) return;
-        RandomAccessFile raf = null;
-        long fileLength, modifyTime;
         var cached = NekoMaid.INSTANCE.pluginStaticFiles.get(path);
-        if (cached == null) {
-            File file = null;
-            var result = path.split(File.separator.equals("\\") ? "\\\\" : File.separator, 2);
-            if (result.length == 2) {
-                var list = NekoMaid.INSTANCE.pluginStaticPaths.get(result[0]);
-                if (list != null) for (var dir : list) {
-                    var tmp = new File(dir, result[1]);
-                    if (!tmp.isHidden() && tmp.isFile()) {
-                        file = tmp;
-                        break;
-                    }
-                }
-            }
-
-            if (file == null) {
-                sendError(ctx, NOT_FOUND);
-                return;
-            }
-
-            modifyTime = file.lastModified();
-            if (sendModifyTime(modifyTime)) sendNotModified(ctx);
-
-            try {
-                raf = new RandomAccessFile(file, "r");
-            } catch (FileNotFoundException ignore) {
-                return;
-            }
-            fileLength = raf.length();
-        } else {
-            modifyTime = cached.getValue();
-            fileLength = cached.getKey().length;
+        if (cached == null) return;
+        var time = cached.getValue();
+        if (sendModifyTime(time)) {
+            sendNotModified(ctx);
+            return;
         }
+        var fileLength = cached.getKey().length;
 
-        var response = new DefaultHttpResponse(HTTP_1_1, OK);
+        var response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(cached.getKey()));
         HttpUtil.setContentLength(response, fileLength);
+        response.headers()
+                .set(HttpHeaderNames.CONTENT_TYPE, MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(path));
 
-        setContentTypeHeader(response, path);
-        setDateAndCacheHeaders(response, modifyTime);
+        setDateAndCacheHeaders(response.headers(), time);
 
-        if (!keepAlive) {
-            response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
-        } else if (request.protocolVersion().equals(HTTP_1_0)) {
-            response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-        }
-
-        ctx.write(response);
-
-        ctx.write(raf == null ? Unpooled.wrappedBuffer(cached.getKey())
-                : new ChunkedFile(raf, 0, fileLength, 8192), ctx.newProgressivePromise());
-        var lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
-
-        if (!keepAlive) lastContentFuture.addListener(ChannelFutureListener.CLOSE);
+        sendAndCleanupConnection(ctx, response);
     }
 
     @Override
@@ -190,21 +148,16 @@ public class StaticHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
         response.headers().set(HttpHeaderNames.DATE, dateFormatter.format(time.getTime()));
     }
 
-    private static void setDateAndCacheHeaders(HttpResponse response, long modifyTime) {
+    private static void setDateAndCacheHeaders(HttpHeaders headers, long modifyTime) {
         var dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
         dateFormatter.setTimeZone(TimeZone.getTimeZone(HTTP_DATE_GMT_TIMEZONE));
 
         var time = new GregorianCalendar();
-        response.headers().set(HttpHeaderNames.DATE, dateFormatter.format(time.getTime()));
+        headers.set(HttpHeaderNames.DATE, dateFormatter.format(time.getTime()));
 
         time.add(Calendar.SECOND, HTTP_CACHE_SECONDS);
-        response.headers().set(HttpHeaderNames.EXPIRES, dateFormatter.format(time.getTime()));
-        response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, max-age=" + HTTP_CACHE_SECONDS);
-        response.headers().set(
-                HttpHeaderNames.LAST_MODIFIED, dateFormatter.format(new Date(modifyTime)));
-    }
-
-    private static void setContentTypeHeader(HttpResponse response, String ext) {
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(ext));
+        headers.set(HttpHeaderNames.EXPIRES, dateFormatter.format(time.getTime()))
+                .set(HttpHeaderNames.CACHE_CONTROL, "private, max-age=" + HTTP_CACHE_SECONDS)
+                .set(HttpHeaderNames.LAST_MODIFIED, dateFormatter.format(new Date(modifyTime)));
     }
 }

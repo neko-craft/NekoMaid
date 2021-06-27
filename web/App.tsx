@@ -4,6 +4,7 @@ import { useLocation, useHistory, Route } from 'react-router-dom'
 import { Divider, Hidden, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar,
   Typography, Drawer, Toolbar, IconButton, useMediaQuery } from '@material-ui/core'
 import { makeStyles, useTheme, createMuiTheme, ThemeProvider } from '@material-ui/core/styles'
+import { SnackbarProvider } from 'notistack'
 
 import { Build, Menu, Brightness4, Brightness7 } from '@material-ui/icons'
 import { address, token } from './url'
@@ -46,7 +47,6 @@ const useStyles = makeStyles(theme => ({
       display: 'none'
     }
   },
-  toolbar: theme.mixins.toolbar,
   drawerPaper: {
     width: drawerWidth
   },
@@ -107,8 +107,8 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
 
   const drawer = (
     <div>
-      <div className={classes.toolbar} />
-      <Divider />
+      <Toolbar />
+      <Hidden smUp implementation='css'><Divider /></Hidden>
       <List>{multiPagesPages.flat()}</List>
     </div>
   )
@@ -168,7 +168,11 @@ const AppWrap: React.FC = () => {
       type: darkMode ? 'dark' : 'light'
     }
   }), [darkMode])
-  return <ThemeProvider theme={theme2}><App darkMode={darkMode} setDarkMode={setDarkMode} /></ThemeProvider>
+  return <ThemeProvider theme={theme2}>
+    <SnackbarProvider classes={{ root: 'notistack' }} anchorOrigin={{ horizontal: 'right', vertical: 'top' }}>
+      <App darkMode={darkMode} setDarkMode={setDarkMode} />
+    </SnackbarProvider>
+  </ThemeProvider>
 }
 
 export default AppWrap

@@ -13,8 +13,7 @@ import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles'
 import url from './url'
 import App from './App'
 
-const theme = createMuiTheme({
-}, zhCN)
+const theme = createMuiTheme(zhCN)
 
 const Provider = newInstance()
 

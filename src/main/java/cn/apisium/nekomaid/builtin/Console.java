@@ -2,6 +2,7 @@ package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
 import cn.apisium.nekomaid.Room;
+import cn.apisium.nekomaid.Utils;
 import com.google.common.collect.EvictingQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.*;
@@ -20,7 +21,18 @@ public final class Console implements Appender {
             .setPattern("%msg%xEx{full}").setDisableAnsi(true).build();
 
     public Console(NekoMaid main) {
-        room = main.onSwitchPage(main, "console", client -> client.emit("logs", queue));
+        room = main.onSwitchPage(main, "console", client -> client.emit("console:logs", queue));
+        main
+                .onWithAck(main, "console:complete", String.class, Utils::complete)
+                .on(main, "console:run", String.class, (c, it) -> main.getServer().getScheduler()
+                        .runTask(main, () -> {
+                            main.getLogger().info(c.getAddress() + " issued server command: /" + it);
+                            try {
+                                main.getServer().dispatchCommand(main.getServer().getConsoleSender(), it);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }));
         ((Logger) LogManager.getRootLogger()).addAppender(this);
     }
 
@@ -32,7 +44,7 @@ public final class Console implements Appender {
         obj.logger = event.getLoggerName();
         obj.msg = serializer.toSerializable(event);
         queue.add(obj);
-        room.emit("log", obj);
+        room.emit("console:log", obj);
     }
 
     @Override

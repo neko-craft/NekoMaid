@@ -19,12 +19,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.function.*;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 @Plugin(name = "NekoMaid", version = "1.0")
@@ -40,7 +38,6 @@ public final class NekoMaid extends JavaPlugin implements Listener {
 
     private final Multimap<org.bukkit.plugin.Plugin, String> pluginEventNames = ArrayListMultimap.create();
     private final HashMap<String, HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>>> pluginPages = new HashMap<>();
-    protected final Multimap<String, File> pluginStaticPaths = ArrayListMultimap.create();
     protected final HashMap<String, AbstractMap.SimpleEntry<byte[], Long>> pluginStaticFiles = new HashMap<>();
 
     private Console console;
@@ -49,6 +46,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
 
     private static class PageSwitch { public String page, namespace; }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -59,7 +57,6 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         final var config = new Configuration();
         config.setPort(getConfig().getInt("port", 11451));
         config.setHostname(getConfig().getString("listenHostname", null));
-        config.setHttpCompression(false);
         config.setAuthorizationListener(it -> getConfig().getString("token", "").equals(it.getSingleUrlParam("token")));
         server = new SocketIOServer(config);
         server.setPipelineFactory(new Pipeline());
@@ -152,6 +149,41 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         return this;
     }
 
+    @Contract("_, _, _, _ -> this")
+    public <T, R> NekoMaid onWithAck(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull Function<T, R> listener) {
+        server.addEventListener(plugin.getName() + ":" + eventName, eventClass, (a, b, c) -> c.sendAckData(listener.apply(b)));
+        pluginEventNames.put(plugin, eventName);
+        return this;
+    }
+
+    @Contract("_, _, _, _ -> this")
+    public <T, R> NekoMaid onWithAck(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull BiFunction<Client, T, R> listener) {
+        server.addEventListener(plugin.getName() + ":" + eventName, eventClass, (a, b, c) -> c.sendAckData(listener.apply(new Client(plugin, a), b)));
+        pluginEventNames.put(plugin, eventName);
+        return this;
+    }
+
+    @Contract("_, _, _, _ -> this")
+    public <T> NekoMaid on(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull BiConsumer<Client, T> listener) {
+        server.addEventListener(plugin.getName() + ":" + eventName, eventClass, (a, b, c) -> listener.accept(new Client(plugin, a), b));
+        pluginEventNames.put(plugin, eventName);
+        return this;
+    }
+
+    @Contract("_, _, _, _ -> this")
+    public <T, R> NekoMaid on(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull Consumer<T> listener) {
+        server.addEventListener(plugin.getName() + ":" + eventName, eventClass, (a, b, c) -> listener.accept(b));
+        pluginEventNames.put(plugin, eventName);
+        return this;
+    }
+
+    @Contract("_, _ -> this")
+    public NekoMaid off(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName) {
+        server.removeAllListeners(plugin.getName() + ":" + eventName);
+        pluginEventNames.remove(plugin, eventName);
+        return this;
+    }
+
     @Contract("_, _, _ -> this")
     public NekoMaid on(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @NotNull DataListener<Void> listener) {
         server.addEventListener(plugin.getName() + ":" + eventName, null, (a, b, c) -> listener.onData(new Client(plugin, a), null, c));
@@ -174,14 +206,6 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     @NotNull
     public Room getPage(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String page) {
         return new Room(plugin, "page:" + page);
-    }
-
-    @Contract("_, _ -> this")
-    public NekoMaid addStaticPath(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull File path) {
-        if (!path.isDirectory()) throw new RuntimeException("Path is not a directory.");
-        if (pluginStaticPaths.containsValue(path)) throw new RuntimeException("The path already exists.");
-        pluginStaticPaths.put(plugin.getName(), path);
-        return this;
     }
 
     @Contract("_, _, _ -> this")
@@ -218,7 +242,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
 
     @NotNull
     public List<Client> getAllClients(@NotNull org.bukkit.plugin.Plugin plugin) {
-        return server.getAllClients().stream().map(it -> new Client(plugin, it)).collect(Collectors.toUnmodifiableList());
+        return server.getAllClients().stream().map(it -> new Client(plugin, it)).toList();
     }
 
     @EventHandler
@@ -230,7 +254,6 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             list.forEach(server::removeAllListeners);
             pluginEventNames.removeAll(e.getPlugin());
         }
-        pluginStaticPaths.removeAll(name);
         var name2 = name + "/";
         pluginStaticFiles.keySet().removeIf(s -> s.startsWith(name2));
         var name3 = name + ":";

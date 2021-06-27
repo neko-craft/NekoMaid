@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public final class Room {
@@ -57,6 +56,6 @@ public final class Room {
 
     @NotNull
     public List<Client> getClients() {
-        return NekoMaid.INSTANCE.server.getRoomOperations(roomName).getClients().stream().map(it -> new Client(plugin, it)).collect(Collectors.toUnmodifiableList());
+        return NekoMaid.INSTANCE.server.getRoomOperations(roomName).getClients().stream().map(it -> new Client(plugin, it)).toList();
     }
 }

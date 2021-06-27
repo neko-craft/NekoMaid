@@ -4,6 +4,7 @@ import com.corundumstudio.socketio.AckCallback;
 
 import java.util.function.Consumer;
 
+@SuppressWarnings("unused")
 public class ACKCallback <T> extends AckCallback<T> {
     private final Consumer<T> consumer;
     private Runnable timeout;
