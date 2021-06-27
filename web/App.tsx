@@ -1,18 +1,26 @@
 import React, { useMemo, useState } from 'react'
 import socketIO from 'socket.io-client'
-import { useLocation, useHistory, Route } from 'react-router-dom'
-import { Divider, Hidden, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar,
+import darkScrollbar from '@material-ui/core/darkScrollbar'
+import { useLocation, useHistory, Route, Redirect } from 'react-router-dom'
+import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar,
   Typography, Drawer, Toolbar, IconButton, useMediaQuery } from '@material-ui/core'
-import { makeStyles, useTheme, createMuiTheme, ThemeProvider } from '@material-ui/core/styles'
-import { SnackbarProvider } from 'notistack'
+import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
 
 import { Build, Menu, Brightness4, Brightness7 } from '@material-ui/icons'
 import { address, token } from './url'
+import { Snackbars } from './toast'
 import PluginContext from './Context'
 import Plugin from './Plugin'
 import initPages from './pages/index'
 
-export interface Page { title: string, component: React.ComponentType<any>, path: string, icon?: JSX.Element, noPadding?: boolean }
+declare module '@material-ui/core/styles/createPalette' {
+  // eslint-disable-next-line no-unused-vars
+  interface TypeBackground {
+    secondary: string
+  }
+}
+
+export interface Page { title: string, component: React.ComponentType<any>, path: string, icon?: JSX.Element }
 
 export const pages: Record<string, Page[]> = { }
 
@@ -20,48 +28,7 @@ export let update: React.Dispatch<number>
 
 const drawerWidth = 240
 
-const useStyles = makeStyles(theme => ({
-  actived: {
-    '& div': {
-      color: theme.palette.primary[theme.palette.type === 'light' ? 'main' : 'contrastText']
-    }
-  },
-  root: {
-    display: 'flex'
-  },
-  drawer: {
-    [theme.breakpoints.up('sm')]: {
-      width: drawerWidth,
-      flexShrink: 0
-    }
-  },
-  appBar: {
-    [theme.breakpoints.up('sm')]: {
-      width: '100%',
-      zIndex: theme.zIndex.drawer + 1
-    }
-  },
-  menuButton: {
-    marginRight: theme.spacing(2),
-    [theme.breakpoints.up('sm')]: {
-      display: 'none'
-    }
-  },
-  drawerPaper: {
-    width: drawerWidth
-  },
-  content: {
-    flexGrow: 1,
-    padding: theme.spacing(3)
-  },
-  title: {
-    flexGrow: 1
-  }
-}))
-
 const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = ({ darkMode, setDarkMode }) => {
-  const classes = useStyles()
-  const theme = useTheme()
   const loc = useLocation()
   const history = useHistory()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -85,93 +52,126 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen)
 
   const routes: JSX.Element[] = []
-  let needPadding = true
   const mapToItem = (name: string, it: Page) => {
     const key = '/' + name + '/' + it.path
-    const actived = key === loc.pathname
-    if (actived && it.noPadding) needPadding = false
     routes.push(<PluginContext.Provider key={key} value={create(name)}><Route path={key} component={it.component} exact /></PluginContext.Provider>)
-    return <ListItem button key={key} className={actived ? classes.actived : undefined} onClick={() => history.push(key)}>
-      <ListItemIcon>{it.icon || <Build />}</ListItemIcon>
+    return <ListItem
+      sx={key === loc.pathname
+        ? {
+            fontWeight: 'bold',
+            color: theme => theme.palette.primary.main,
+            backgroundColor: theme => alpha(theme.palette.primary.main, theme.palette.action.selectedOpacity) + '!important'
+          }
+        : undefined}
+      button
+      key={key}
+      onClick={() => history.push(key)}
+    >
+      <ListItemIcon sx={key === loc.pathname ? { color: theme => theme.palette.primary.main } : undefined}>{it.icon || <Build />}</ListItemIcon>
       <ListItemText primary={it.title} />
     </ListItem>
   }
 
   const singlePages: JSX.Element[] = []
-  const multiPagesPages: Array<JSX.Element | JSX.Element[]> = [singlePages]
+  const multiPagesPages: Array<JSX.Element | JSX.Element[]> = []
   let index = 0
   for (const name in pages) {
     if (pages[name].length === 1) singlePages.push(mapToItem(name, pages[name][0]))
-    else multiPagesPages.push(<Divider key={index++} />, pages[name].map(it => mapToItem(name, it)))
+    else {
+      if (multiPagesPages.length) multiPagesPages.push(<Divider key={index++} />)
+      multiPagesPages.push(pages[name].map(it => mapToItem(name, it)))
+    }
   }
+  if (singlePages.length) multiPagesPages.push(<Divider key={index++} />, singlePages)
 
   const drawer = (
     <div>
       <Toolbar />
-      <Hidden smUp implementation='css'><Divider /></Hidden>
+      <Divider sx={{ display: { sm: 'none', xs: 'block' } }} />
       <List>{multiPagesPages.flat()}</List>
     </div>
   )
 
-  return (
-    <div className={classes.root}>
-      <CssBaseline />
-      <AppBar position='fixed' className={classes.appBar}>
-        <Toolbar>
-          <IconButton
-            color='inherit'
-            aria-label='open drawer'
-            edge='start'
-            onClick={handleDrawerToggle}
-            className={classes.menuButton}
-          >
-            <Menu />
-          </IconButton>
-          <Typography variant='h6' className={classes.title}>NekoMaid</Typography>
-          <IconButton
-            color='inherit'
-            edge='end'
-            onClick={() => setDarkMode(!darkMode)}
-          >
-            {darkMode ? <Brightness7 /> : <Brightness4 />}
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      <nav className={classes.drawer} aria-label="mailbox folders">
-        <Hidden smUp implementation='css'>
-          <Drawer
-            variant='temporary'
-            anchor={theme.direction === 'rtl' ? 'right' : 'left'}
-            open={mobileOpen}
-            onClose={handleDrawerToggle}
-            classes={{ paper: classes.drawerPaper }}
-            ModalProps={{ keepMounted: true }}
-          >
-            {drawer}
-          </Drawer>
-        </Hidden>
-        <Hidden xsDown implementation='css'>
-          <Drawer classes={{ paper: classes.drawerPaper }} variant="permanent" open>{drawer}</Drawer>
-        </Hidden>
-      </nav>
-      <main style={{ width: '100%' }} className={needPadding ? classes.content : undefined}>
-        {routes}
-      </main>
-    </div>
-  )
+  return <Box sx={{ display: 'flex' }}>
+    <CssBaseline />
+    <AppBar position='fixed' sx={{ zIndex: theme => theme.zIndex.drawer + 1 }}>
+      <Toolbar>
+        <IconButton
+          color='inherit'
+          aria-label='open drawer'
+          edge='start'
+          onClick={handleDrawerToggle}
+          sx={{ mr: 2, display: { sm: 'none' } }}
+        >
+          <Menu />
+        </IconButton>
+        <Typography variant='h6' noWrap component='div' sx={{ flexGrow: 1 }}>NekoMaid</Typography>
+        <IconButton
+          color='inherit'
+          edge='end'
+          onClick={() => setDarkMode(!darkMode)}
+        >
+          {darkMode ? <Brightness7 /> : <Brightness4 />}
+        </IconButton>
+      </Toolbar>
+    </AppBar>
+    <Box component='nav' sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
+      <Drawer
+        variant='temporary'
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          display: { xs: 'block', sm: 'none' },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: drawerWidth,
+            backgroundImage: theme => theme.palette.mode === 'dark' ? 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))' : undefined
+          }
+        }}
+      >
+        {drawer}
+      </Drawer>
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', sm: 'block' },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: drawerWidth,
+            backgroundImage: theme => theme.palette.mode === 'dark' ? 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))' : undefined
+          }
+        }}
+        open
+      >
+        {drawer}
+      </Drawer>
+    </Box>
+    <Box component='main' sx={{ flexGrow: 1 }}>
+      {routes}
+      <Redirect path='*' to='/NekoMaid/console' />
+    </Box>
+  </Box>
 }
 
 const AppWrap: React.FC = () => {
   const [darkMode, setDarkMode] = useState(useMediaQuery('(prefers-color-scheme: dark)'))
-  const theme2 = React.useMemo(() => createMuiTheme({
+  const theme = React.useMemo(() => createTheme({
+    components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          body: darkMode ? darkScrollbar() : null
+        }
+      }
+    },
     palette: {
-      type: darkMode ? 'dark' : 'light'
+      mode: darkMode ? 'dark' : 'light',
+      background: darkMode ? { default: '#212121', paper: '#212121' } : { default: '#fff', paper: '#fff', secondary: '#fbfbfb' }
     }
   }), [darkMode])
-  return <ThemeProvider theme={theme2}>
-    <SnackbarProvider classes={{ root: 'notistack' }} anchorOrigin={{ horizontal: 'right', vertical: 'top' }}>
-      <App darkMode={darkMode} setDarkMode={setDarkMode} />
-    </SnackbarProvider>
+  return <ThemeProvider theme={theme}>
+    <Snackbars />
+    <App darkMode={darkMode} setDarkMode={setDarkMode} />
   </ThemeProvider>
 }
 

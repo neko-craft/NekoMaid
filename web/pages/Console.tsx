@@ -1,13 +1,12 @@
 /* eslint-disable no-labels */
 import React, { useMemo, useEffect, useState, useRef } from 'react'
 import { usePlugin } from '../Context'
-import { makeStyles } from '@material-ui/core/styles'
 import { Send } from '@material-ui/icons'
-import { useSnackbar } from 'notistack'
-import { TextField, Toolbar, IconButton, Paper, Tooltip } from '@material-ui/core'
+import { TextField, Toolbar, IconButton, Paper, Tooltip, Box, Autocomplete } from '@material-ui/core'
 import { address } from '../url'
-import Autocomplete from '@material-ui/lab/Autocomplete'
+import { css } from '@emotion/css'
 import throttle from 'lodash.throttle'
+import toast from '../toast'
 
 interface Log { level: string, msg: string, time: number, logger: string }
 
@@ -24,63 +23,6 @@ const levelNames: Record<string, string> = {
   DEBUG: '调试',
   TRACE: '堆栈'
 }
-
-const useStyles = makeStyles(theme => ({
-  wrap: {
-    width: '100%',
-    height: '100vh',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    '& p': {
-      margin: 0,
-      whiteSpace: 'pre-wrap',
-      wordBreak: 'break-word',
-      display: 'flex',
-      '& .msg': {
-        flex: '1'
-      },
-      '& .logger': {
-        color: theme.palette.success.main,
-        fontStyle: 'italic'
-      },
-      '& .level': {
-        userSelect: 'none',
-        color: theme.palette.primary.main,
-        fontWeight: 'bolder'
-      },
-      '& .white': {
-        textShadow: theme.palette.type === 'light' ? '#000 1px 0 0, #000 0 1px 0, #000 -1px 0 0, #000 0 -1px 0' : undefined
-      },
-      '& .black': {
-        textShadow: theme.palette.type === 'dark' ? '#fff 1px 0 0, #fff 0 1px 0, #fff -1px 0 0, #fff 0 -1px 0' : undefined
-      }
-    },
-    '& .warn': {
-      color: theme.palette.warning.main
-    },
-    '& .error': {
-      color: theme.palette.error.main
-    }
-  },
-  logs: {
-    height: '100%',
-    overflow: 'hidden scroll',
-    marginTop: theme.spacing(1),
-    padding: theme.spacing(1, 1, 0, 1)
-  },
-  command: {
-    display: 'flex',
-    padding: theme.spacing(1, 1, 2),
-    marginBottom: -theme.spacing(1)
-  },
-  input: {
-    flex: '1'
-  },
-  popper: {
-    top: '-30px !important'
-  }
-}))
 
 const pad = (it: number) => it.toString().padStart(2, '0')
 
@@ -153,8 +95,6 @@ const Console: React.FC = () => {
   const logs = useMemo<JSX.Element[]>(() => [], [])
   const ref = useRef<HTMLDivElement | null>(null)
   const plugin = usePlugin()
-  const classes = useStyles()
-  const { enqueueSnackbar } = useSnackbar()
   const [, update] = useState(0)
   const [open, setOpen] = useState(false)
   const [command, setCommand] = useState('')
@@ -185,7 +125,7 @@ const Console: React.FC = () => {
   const execCommand = () => {
     if (!command) return
     plugin.emit('console:run', command)
-    enqueueSnackbar('执行成功!', { variant: 'success' })
+    toast('执行成功!', 'success')
     const arr = JSON.parse(localStorage.getItem(`NekoMaid:${address}:commandHistory`) || '[]')
     if (arr.length === 5) arr.pop()
     arr.unshift([command, true])
@@ -212,10 +152,60 @@ const Console: React.FC = () => {
 
   useEffect(() => { ref.current && scrollToEnd(ref.current) }, [logs[logs.length - 1]])
 
-  return <div className={classes.wrap}>
+  return <Box sx={{
+    width: '100%',
+    height: '100vh',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    '& p': {
+      margin: 0,
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
+      display: 'flex',
+      '& .msg': {
+        flex: '1'
+      },
+      '& .logger': {
+        color: theme => theme.palette.success.main,
+        fontStyle: 'italic'
+      },
+      '& .level': {
+        userSelect: 'none',
+        color: theme => theme.palette.primary.main,
+        fontWeight: 'bolder'
+      },
+      '& .white': {
+        textShadow: theme => theme.palette.mode === 'light' ? '#000 1px 0 0, #000 0 1px 0, #000 -1px 0 0, #000 0 -1px 0' : undefined
+      },
+      '& .black': {
+        textShadow: theme => theme.palette.mode === 'dark' ? '#fff 1px 0 0, #fff 0 1px 0, #fff -1px 0 0, #fff 0 -1px 0' : undefined
+      }
+    },
+    '& .warn': {
+      color: theme => theme.palette.warning.main
+    },
+    '& .error': {
+      color: theme => theme.palette.error.main
+    }
+  }}>
     <Toolbar />
-    <div ref={ref} className={classes.logs}>{logs}</div>
-    <Paper className={classes.command}>
+    <Box
+      ref={ref}
+      sx={{
+        height: '100%',
+        overflow: 'hidden scroll',
+        backgroundColor: theme => theme.palette.background.secondary,
+        padding: theme => theme.spacing(1)
+      }}>
+      {logs}
+    </Box>
+    <Paper sx={{
+      display: 'flex',
+      borderRadius: '4px 4px 0 0',
+      padding: theme => theme.spacing(1),
+      zIndex: theme => theme.zIndex.drawer + 1
+    }}>
       <Autocomplete
         freeSolo
         open={open}
@@ -224,10 +214,11 @@ const Console: React.FC = () => {
         onOpen={() => setOpen(true)}
         onClose={() => setOpen(false)}
         onFocus={() => getSuggestions(command)}
-        onKeyUp={e => e.key === 'Enter' && (!open || !suggestions.length) && execCommand()}
-        className={classes.input}
-        classes={{ popper: classes.popper }}
-        renderInput={(params) => <TextField {...params} label='命令' />}
+        onKeyUp={(e: any) => e.key === 'Enter' && (!open || !suggestions.length) && execCommand()}
+        sx={{ flex: '1' }}
+        classes={{ popper: css({ marginBottom: '20px !important' }) }}
+        // classes={{ popper: css({ top: '-30px !important' }) }}
+        renderInput={params => <TextField {...params as any} label='命令' />}
         getOptionLabel={it => typeof it === 'string' ? it : it[0]}
         groupBy={it => it[1] ? '历史记录' : '命令'}
         onInputChange={(_, it) => {
@@ -235,9 +226,9 @@ const Console: React.FC = () => {
           setCommand(it)
         }}
       />
-      <IconButton color='primary' disabled={!command} onClick={execCommand}><Send /></IconButton>
+      <IconButton color='primary' disabled={!command} onClick={execCommand} sx={{ margin: theme => theme.spacing('auto', 0, 'auto', 1) }}><Send /></IconButton>
     </Paper>
-  </div>
+  </Box>
 }
 
 export default Console
