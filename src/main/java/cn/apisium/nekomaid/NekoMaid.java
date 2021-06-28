@@ -1,6 +1,6 @@
 package cn.apisium.nekomaid;
 
-import cn.apisium.nekomaid.builtin.Console;
+import cn.apisium.nekomaid.builtin.BuiltinPlugins;
 import com.corundumstudio.socketio.*;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -40,7 +40,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     private final HashMap<String, HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>>> pluginPages = new HashMap<>();
     protected final HashMap<String, AbstractMap.SimpleEntry<byte[], Long>> pluginStaticFiles = new HashMap<>();
 
-    private Console console;
+    private BuiltinPlugins plugins;
 
     { INSTANCE = this; }
 
@@ -80,7 +80,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         });
         server.startAsync();
 
-        console = new Console(this);
+        plugins = new BuiltinPlugins(this);
 
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("nekomaid").setExecutor(this);
@@ -94,7 +94,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        if (console != null) console.stop();
+        plugins.disable();
         if (server != null) server.stop();
     }
 

@@ -126,7 +126,7 @@ const Console: React.FC = () => {
     if (!command) return
     plugin.emit('console:run', command)
     toast('执行成功!', 'success')
-    const arr = JSON.parse(localStorage.getItem(`NekoMaid:${address}:commandHistory`) || '[]')
+    const arr = JSON.parse(localStorage.getItem(`NekoMaid:${address}:commandHistory`) || '[]').filter((it: [string]) => it[0] !== command)
     if (arr.length === 5) arr.pop()
     arr.unshift([command, true])
     localStorage.setItem(`NekoMaid:${address}:commandHistory`, JSON.stringify(arr))
@@ -134,7 +134,7 @@ const Console: React.FC = () => {
   }
 
   useEffect(() => {
-    const f = (data: Log) => {
+    const onLog = (data: Log) => {
       const t = new Date(data.time)
       const time = pad(t.getHours()) + ':' + pad(t.getMinutes()) + ':' + pad(t.getSeconds())
       logs.push(<p key={i++} className={data.level === 'FATAL' || data.level === 'ERROR' ? 'error' : data.level === 'WARN' ? 'warn' : undefined}>
@@ -146,8 +146,12 @@ const Console: React.FC = () => {
       </p>)
       update(i)
     }
-    plugin.once('console:logs', (logs: Log[]) => logs.forEach(f)).on('console:log', f).switchPage('console')
-    return () => { plugin.off('console:log', f).off('console:logs', f) }
+    const onLogs = (it: Log[]) => {
+      logs.length = 0
+      it.forEach(onLog)
+    }
+    plugin.on('console:logs', onLogs).on('console:log', onLog).switchPage('console')
+    return () => { plugin.off('console:log', onLog).off('console:logs', onLogs) }
   }, [])
 
   useEffect(() => { ref.current && scrollToEnd(ref.current) }, [logs[logs.length - 1]])
@@ -195,7 +199,7 @@ const Console: React.FC = () => {
       sx={{
         height: '100%',
         overflow: 'hidden scroll',
-        backgroundColor: theme => theme.palette.background.secondary,
+        backgroundColor: theme => theme.palette.background.default,
         padding: theme => theme.spacing(1)
       }}>
       {logs}

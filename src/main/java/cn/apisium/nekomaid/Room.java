@@ -3,6 +3,7 @@ package cn.apisium.nekomaid;
 import com.corundumstudio.socketio.BroadcastAckCallback;
 import com.corundumstudio.socketio.BroadcastOperations;
 import com.corundumstudio.socketio.SocketIOClient;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

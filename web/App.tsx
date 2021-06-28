@@ -9,16 +9,10 @@ import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
 import { Build, Menu, Brightness4, Brightness7 } from '@material-ui/icons'
 import { address, token } from './url'
 import { Snackbars } from './toast'
+import { typography } from './theme'
 import PluginContext from './Context'
 import Plugin from './Plugin'
 import initPages from './pages/index'
-
-declare module '@material-ui/core/styles/createPalette' {
-  // eslint-disable-next-line no-unused-vars
-  interface TypeBackground {
-    secondary: string
-  }
-}
 
 export interface Page { title: string, component: React.ComponentType<any>, path: string, icon?: JSX.Element }
 
@@ -28,8 +22,10 @@ export let update: React.Dispatch<number>
 
 const drawerWidth = 240
 
+let sent = false
+let loc: ReturnType<typeof useLocation>
 const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = ({ darkMode, setDarkMode }) => {
-  const loc = useLocation()
+  loc = useLocation()
   const history = useHistory()
   const [mobileOpen, setMobileOpen] = useState(false)
   update = useState(0)[1]
@@ -41,6 +37,9 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       let cur = his.find(it => it.address === curAddress)
       if (!cur) his.push((cur = { address: curAddress, time: 0 }))
       cur.time = Date.now()
+      const arr = loc.pathname.split('/')
+      if (!sent && arr.length > 2) io.emit('switchPage', { page: arr[1], namespace: arr[0] })
+      sent = true
       localStorage.setItem('NekoMaid:servers', JSON.stringify(his))
     })
     const map: Record<string, Plugin> = { }
@@ -105,7 +104,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
         >
           <Menu />
         </IconButton>
-        <Typography variant='h6' noWrap component='div' sx={{ flexGrow: 1 }}>NekoMaid</Typography>
+        <Typography variant='h3' noWrap component='div' sx={{ flexGrow: 1 }}>NekoMaid</Typography>
         <IconButton
           color='inherit'
           edge='end'
@@ -149,7 +148,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     </Box>
     <Box component='main' sx={{ flexGrow: 1 }}>
       {routes}
-      <Redirect path='*' to='/NekoMaid/console' />
+      <Redirect path='*' to='/NekoMaid/dashboard' />
     </Box>
   </Box>
 }
@@ -157,6 +156,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
 const AppWrap: React.FC = () => {
   const [darkMode, setDarkMode] = useState(useMediaQuery('(prefers-color-scheme: dark)'))
   const theme = React.useMemo(() => createTheme({
+    typography,
     components: {
       MuiCssBaseline: {
         styleOverrides: {
@@ -166,7 +166,7 @@ const AppWrap: React.FC = () => {
     },
     palette: {
       mode: darkMode ? 'dark' : 'light',
-      background: darkMode ? { default: '#212121', paper: '#212121' } : { default: '#fff', paper: '#fff', secondary: '#fbfbfb' }
+      background: darkMode ? { default: '#212121', paper: '#212121' } : { default: '#f4f6f8', paper: '#fff' }
     }
   }), [darkMode])
   return <ThemeProvider theme={theme}>

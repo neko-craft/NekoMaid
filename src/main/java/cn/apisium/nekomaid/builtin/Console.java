@@ -13,7 +13,7 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 import java.io.Serializable;
 
 @SuppressWarnings("UnstableApiUsage")
-public final class Console implements Appender {
+final class Console implements Appender {
     private ErrorHandler handler = new DefaultErrorHandler(this);
     private final EvictingQueue<Log> queue = EvictingQueue.create(100);
     private final Room room;
@@ -37,12 +37,8 @@ public final class Console implements Appender {
     }
 
     @Override
-    public void append(LogEvent event) {
-        var obj = new Log();
-        obj.level = event.getLevel().name();
-        obj.time = event.getTimeMillis();
-        obj.logger = event.getLoggerName();
-        obj.msg = serializer.toSerializable(event);
+    public void append(LogEvent e) {
+        var obj = new Log(serializer.toSerializable(e), e.getLevel().name(), e.getLoggerName(), e.getTimeMillis());
         queue.add(obj);
         room.emit("console:log", obj);
     }
@@ -98,8 +94,5 @@ public final class Console implements Appender {
         return false;
     }
 
-    private static final class Log {
-        public String msg, level, logger;
-        public long time;
-    }
+    private static final record Log(String msg, String level, String logger, long time) { }
 }
