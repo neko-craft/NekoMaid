@@ -2,10 +2,13 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
 import { red, green, orange, deepPurple, blue, yellow } from '@material-ui/core/colors'
 import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, SentimentDissatisfied,
-  SentimentSatisfied, AccessTime, ArrowUpward } from '@material-ui/icons'
-import { useTheme } from '@material-ui/core/styles'
+  SentimentSatisfied, AccessTime, ArrowUpward, MoreHoriz, Remove } from '@material-ui/icons'
+import { useTheme, alpha } from '@material-ui/core/styles'
 import { usePlugin } from '../Context'
-import { CardContent, Container, Grid, Box, Card, Typography, Avatar, Toolbar, CardHeader, Divider, Skeleton, LinearProgress } from '@material-ui/core'
+import { CardContent, Container, Grid, Box, Card, Typography, Avatar, Toolbar, CardHeader, Divider, Skeleton, LinearProgress, List,
+  ListItem, IconButton, ListItemText, ListItemAvatar, Pagination } from '@material-ui/core'
+import { LoadingList } from '../components/Loading'
+import Empty from '../components/Empty'
 import Uptime from '../components/Uptime'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }
@@ -27,30 +30,58 @@ const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.R
     </CardContent>
   </Card>
 
-const data = {
-  labels: ['1', '2', '3', '4', '5', '6'],
-  datasets: [
-    {
-      label: '# of Votes',
-      data: [12, 19, 3, 5, 2, 3],
-      fill: false,
-      backgroundColor: 'rgb(255, 99, 132)',
-      borderColor: 'rgba(255, 99, 132, 0.2)',
-      yAxisID: 'yAxes'
-    },
-    {
-      label: '# of No Votes',
-      data: [1, 2, 1, 1, 2, 2],
-      fill: false,
-      backgroundColor: 'rgb(54, 162, 235)',
-      borderColor: 'rgba(54, 162, 235, 0.2)',
-      yAxisID: 'yAxis'
-    }
-  ]
+const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
+  const [page, setPage] = useState(1)
+  return <Card>
+    <CardHeader title='在线玩家' />
+    <Divider />
+    <CardContent>
+      {players?.length === 0
+        ? <Empty />
+        : <>
+        <List sx={{ paddingTop: 0 }}>
+          {players
+            ? players.slice((page - 1) * 8, page * 8).map(it => <ListItem
+              key={it}
+              secondaryAction={<IconButton edge='end'><MoreHoriz /></IconButton>}
+            >
+              <ListItemAvatar><Avatar src={`https://mc-heads.net/avatar/${it}/40`} imgProps={{ crossOrigin: 'anonymous' }} /></ListItemAvatar>
+              <ListItemText primary={it} />
+            </ListItem>)
+            : <LoadingList />
+          }
+        </List>
+        {players && <Pagination
+          page={page}
+          onChange={(_, it) => setPage(it)}
+          count={Math.max(Math.ceil(players.length / 8), 1)}
+          sx={{ display: 'flex', justifyContent: 'flex-end' }}
+        />}
+      </>}
+    </CardContent>
+  </Card>
 }
 
-const Charts: React.FC = () => {
+const makeData = (title: string, color: string, yAxisID: string) => ({
+  yAxisID,
+  label: '# ' + title,
+  data: [] as number[],
+  fill: false,
+  backgroundColor: color,
+  borderColor: alpha(color, 0.2)
+})
+
+const Charts: React.FC<{ data: Status[] }> = props => {
   const theme = useTheme()
+  const gridLines = {
+    borderDash: [2],
+    borderDashOffset: [2],
+    color: theme.palette.divider,
+    drawBorder: false,
+    zeroLineBorderDash: [2],
+    zeroLineBorderDashOffset: [2],
+    zeroLineColor: theme.palette.divider
+  }
   const options = {
     cornerRadius: 20,
     layout: { padding: 0 },
@@ -58,39 +89,57 @@ const Charts: React.FC = () => {
     maintainAspectRatio: false,
     responsive: true,
     scales: {
-      xAxes: [
-        {
-          barThickness: 12,
-          maxBarThickness: 10,
-          barPercentage: 0.5,
-          categoryPercentage: 0.5,
-          ticks: {
-            fontColor: theme.palette.text.secondary
-          },
-          gridLines: {
-            display: false,
-            drawBorder: false
-          }
+      xAxes: {
+        barThickness: 12,
+        maxBarThickness: 10,
+        barPercentage: 0.5,
+        categoryPercentage: 0.5,
+        ticks: {
+          fontColor: theme.palette.text.secondary
+        },
+        gridLines: {
+          display: false,
+          drawBorder: false
         }
-      ],
-      yAxes: [
-        {
-          ticks: {
-            fontColor: theme.palette.text.secondary,
-            beginAtZero: true,
-            min: 0
-          },
-          gridLines: {
-            borderDash: [2],
-            borderDashOffset: [2],
-            color: theme.palette.divider,
-            drawBorder: false,
-            zeroLineBorderDash: [2],
-            zeroLineBorderDashOffset: [2],
-            zeroLineColor: theme.palette.divider
-          }
+      },
+      players: {
+        gridLines,
+        position: 'left',
+        min: 0,
+        ticks: {
+          stepSize: 1,
+          fontColor: theme.palette.text.secondary
         }
-      ]
+      },
+      tps: {
+        gridLines,
+        position: 'left',
+        display: true,
+        beginAtZero: true,
+        suggestedMax: 20,
+        ticks: {
+          fontColor: theme.palette.text.secondary
+        }
+      },
+      entities: {
+        gridLines,
+        stepSize: 1,
+        position: 'right',
+        ticks: {
+          stepSize: 1,
+          fontColor: theme.palette.text.secondary
+        }
+      },
+      chunks: {
+        gridLines,
+        stepSize: 1,
+        position: 'right',
+        min: 0,
+        ticks: {
+          stepSize: 1,
+          fontColor: theme.palette.text.secondary
+        }
+      }
     },
     tooltips: {
       backgroundColor: theme.palette.background.paper,
@@ -105,12 +154,25 @@ const Charts: React.FC = () => {
     }
   }
 
+  const data = {
+    labels: [] as string[],
+    datasets: [makeData('玩家数', blue[600], 'players'), makeData('TPS', orange[600], 'tps'), makeData('区块数', deepPurple[600], 'chunks'), makeData('实体数', green[600], 'entities')]
+  }
+  props.data.forEach(it => {
+    const time = new Date(it.time)
+    data.labels.push(`${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`)
+    data.datasets[0].data.push(it.players)
+    data.datasets[1].data.push(it.tps)
+    data.datasets[2].data.push(it.chunks)
+    data.datasets[3].data.push(it.entities)
+  })
+
   return <Card>
     <CardHeader title='概览' />
     <Divider />
     <CardContent>
       <Box sx={{ height: 400, position: 'relative' }}>
-        <Line data={data} options={options} />
+        <Line data={data} options={options} type='line' />
       </Box>
     </CardContent>
   </Card>
@@ -141,7 +203,7 @@ const Dashboard: React.FC = () => {
         <Grid item lg={3} sm={6} xl={3} xs={12}>
           <TopCard title='服务端版本' content={current ? current.version : <Skeleton animation='wave' width={150} />} icon={<Handyman />} color={orange[600]}>
             <Box sx={{ pt: 2, display: 'flex', alignItems: 'flex-end' }}>
-              <Check sx={{ color: green[900] }} />
+              <Check htmlColor={green[900]} />
               <Typography color='textSecondary' variant='caption'>&nbsp;当前已为最新版</Typography>
             </Box>
           </TopCard>
@@ -149,7 +211,7 @@ const Dashboard: React.FC = () => {
         <Grid item lg={3} sm={6} xl={3} xs={12}>
           <TopCard title='在线人数' content={current ? playerCount : <Skeleton animation='wave' width={150} />} icon={<People />} color={deepPurple[600]}>
             <Box sx={{ pt: 2, display: 'flex', alignItems: 'flex-end' }}>
-              {percent < 0 ? <ArrowDownward sx={{ color: red[900] }} /> : <ArrowUpward sx={{ color: green[900] }} />}
+              {percent === 0 ? <Remove color='primary' /> : percent < 0 ? <ArrowDownward color='error' /> : <ArrowUpward color='success' />}
               <Typography sx={{ color: (percent < 0 ? red : green)[900], mr: 1 }} variant='body2'>{Math.abs(percent)}%</Typography>
               <Typography color='textSecondary' variant='caption'>相比于上一小时</Typography>
             </Box>
@@ -162,7 +224,7 @@ const Dashboard: React.FC = () => {
             icon={!current || current.tps >= 18 || current.tps === -1 ? <SentimentVerySatisfied /> : current.tps >= 15 ? <SentimentSatisfied /> : <SentimentDissatisfied />}
             color={tpsColor[600]}
           >
-            <Box sx={{ pt: 2, display: 'flex', alignItems: 'flex-end' }}>
+            <Box sx={{ pt: 2.1, display: 'flex', alignItems: 'flex-end' }}>
               <Typography sx={{ color: tpsColor[900], mr: 1 }} variant='body2'>{!current || current.mspt === -1 ? '?' : current.mspt.toFixed(2) + 'ms'}</Typography>
               <Typography color='textSecondary' variant='caption'>每Tick耗时</Typography>
             </Box>
@@ -170,13 +232,14 @@ const Dashboard: React.FC = () => {
         </Grid>
         <Grid item lg={3} sm={6} xl={3} xs={12}>
           <TopCard title='运行时间' content={current ? <Uptime time={current.time} /> : <Skeleton animation='wave' width={150} />} icon={<AccessTime />} color={blue[600]}>
-            <Box sx={{ pt: 2, display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ pt: 2.7, display: 'flex', alignItems: 'center' }}>
               <Typography color='textSecondary' variant='caption' sx={{ marginRight: 1 }}>内存占用</Typography>
               <LinearProgress variant='determinate' value={current?.memory || 0} sx={{ flex: '1' }} />
             </Box>
           </TopCard>
         </Grid>
-        <Grid item lg={8} md={12} xl={9} xs={12}>{useMemo(() => <Charts />, [])}</Grid>
+        <Grid item lg={8} md={12} xl={9} xs={12}>{useMemo(() => <Charts data={status} />, [status])}</Grid>
+        <Grid item lg={4} md={6} xl={3} xs={12}><Players players={current?.players} /></Grid>
       </Grid>
     </Container>
   </Box>

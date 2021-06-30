@@ -186,10 +186,10 @@ const Console: React.FC = () => {
         textShadow: theme => theme.palette.mode === 'dark' ? '#fff 1px 0 0, #fff 0 1px 0, #fff -1px 0 0, #fff 0 -1px 0' : undefined
       }
     },
-    '& .warn': {
+    '& .warn, & .warn .level': {
       color: theme => theme.palette.warning.main
     },
-    '& .error': {
+    '& .error, & .error .level': {
       color: theme => theme.palette.error.main
     }
   }}>
