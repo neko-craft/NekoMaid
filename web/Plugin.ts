@@ -1,4 +1,15 @@
-import { pages, Page, update } from './App'
+import { pages, update } from './App'
+
+export interface Page {
+  title: string
+  component: React.ComponentType<any>
+  path: string | string[]
+  url?: string
+  icon?: JSX.Element
+  exact?: boolean
+  strict?: boolean
+  sensitive?: boolean
+}
 
 let flag = 0
 export default class Plugin {

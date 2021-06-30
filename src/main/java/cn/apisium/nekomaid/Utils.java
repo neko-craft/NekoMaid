@@ -1,11 +1,9 @@
 package cn.apisium.nekomaid;
 
 import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
-import com.earth2me.essentials.Essentials;
-import com.earth2me.essentials.IEssentials;
 import com.google.common.collect.ImmutableList;
-import io.papermc.lib.PaperLib;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.event.server.TabCompleteEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +17,8 @@ import java.util.concurrent.FutureTask;
 
 public final class Utils {
     private final static boolean IS_PAPER;
+    private static Object server;
+    private static Field recentTps, mspt;
     static {
         var tmp = false;
         try {
@@ -26,15 +26,29 @@ public final class Utils {
             tmp = true;
         } catch (Exception ignored) { }
         IS_PAPER = tmp;
+        try {
+            Class<?> nms = Bukkit.getServer().getClass().getMethod("getServer").invoke(Bukkit.getServer()).getClass();
+            server = nms.getMethod("getServer").invoke(null);
+            try { recentTps = nms.getField("recentTps"); } catch (Exception ignored) { }
+            try {
+                for (var it : nms.getFields()) {
+                    var f = it.getModifiers();
+                    if (it.getType() == long[].class && it.getName().length() == 1 && Modifier.isPublic(f) &&
+                            Modifier.isFinal(f) && !Modifier.isStatic(f) && it.canAccess(server)) {
+                        var arr = (long[]) it.get(server);
+                        if (arr.length == 100) mspt = it;
+                    }
+                }
+            } catch (Exception ignored) { }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static double getTPS() {
         if (IS_PAPER) return Bukkit.getTPS()[0];
-        var p = Bukkit.getPluginManager().getPlugin("Essentials");
-        if (p != null && p.isEnabled()) return ((IEssentials) p).getTimer().getAverageTPS();
         try {
-            var nms = Class.forName("net.minecraft.server.MinecraftServer");
-            return ((double[]) nms.getField("recentTps").get(nms.getMethod("getServer").invoke(null)))[0];
+            return ((double[]) recentTps.get(server))[0];
         } catch (Exception ignored) { }
         return -1;
     }
@@ -42,23 +56,18 @@ public final class Utils {
     public static double getMSPT() {
         if (IS_PAPER) return Bukkit.getAverageTickTime();
         try {
-            var nms = Class.forName("net.minecraft.server.MinecraftServer");
-            for (var it : nms.getFields()) {
-                var f = it.getModifiers();
-                var server = nms.getMethod("getServer").invoke(null);
-                if (it.getType() == long[].class && it.getName().length() == 1 && Modifier.isPublic(f) &&
-                        Modifier.isFinal(f) && !Modifier.isStatic(f) && it.canAccess(server)) {
-                    var arr = (long[]) it.get(server);
-                    if (arr.length == 100) {
-                        long i = 0L;
-                        for (final long l : arr) i += l;
-                        return i / 100.0 * 1.0E-6D;
-                    }
-                }
+            var arr = (long[]) mspt.get(server);
+            if (arr.length == 100) {
+                long i = 0L;
+                for (final long l : arr) i += l;
+                return i / 100.0 * 1.0E-6D;
             }
         } catch (Exception ignored) { }
         return -1;
     }
+
+    @SuppressWarnings("deprecation")
+    public static long getPlayerLastPlayTime(@NotNull OfflinePlayer p) { return IS_PAPER ? p.getLastLogin() : p.getLastPlayed(); }
 
     @Nullable
     public static List<String> complete(final @NotNull String buffer) {

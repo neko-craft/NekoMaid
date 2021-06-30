@@ -208,7 +208,7 @@ const Console: React.FC = () => {
       display: 'flex',
       borderRadius: '4px 4px 0 0',
       padding: theme => theme.spacing(1),
-      zIndex: theme => theme.zIndex.drawer + 1
+      zIndex: 2
     }}>
       <Autocomplete
         freeSolo

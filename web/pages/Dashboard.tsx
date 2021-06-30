@@ -4,6 +4,7 @@ import { red, green, orange, deepPurple, blue, yellow } from '@material-ui/core/
 import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, SentimentDissatisfied,
   SentimentSatisfied, AccessTime, ArrowUpward, MoreHoriz, Remove } from '@material-ui/icons'
 import { useTheme, alpha } from '@material-ui/core/styles'
+import { useHistory } from 'react-router-dom'
 import { usePlugin } from '../Context'
 import { CardContent, Container, Grid, Box, Card, Typography, Avatar, Toolbar, CardHeader, Divider, Skeleton, LinearProgress, List,
   ListItem, IconButton, ListItemText, ListItemAvatar, Pagination } from '@material-ui/core'
@@ -31,6 +32,7 @@ const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.R
   </Card>
 
 const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
+  const his = useHistory()
   const [page, setPage] = useState(1)
   return <Card>
     <CardHeader title='在线玩家' />
@@ -43,9 +45,9 @@ const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
           {players
             ? players.slice((page - 1) * 8, page * 8).map(it => <ListItem
               key={it}
-              secondaryAction={<IconButton edge='end'><MoreHoriz /></IconButton>}
+              secondaryAction={<IconButton edge='end' onClick={() => his.push('/NekoMaid/playerList/' + it)}><MoreHoriz /></IconButton>}
             >
-              <ListItemAvatar><Avatar src={`https://mc-heads.net/avatar/${it}/40`} imgProps={{ crossOrigin: 'anonymous' }} /></ListItemAvatar>
+              <ListItemAvatar><Avatar src={`https://mc-heads.net/avatar/${it}/40`} imgProps={{ crossOrigin: 'anonymous' }} variant='rounded' /></ListItemAvatar>
               <ListItemText primary={it} />
             </ListItem>)
             : <LoadingList />
@@ -212,7 +214,7 @@ const Dashboard: React.FC = () => {
           <TopCard title='在线人数' content={current ? playerCount : <Skeleton animation='wave' width={150} />} icon={<People />} color={deepPurple[600]}>
             <Box sx={{ pt: 2, display: 'flex', alignItems: 'flex-end' }}>
               {percent === 0 ? <Remove color='primary' /> : percent < 0 ? <ArrowDownward color='error' /> : <ArrowUpward color='success' />}
-              <Typography sx={{ color: (percent < 0 ? red : green)[900], mr: 1 }} variant='body2'>{Math.abs(percent)}%</Typography>
+              <Typography sx={{ color: (percent === 0 ? blue : percent < 0 ? red : green)[900], mr: 1 }} variant='body2'>{Math.abs(percent)}%</Typography>
               <Typography color='textSecondary' variant='caption'>相比于上一小时</Typography>
             </Box>
           </TopCard>

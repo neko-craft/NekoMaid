@@ -23,6 +23,7 @@
         "no-use-before-define": "off",
         "react/prop-types": "off",
         "object-curly-newline": "off",
-        "no-undef": "off"
+        "no-undef": "off",
+        "react/display-name": "off"
     }
 }

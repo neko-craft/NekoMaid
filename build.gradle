@@ -16,10 +16,6 @@ repositories {
         name = 'sonatype'
         url = 'https://oss.sonatype.org/content/groups/public/'
     }
-    maven {
-        name = 'essentialsx-snapshots'
-        url 'https://repo.essentialsx.net/snapshots/'
-    }
 }
 
 dependencies {
@@ -29,10 +25,6 @@ dependencies {
     compileOnly 'org.apache.logging.log4j:log4j-core:2.14.1'
     compileOnly ('org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT')  {
         exclude group: 'org.bukkit'
-    }
-    compileOnly ('net.essentialsx:EssentialsX:2.19.0-SNAPSHOT') {
-        exclude group: 'org.bstats'
-        exclude group: 'org.spigotmc'
     }
     implementation 'javax.activation:activation:1.1.1'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.3'

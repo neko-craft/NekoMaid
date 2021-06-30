@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import socketIO from 'socket.io-client'
 import darkScrollbar from '@material-ui/core/darkScrollbar'
-import { useLocation, useHistory, Route, Redirect } from 'react-router-dom'
+import { zhCN } from '@material-ui/core/locale/index'
+import { useLocation, Route, NavLink } from 'react-router-dom'
 import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar,
   Typography, Drawer, Toolbar, IconButton, useMediaQuery } from '@material-ui/core'
 import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
@@ -11,10 +12,8 @@ import { address, token } from './url'
 import { Snackbars } from './toast'
 import { typography } from './theme'
 import PluginContext from './Context'
-import Plugin from './Plugin'
+import Plugin, { Page } from './Plugin'
 import initPages from './pages/index'
-
-export interface Page { title: string, component: React.ComponentType<any>, path: string, icon?: JSX.Element }
 
 export const pages: Record<string, Page[]> = { }
 
@@ -23,10 +22,8 @@ export let update: React.Dispatch<number>
 const drawerWidth = 240
 
 let sent = false
-let loc: ReturnType<typeof useLocation>
 const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = ({ darkMode, setDarkMode }) => {
-  loc = useLocation()
-  const history = useHistory()
+  const loc = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   update = useState(0)[1]
   const create = useMemo(() => {
@@ -52,23 +49,23 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
 
   const routes: JSX.Element[] = []
   const mapToItem = (name: string, it: Page) => {
-    const key = '/' + name + '/' + it.path
-    routes.push(<PluginContext.Provider key={key} value={create(name)}><Route path={key} component={it.component} exact /></PluginContext.Provider>)
-    return <ListItem
-      sx={key === loc.pathname
-        ? {
-            fontWeight: 'bold',
-            color: theme => theme.palette.primary.main,
-            backgroundColor: theme => alpha(theme.palette.primary.main, theme.palette.action.selectedOpacity) + '!important'
-          }
-        : undefined}
-      button
-      key={key}
-      onClick={() => history.push(key)}
-    >
-      <ListItemIcon sx={key === loc.pathname ? { color: theme => theme.palette.primary.main } : undefined}>{it.icon || <Build />}</ListItemIcon>
-      <ListItemText primary={it.title} />
-    </ListItem>
+    const path = Array.isArray(it.path) ? it.path[0] : it.path
+    const key = '/' + name + '/' + path
+    routes.push(<PluginContext.Provider key={key} value={create(name)}>
+      <Route
+        path={Array.isArray(it.path) ? it.path.map(it => '/' + name + '/' + it) : key}
+        component={it.component}
+        strict={it.strict}
+        exact={it.exact}
+        sensitive={it.sensitive}
+      />
+    </PluginContext.Provider>)
+    return <NavLink key={key} to={'/' + name + '/' + (it.url || path)} activeClassName='actived'>
+      <ListItem button>
+        <ListItemIcon>{it.icon || <Build />}</ListItemIcon>
+        <ListItemText primary={it.title} />
+      </ListItem>
+    </NavLink>
   }
 
   const singlePages: JSX.Element[] = []
@@ -87,7 +84,18 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     <div>
       <Toolbar />
       <Divider sx={{ display: { sm: 'none', xs: 'block' } }} />
-      <List>{multiPagesPages.flat()}</List>
+      <List sx={{
+        '& a': {
+          color: 'inherit',
+          textDecoration: 'inherit'
+        },
+        '& .actived > div': {
+          fontWeight: 'bold',
+          color: theme => theme.palette.primary.main,
+          backgroundColor: theme => alpha(theme.palette.primary.main, theme.palette.action.selectedOpacity) + '!important',
+          '& svg': { color: theme => theme.palette.primary.main + '!important' }
+        }
+      }}>{multiPagesPages.flat()}</List>
     </div>
   )
 
@@ -132,7 +140,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
         {drawer}
       </Drawer>
       <Drawer
-        variant="permanent"
+        variant='permanent'
         sx={{
           display: { xs: 'none', sm: 'block' },
           '& .MuiDrawer-paper': {
@@ -148,7 +156,6 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     </Box>
     <Box component='main' sx={{ flexGrow: 1 }}>
       {routes}
-      <Redirect path='*' to='/NekoMaid/dashboard' />
     </Box>
   </Box>
 }
@@ -166,9 +173,9 @@ const AppWrap: React.FC = () => {
     },
     palette: {
       mode: darkMode ? 'dark' : 'light',
-      background: darkMode ? { default: '#212121', paper: '#212121' } : { default: '#f4f6f8', paper: '#fff' }
+      background: darkMode ? { default: '#212121', paper: '#212121' } : { default: '#f4f6f8', paper: '#ffffff' }
     }
-  }), [darkMode])
+  }, zhCN), [darkMode])
   return <ThemeProvider theme={theme}>
     <Snackbars />
     <App darkMode={darkMode} setDarkMode={setDarkMode} />

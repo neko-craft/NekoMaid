@@ -22,7 +22,7 @@ export const EmptyIcon: React.FC = () => <svg
   </g>
 </svg>
 
-export const Empty: React.FC<{ title?: string }> = ({ title = '暂无数据' }) => <Box sx={{ textAlign: 'center' }}>
+export const Empty: React.FC<{ title?: string | null }> = ({ title = '暂无数据' }) => <Box sx={{ textAlign: 'center' }}>
   <EmptyIcon />
   {title && <Typography color='textSecondary' variant='h6'>{title}</Typography>}
 </Box>
