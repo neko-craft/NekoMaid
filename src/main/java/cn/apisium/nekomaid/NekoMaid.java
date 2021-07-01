@@ -60,6 +60,11 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         config.setAuthorizationListener(it -> getConfig().getString("token", "").equals(it.getSingleUrlParam("token")));
         server = new SocketIOServer(config);
         server.setPipelineFactory(new Pipeline());
+        server.addConnectListener(it -> {
+            var map = new HashMap<String, Object>();
+            map.put("onlineMode", getServer().getOnlineMode());
+            it.sendEvent("globalData", map);
+        });
         server.addEventListener("switchPage", PageSwitch.class, (a, b, c) -> {
             var oldPageObj = (PageSwitch) a.get("page");
             Client client = null;

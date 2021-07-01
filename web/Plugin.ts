@@ -11,6 +11,10 @@ export interface Page {
   sensitive?: boolean
 }
 
+export interface GlobalInfo {
+  onlineMode: boolean
+}
+
 let flag = 0
 export default class Plugin {
   #io: SocketIOClient.Socket

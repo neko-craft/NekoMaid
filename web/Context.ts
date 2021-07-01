@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react'
-import Plugin from './Plugin'
+import Plugin, { GlobalInfo } from './Plugin'
 
-const ctx = createContext<Plugin | null>(null)
-export default ctx
-export const usePlugin = () => useContext(ctx) as Plugin
+export const pluginCtx = createContext<Plugin | null>(null)
+export const globalCtx = createContext<Partial<GlobalInfo>>({ })
+export const usePlugin = () => useContext(pluginCtx) as Plugin
+export const useGlobalData = () => useContext(globalCtx) as Partial<GlobalInfo>

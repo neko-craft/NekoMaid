@@ -3,13 +3,13 @@ import dayjs from 'dayjs'
 import toast from '../toast'
 import Empty from '../components/Empty'
 import Avatar from '../components/Avatar'
-import { usePlugin } from '../Context'
-import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Wifi, Event,
+import { usePlugin, useGlobalData } from '../Context'
+import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Today, Event,
   Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline } from '@material-ui/icons'
 import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContainer, Table, TableBody, CardContent,
   Dialog, DialogTitle, DialogContent, TablePagination, TableHead, TableRow, TableCell, IconButton, Tooltip,
   ToggleButtonGroup, ToggleButton, DialogContentText, TextField, DialogActions, Button, List, ListSubheader, ListItem,
-  ListItemText, ListItemIcon, Collapse, ListItemButton } from '@material-ui/core'
+  ListItemText, ListItemIcon, Collapse, ListItemButton, CardActions, Link } from '@material-ui/core'
 import { FXAASkinViewer, createOrbitControls, WalkingAnimation, RotatingAnimation } from 'skinview3d'
 import { useTheme } from '@material-ui/core/styles'
 import { useParams, useHistory } from 'react-router-dom'
@@ -30,15 +30,47 @@ interface IPlayerInfo {
   tnt: number
 }
 
+const BanPlayerDialog: React.FC<{ name: string | null, onChange: (name: string | null) => void, refresh?: () => void }> = ({ name, onChange, refresh }) => {
+  const plugin = usePlugin()
+  const [reason, setReason] = useState('')
+  return <Dialog open={!!name} onClose={() => onChange(null)}>
+    <DialogTitle id="form-dialog-title">Subscribe</DialogTitle>
+    <DialogContent>
+      <DialogContentText>确认要封禁 <span style={{ fontWeight: 'bold' }}>{name}</span> 吗?</DialogContentText>
+      <TextField
+        autoFocus
+        fullWidth
+        margin='dense'
+        label='封禁理由'
+        variant='standard'
+        value={reason}
+        onChange={it => setReason(it.target.value)}
+      />
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={() => onChange(null)}>取消</Button>
+      <Button onClick={() => {
+        plugin.emit('playerList:ban', [name, reason])
+        onChange(null)
+        refresh?.()
+        toast('操作成功!', 'success')
+      }}>封禁</Button>
+    </DialogActions>
+  </Dialog>
+}
+
 // eslint-disable-next-line react/jsx-key
-const icons = [<AccessTime />, <Wifi />, <Event />, <Login />, <Sick />, <FaceRetouchingOff />, <Pets />, <Fireplace />]
+const icons = [<AccessTime />, <Today />, <Event />, <Login />, <Sick />, <FaceRetouchingOff />, <Pets />, <Fireplace />]
 const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
   const plugin = usePlugin()
+  const globalData = useGlobalData()
   const [open, setOpen] = useState(false)
   const [info, setInfo] = useState<IPlayerInfo | undefined>()
+  const [banPlayer, setBanPlayer] = useState<string | null>(null)
+  const refresh = () => plugin.emit('playerList:query', name, setInfo)
   useEffect(() => {
     setInfo(undefined)
-    if (name) plugin.emit('playerList:query', name, setInfo)
+    if (name) refresh()
   }, [name])
 
   return name && info
@@ -51,7 +83,10 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
       >
         <ListItem>
           <ListItemIcon><AssignmentInd /></ListItemIcon>
-          <ListItemText primary={info.id} />
+          <ListItemText primary={globalData.onlineMode
+            ? <Link underline='hover' rel='noopener' target='_blank' href={'https://namemc.com/profile/' + info.id}>{info.id}</Link>
+            : info.id
+          } />
         </ListItem>
         {!info.hasPlayedBefore && <ListItem>
           <ListItemIcon><ErrorOutline color='error' /></ListItemIcon>
@@ -59,7 +94,7 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
         </ListItem>}
         {info.ban != null && <ListItem>
           <ListItemIcon><Block color='error' /></ListItemIcon>
-          <ListItemText primary={info.ban || '已被封禁'} />
+          <ListItemText primary={'已被封禁' + (info.ban ? ': ' + info.ban : '')} />
         </ListItem>}
         {info.whitelisted && <ListItem>
           <ListItemIcon><Star color='warning' /></ListItemIcon>
@@ -69,29 +104,49 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
           <ListItemIcon><Security color='primary' /></ListItemIcon>
           <ListItemText primary='管理员' />
           </ListItem>}
-        <ListItemButton onClick={() => setOpen(!open)}>
-          <ListItemIcon><Equalizer /></ListItemIcon>
-          <ListItemText primary='统计数据' />
-          {open ? <ExpandLess /> : <ExpandMore />}
-        </ListItemButton>
-        <Collapse in={open} timeout="auto" unmountOnExit>
-          <List component='div' dense disablePadding>
-            {[
-              '在线时间: ' + dayjs.duration(info.playTime / 20, 'seconds').humanize(),
-              '最后登录: ' + dayjs(info.lastOnline).fromNow(),
-              info.hasPlayedBefore ? '首次登录: ' + dayjs(info.firstPlay).fromNow() : null,
-              '登录次数: ' + info.quit,
-              '死亡次数: ' + info.death,
-              '玩家击杀次数: ' + info.playerKill,
-              '实体击杀次数: ' + info.entityKill,
-              'TNT放置次数: ' + info.tnt
-            ].map((it, i) => it && <ListItem key={i} sx={{ pl: 4 }}>
-              <ListItemIcon>{icons[i]}</ListItemIcon>
-              <ListItemText primary={it} />
-            </ListItem>)}
-          </List>
-        </Collapse>
+        {info.hasPlayedBefore && <>
+            <ListItemButton onClick={() => setOpen(!open)}>
+            <ListItemIcon><Equalizer /></ListItemIcon>
+            <ListItemText primary='统计数据' />
+            {open ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <List component='div' dense disablePadding>
+              {[
+                '在线时间: ' + dayjs.duration(info.playTime / 20, 'seconds').humanize(),
+                '首次登录: ' + dayjs(info.firstPlay).fromNow(),
+                '最后登录: ' + dayjs(info.lastOnline).fromNow(),
+                '登录次数: ' + info.quit,
+                '死亡次数: ' + info.death,
+                '玩家击杀次数: ' + info.playerKill,
+                '实体击杀次数: ' + info.entityKill,
+                'TNT放置次数: ' + info.tnt
+              ].map((it, i) => <ListItem key={i} sx={{ pl: 4 }}>
+                <ListItemIcon>{icons[i]}</ListItemIcon>
+                <ListItemText primary={it} />
+              </ListItem>)}
+            </List>
+          </Collapse>
+        </>}
       </List>
+      <CardActions disableSpacing sx={{ justifyContent: 'flex-end' }}>
+        <Tooltip title={info.whitelisted ? '点击可将该玩家移出白名单' : '点击可将该玩家添加到白名单'}>
+          <IconButton onClick={() => {
+            plugin.emit(`playerList:${info.whitelisted ? 'remove' : 'add'}Whitelist`, name)
+            refresh()
+            toast('操作成功!', 'success')
+          }}>{info.whitelisted ? <Star color='warning' /> : <StarBorder />}</IconButton>
+        </Tooltip>
+        <Tooltip title={info.ban == null ? '点击可封禁该玩家' : '点击可解除该玩家的封禁'}>
+          <IconButton onClick={() => {
+            if (info.ban == null) return setBanPlayer(name)
+            plugin.emit('playerList:pardon', name)
+            refresh()
+            toast('操作成功!', 'success')
+          }}><Block color={info.ban == null ? undefined : 'error'} /></IconButton>
+        </Tooltip>
+      </CardActions>
+      <BanPlayerDialog name={banPlayer} onChange={setBanPlayer} refresh={refresh} />
     </>
     : <></>
 }
@@ -158,7 +213,6 @@ const Players: React.FC = () => {
   const his = useHistory()
   const plugin = usePlugin()
   const [page, setPage] = useState(0)
-  const [reason, setReason] = useState('')
   const [banPlayer, setBanPlayer] = useState<string | null>(null)
   const [state, setState] = useState<number | null>(null)
   const [data, setData] = useState<{ count: number, hasWhitelist: boolean, players: PlayerData[] }>(() => ({ count: 0, hasWhitelist: false, players: [] }))
@@ -217,7 +271,7 @@ const Players: React.FC = () => {
               </Tooltip>}
               <Tooltip title={it.ban == null ? '点击可封禁该玩家' : '已被封禁: ' + it.ban}>
                 <IconButton onClick={() => {
-                  if (!it.ban) return setBanPlayer(it.name)
+                  if (it.ban == null) return setBanPlayer(it.name)
                   plugin.emit('playerList:pardon', it.name)
                   refresh()
                   toast('操作成功!', 'success')
@@ -236,30 +290,7 @@ const Players: React.FC = () => {
       page={page}
       onPageChange={(_, it) => setPage(it)}
     />
-    <Dialog open={!!banPlayer} onClose={() => setBanPlayer(null)}>
-      <DialogTitle id="form-dialog-title">Subscribe</DialogTitle>
-      <DialogContent>
-        <DialogContentText>确认要封禁 <span style={{ fontWeight: 'bold' }}>{banPlayer}</span> 吗?</DialogContentText>
-        <TextField
-          autoFocus
-          fullWidth
-          margin='dense'
-          label='封禁理由'
-          variant='standard'
-          value={reason}
-          onChange={it => setReason(it.target.value)}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setBanPlayer(null)}>取消</Button>
-        <Button onClick={() => {
-          plugin.emit('playerList:ban', [banPlayer, reason])
-          setBanPlayer(null)
-          refresh()
-          toast('操作成功!', 'success')
-        }}>封禁</Button>
-      </DialogActions>
-    </Dialog>
+    <BanPlayerDialog name={banPlayer} onChange={setBanPlayer} refresh={refresh} />
   </Card>
 }
 

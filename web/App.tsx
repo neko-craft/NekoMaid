@@ -11,7 +11,7 @@ import { Build, Menu, Brightness4, Brightness7 } from '@material-ui/icons'
 import { address, token } from './url'
 import { Snackbars } from './toast'
 import { typography } from './theme'
-import PluginContext from './Context'
+import { pluginCtx, globalCtx } from './Context'
 import Plugin, { Page } from './Plugin'
 import initPages from './pages/index'
 
@@ -25,6 +25,7 @@ let sent = false
 const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = ({ darkMode, setDarkMode }) => {
   const loc = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [globalData, setGlobalData] = useState({ })
   update = useState(0)[1]
   const create = useMemo(() => {
     const io = socketIO(address!, { query: 'token=' + token })
@@ -38,7 +39,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       if (!sent && arr.length > 2) io.emit('switchPage', { page: arr[1], namespace: arr[0] })
       sent = true
       localStorage.setItem('NekoMaid:servers', JSON.stringify(his))
-    })
+    }).on('globalData', setGlobalData)
     const map: Record<string, Plugin> = { }
     const fn = (name: string) => map[name] || (map[name] = new Plugin(io, name))
     initPages(fn('NekoMaid'))
@@ -51,7 +52,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   const mapToItem = (name: string, it: Page) => {
     const path = Array.isArray(it.path) ? it.path[0] : it.path
     const key = '/' + name + '/' + path
-    routes.push(<PluginContext.Provider key={key} value={create(name)}>
+    routes.push(<pluginCtx.Provider key={key} value={create(name)}>
       <Route
         path={Array.isArray(it.path) ? it.path.map(it => '/' + name + '/' + it) : key}
         component={it.component}
@@ -59,7 +60,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
         exact={it.exact}
         sensitive={it.sensitive}
       />
-    </PluginContext.Provider>)
+    </pluginCtx.Provider>)
     return <NavLink key={key} to={'/' + name + '/' + (it.url || path)} activeClassName='actived'>
       <ListItem button>
         <ListItemIcon>{it.icon || <Build />}</ListItemIcon>
@@ -155,7 +156,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       </Drawer>
     </Box>
     <Box component='main' sx={{ flexGrow: 1 }}>
-      {routes}
+      <globalCtx.Provider value={globalData}>{routes}</globalCtx.Provider>
     </Box>
   </Box>
 }
