@@ -2,15 +2,18 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
 import { red, green, orange, deepPurple, blue, yellow } from '@material-ui/core/colors'
 import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, SentimentDissatisfied,
-  SentimentSatisfied, AccessTime, ArrowUpward, MoreHoriz, Remove } from '@material-ui/icons'
+  SentimentSatisfied, AccessTime, ArrowUpward, MoreHoriz, Remove, ExitToApp } from '@material-ui/icons'
 import { useTheme, alpha } from '@material-ui/core/styles'
 import { useHistory } from 'react-router-dom'
 import { usePlugin } from '../Context'
-import { CardContent, Container, Grid, Box, Card, Typography, Avatar, Toolbar, CardHeader, Divider, Skeleton, LinearProgress, List,
-  ListItem, IconButton, ListItemText, ListItemAvatar, Pagination } from '@material-ui/core'
+import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeader, Divider, Skeleton,
+  LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar, Pagination, Dialog, DialogTitle,
+  DialogContent, DialogContentText, DialogActions, TextField, Button } from '@material-ui/core'
 import { LoadingList } from '../components/Loading'
 import Empty from '../components/Empty'
 import Uptime from '../components/Uptime'
+import Avatar from '../components/Avatar'
+import toast from '../toast'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }
 interface CurrentStatus { version: string, players: string[], mspt: number, tps: number, time: number, memory: number }
@@ -33,7 +36,11 @@ const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.R
 
 const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
   const his = useHistory()
+  const plugin = usePlugin()
   const [page, setPage] = useState(1)
+  const [reason, setReason] = useState('')
+  const [kickName, setKickName] = useState<string | null>(null)
+  const [id, update] = useState(0)
   return <Card>
     <CardHeader title='在线玩家' />
     <Divider />
@@ -45,7 +52,10 @@ const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
           {players
             ? players.slice((page - 1) * 8, page * 8).map(it => <ListItem
               key={it}
-              secondaryAction={<IconButton edge='end' onClick={() => his.push('/NekoMaid/playerList/' + it)}><MoreHoriz /></IconButton>}
+              secondaryAction={<>
+                <IconButton edge='end' onClick={() => setKickName(it)} size='small'><ExitToApp /></IconButton>
+                <IconButton edge='end' onClick={() => his.push('/NekoMaid/playerList/' + it)} size='small'><MoreHoriz /></IconButton>
+              </>}
             >
               <ListItemAvatar><Avatar src={`https://mc-heads.net/avatar/${it}/40`} imgProps={{ crossOrigin: 'anonymous' }} variant='rounded' /></ListItemAvatar>
               <ListItemText primary={it} />
@@ -61,6 +71,37 @@ const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
         />}
       </>}
     </CardContent>
+    <Dialog open={!!kickName} onClose={() => setKickName(null)}>
+      <DialogTitle id="form-dialog-title">Subscribe</DialogTitle>
+      <DialogContent>
+        <DialogContentText>确认要将 <span style={{ fontWeight: 'bold' }}>{kickName}</span> 踢出游戏吗?</DialogContentText>
+        <TextField
+            autoFocus
+            fullWidth
+            margin='dense'
+            label='理由'
+            variant='standard'
+            value={reason}
+            onChange={it => setReason(it.target.value)}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setKickName(null)}>取消</Button>
+        <Button onClick={() => {
+          const name = kickName
+          plugin.emit('dashboard:kick', [name, reason || null],
+            res => {
+              if (res) {
+                toast('操作成功!', 'success')
+                if (!players) return
+                players.splice(players.indexOf(name!), 1)
+                update(id + 1)
+              } else toast('操作失败!', 'error')
+            })
+          setKickName(null)
+        }}>确认</Button>
+      </DialogActions>
+    </Dialog>
   </Card>
 }
 

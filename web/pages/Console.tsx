@@ -7,10 +7,11 @@ import { address } from '../url'
 import { css } from '@emotion/css'
 import throttle from 'lodash.throttle'
 import toast from '../toast'
+import More from '../components/More'
 
 interface Log { level: string, msg: string, time: number, logger: string }
 
-const hideLoggerRegexp = /net\.minecraft\.|Minecraft|com\.mojang\.|com\.sk89q\.|ru\.tehkode\.|Minecraft\.AWE/
+const hideLoggerRegexp = /net\.minecraft\.|Minecraft|com\.mojang\.|com\.sk89q\.|ru\.tehkode\.|Minecraft\.AWE|com\.corundumstudio\./
 
 const colors = ['#212121', '#3f51b5', '#4caf50', '#00bcd4', '#b71c1c', '#9c27b0', '#ff5722', '#9e9e9e', '#616161', '#2196f3', '#8bc34a',
   '#03a9f4', '#f44336', '#ffc107', '#ff9800', '#eeeeee']
@@ -137,14 +138,19 @@ const Console: React.FC = () => {
     const onLog = (data: Log) => {
       const t = new Date(data.time)
       const time = pad(t.getHours()) + ':' + pad(t.getMinutes()) + ':' + pad(t.getSeconds())
-      logs.push(<p key={i++} className={data.level === 'FATAL' || data.level === 'ERROR' ? 'error' : data.level === 'WARN' ? 'warn' : undefined}>
+      const msg = parseMessage(data.msg)
+      const isError = data.level === 'FATAL' || data.level === 'ERROR'
+      const elm = <p key={i} className={isError ? 'error' : data.level === 'WARN' ? 'warn' : undefined}>
         <Tooltip title={time} placement='right'>
           <span className='level'>[{levelNames[data.level] || '信息'}] </span>
         </Tooltip>
-        <span className='msg'>{data.logger && !hideLoggerRegexp.test(data.logger) && <span className='logger'>[{data.logger}] </span>}
-          {parseMessage(data.msg)}</span>
-      </p>)
-      update(i)
+        <span className='msg'>
+          {isError && <span className='more' data-collapse='[收起]'>[展开]</span>}
+          {data.logger && !hideLoggerRegexp.test(data.logger) && <span className='logger'>[{data.logger}] </span>}
+          {msg}</span>
+      </p>
+      logs.push(isError ? <More key={i}>{elm}</More> : elm)
+      update(++i)
     }
     const onLogs = (it: Log[]) => {
       logs.length = 0
@@ -176,14 +182,21 @@ const Console: React.FC = () => {
       },
       '& .level': {
         userSelect: 'none',
-        color: theme => theme.palette.primary.main,
-        fontWeight: 'bolder'
+        height: 'fit-content',
+        fontWeight: 'bolder',
+        color: theme => theme.palette.primary.main
       },
       '& .white': {
         textShadow: theme => theme.palette.mode === 'light' ? '#000 1px 0 0, #000 0 1px 0, #000 -1px 0 0, #000 0 -1px 0' : undefined
       },
       '& .black': {
         textShadow: theme => theme.palette.mode === 'dark' ? '#fff 1px 0 0, #fff 0 1px 0, #fff -1px 0 0, #fff 0 -1px 0' : undefined
+      },
+      '& .more': {
+        color: theme => theme.palette.secondary.main,
+        marginRight: '4px',
+        cursor: 'pointer',
+        textDecoration: 'underline'
       }
     },
     '& .warn, & .warn .level': {

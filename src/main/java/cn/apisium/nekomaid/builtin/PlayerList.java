@@ -2,15 +2,15 @@ package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
 import cn.apisium.nekomaid.Utils;
-import org.bukkit.BanList;
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.Statistic;
+import org.bukkit.*;
 
 import java.util.Arrays;
 import java.util.Objects;
 
 final class PlayerList {
+    private static final record PlayerData2(String id, String ban, boolean whitelisted, int playTime, long lastOnline,
+        boolean hasPlayedBefore, long firstPlay, boolean isOP, int death, int quit, int playerKill, int entityKill,
+                                            int tnt) { }
     private static final record PlayerData(String name, String ban, boolean whitelisted, int playTime, long lastOnline) { }
     private static final record List(int count, boolean hasWhitelist, PlayerData[] players) { }
     private static final record Fetch(int state, int page) { }
@@ -25,10 +25,11 @@ final class PlayerList {
             if (start >= list.length) return new List(0, Bukkit.hasWhitelist(), null);
             int end = Math.min(start + 10, list.length);
             var res = new PlayerData[end - start];
+            var banList = Bukkit.getBanList(BanList.Type.NAME);
             for (int i = 0; start < end; start++, i++) {
                 var p = list[start];
                 String ban = null;
-                var be = Bukkit.getBanList(BanList.Type.NAME).getBanEntry(Objects.requireNonNull(p.getName()));
+                var be = banList.getBanEntry(Objects.requireNonNull(p.getName()));
                 if (be != null) ban = be.getReason();
                 res[i] = new PlayerData(p.getName(), ban, p.isWhitelisted(),
                         p.getStatistic(Statistic.PLAY_ONE_MINUTE), Utils.getPlayerLastPlayTime(p));
@@ -49,6 +50,14 @@ final class PlayerList {
         }).on(main, "playerList:removeWhitelist", String.class, it -> {
             Bukkit.getOfflinePlayer(it).setWhitelisted(false);
             main.getLogger().info("Removed " + it + " from the whitelist");
+        }).onWithAck(main, "playerList:query", String.class, it -> {
+            var p = Bukkit.getOfflinePlayer(it);
+            var ban = Bukkit.getBanList(BanList.Type.NAME).getBanEntry(it);
+            return new PlayerData2(p.getUniqueId().toString(), ban == null ? null :ban.getReason(),
+                    p.isWhitelisted(), p.getStatistic(Statistic.PLAY_ONE_MINUTE), Utils.getPlayerLastPlayTime(p),
+                    p.hasPlayedBefore(), p.getFirstPlayed(), p.isOp(), p.getStatistic(Statistic.DEATHS),
+                    p.getStatistic(Statistic.LEAVE_GAME), p.getStatistic(Statistic.PLAYER_KILLS),
+                    p.getStatistic(Statistic.MOB_KILLS), p.getStatistic(Statistic.USE_ITEM, Material.TNT));
         });
     }
 }

@@ -2,14 +2,99 @@ import React, { useMemo, useEffect, useState, useRef } from 'react'
 import dayjs from 'dayjs'
 import toast from '../toast'
 import Empty from '../components/Empty'
+import Avatar from '../components/Avatar'
 import { usePlugin } from '../Context'
-import { Block, Star, StarBorder } from '@material-ui/icons'
-import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, CardContent, TableContainer, Table, TableBody, Dialog, DialogTitle,
-  DialogContent, TablePagination, TableHead, TableRow, TableCell, Avatar, IconButton, Tooltip, ToggleButtonGroup, ToggleButton,
-  DialogContentText, TextField, DialogActions, Button } from '@material-ui/core'
+import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Wifi, Event,
+  Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline } from '@material-ui/icons'
+import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContainer, Table, TableBody, CardContent,
+  Dialog, DialogTitle, DialogContent, TablePagination, TableHead, TableRow, TableCell, IconButton, Tooltip,
+  ToggleButtonGroup, ToggleButton, DialogContentText, TextField, DialogActions, Button, List, ListSubheader, ListItem,
+  ListItemText, ListItemIcon, Collapse, ListItemButton } from '@material-ui/core'
 import { FXAASkinViewer, createOrbitControls, WalkingAnimation, RotatingAnimation } from 'skinview3d'
 import { useTheme } from '@material-ui/core/styles'
 import { useParams, useHistory } from 'react-router-dom'
+
+interface IPlayerInfo {
+  id: string
+  ban: string | null
+  whitelisted: boolean
+  playTime: number
+  lastOnline: number
+  hasPlayedBefore: boolean
+  firstPlay: number
+  isOP: boolean
+  death: number
+  quit: number
+  playerKill: number
+  entityKill: number
+  tnt: number
+}
+
+// eslint-disable-next-line react/jsx-key
+const icons = [<AccessTime />, <Wifi />, <Event />, <Login />, <Sick />, <FaceRetouchingOff />, <Pets />, <Fireplace />]
+const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
+  const plugin = usePlugin()
+  const [open, setOpen] = useState(false)
+  const [info, setInfo] = useState<IPlayerInfo | undefined>()
+  useEffect(() => {
+    setInfo(undefined)
+    if (name) plugin.emit('playerList:query', name, setInfo)
+  }, [name])
+
+  return name && info
+    ? <>
+      <Divider />
+      <List
+        sx={{ width: '100%' }}
+        component='nav'
+        subheader={<ListSubheader component='div' sx={{ backgroundColor: 'inherit' }}>详细信息</ListSubheader>}
+      >
+        <ListItem>
+          <ListItemIcon><AssignmentInd /></ListItemIcon>
+          <ListItemText primary={info.id} />
+        </ListItem>
+        {!info.hasPlayedBefore && <ListItem>
+          <ListItemIcon><ErrorOutline color='error' /></ListItemIcon>
+          <ListItemText primary='该玩家还从未进入过服务器!' />
+        </ListItem>}
+        {info.ban != null && <ListItem>
+          <ListItemIcon><Block color='error' /></ListItemIcon>
+          <ListItemText primary={info.ban || '已被封禁'} />
+        </ListItem>}
+        {info.whitelisted && <ListItem>
+          <ListItemIcon><Star color='warning' /></ListItemIcon>
+          <ListItemText primary='白名单成员' />
+        </ListItem>}
+        {info.isOP && <ListItem>
+          <ListItemIcon><Security color='primary' /></ListItemIcon>
+          <ListItemText primary='管理员' />
+          </ListItem>}
+        <ListItemButton onClick={() => setOpen(!open)}>
+          <ListItemIcon><Equalizer /></ListItemIcon>
+          <ListItemText primary='统计数据' />
+          {open ? <ExpandLess /> : <ExpandMore />}
+        </ListItemButton>
+        <Collapse in={open} timeout="auto" unmountOnExit>
+          <List component='div' dense disablePadding>
+            {[
+              '在线时间: ' + dayjs.duration(info.playTime / 20, 'seconds').humanize(),
+              '最后登录: ' + dayjs(info.lastOnline).fromNow(),
+              info.hasPlayedBefore ? '首次登录: ' + dayjs(info.firstPlay).fromNow() : null,
+              '登录次数: ' + info.quit,
+              '死亡次数: ' + info.death,
+              '玩家击杀次数: ' + info.playerKill,
+              '实体击杀次数: ' + info.entityKill,
+              'TNT放置次数: ' + info.tnt
+            ].map((it, i) => it && <ListItem key={i} sx={{ pl: 4 }}>
+              <ListItemIcon>{icons[i]}</ListItemIcon>
+              <ListItemText primary={it} />
+            </ListItem>)}
+          </List>
+        </Collapse>
+      </List>
+    </>
+    : <></>
+}
 
 const PlayerActions: React.FC = () => {
   const theme = useTheme()
@@ -20,7 +105,7 @@ const PlayerActions: React.FC = () => {
     if (!ref.current || !name) return
     const viewer = viewerRef.current = new FXAASkinViewer({
       canvas: ref.current!,
-      height: 400,
+      height: 350,
       width: ref.current.clientWidth,
       skin: 'https://mc-heads.net/skin/' + name
     })
@@ -29,7 +114,7 @@ const PlayerActions: React.FC = () => {
     window.addEventListener('resize', resize)
     const control = createOrbitControls(viewer)
     control.enableRotate = true
-    control.enablePan = true
+    control.enablePan = control.enableZoom = false
 
     viewer.animations.add(WalkingAnimation)
     viewer.animations.add(RotatingAnimation)
@@ -51,26 +136,25 @@ const PlayerActions: React.FC = () => {
   return <Card>
     <CardHeader title={name ? name + ' 的详细信息' : '请选择一名玩家'} />
     <Divider />
-    <CardContent>
-      <Box sx={{ position: 'relative', '& canvas': { width: '100%!important' } }}>
-        <canvas
-          ref={ref}
-          height='400'
-          style={{
-            cursor: 'grab',
-            filter: `drop-shadow(rgba(${color}, ${color}, ${color}, 0.2) 2px 4px 4px)`,
-            display: name ? undefined : 'none'
-          }}
-        />
-        {!name && <Empty title={null} />}
-      </Box>
-    </CardContent>
+    <Box sx={{ position: 'relative', '& canvas': { width: '100%!important' } }}>
+      <canvas
+        ref={ref}
+        height='400'
+        style={{
+          cursor: 'grab',
+          filter: `drop-shadow(rgba(${color}, ${color}, ${color}, 0.2) 2px 4px 4px)`,
+          display: name ? undefined : 'none'
+        }}
+      />
+      {!name && <CardContent><Empty title={null} /></CardContent>}
+    </Box>
+    <PlayerInfo name={name} />
   </Card>
 }
 
 interface PlayerData { name: string, ban: String | null, whitelisted: boolean, playTime: number, lastOnline: number }
 
-const List: React.FC = () => {
+const Players: React.FC = () => {
   const his = useHistory()
   const plugin = usePlugin()
   const [page, setPage] = useState(0)
@@ -184,7 +268,7 @@ const PlayerList: React.FC = () => {
     <Toolbar />
     <Container maxWidth={false}>
       <Grid container spacing={3}>
-        <Grid item lg={8} md={12} xl={9} xs={12}><List /></Grid>
+        <Grid item lg={8} md={12} xl={9} xs={12}><Players /></Grid>
         <Grid item lg={4} md={6} xl={3} xs={12}><PlayerActions /></Grid>
       </Grid>
     </Container>

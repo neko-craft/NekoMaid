@@ -27,6 +27,7 @@ final class Dashboard {
     private final static record Status(long time, int players, double tps, int entities, int chunks) { }
     private final static record CurrentStatus(String version, String[] players, double tps, double mspt, long time, int memory) { }
 
+    @SuppressWarnings("deprecation")
     public Dashboard(NekoMaid main, File file) {
         try {
             if (!file.exists()) Files.writeString(file.toPath(), "[]");
@@ -55,7 +56,12 @@ final class Dashboard {
             }
         }, 0, 20 * 60 * 60);
         refresh();
-        room = main.onSwitchPage(main, "dashboard", it -> {
+        room = main.onWithAck(main, "dashboard:kick", String[].class, it -> {
+            var p = main.getServer().getPlayerExact(it[0]);
+            if (p == null) return false;
+            main.getServer().getScheduler().runTask(main, () -> p.kickPlayer(it[1]));
+            return true;
+        }).onSwitchPage(main, "dashboard", it -> {
             if (room == null || room.getClients().size() == 1) refresh();
             it.emit("dashboard:info", queue).emit("dashboard:current", current);
         });
