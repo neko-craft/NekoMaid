@@ -12,5 +12,5 @@ export default (p: Plugin) => p.addPages(
   { component: Dashboard, path: 'dashboard', icon: <DashboardIcon />, title: '概览' },
   { component: Console, path: 'console', icon: <DoubleArrow />, title: '终端' },
   { component: PlayerList, path: ['playerList', 'playerList/:name'], icon: <People />, title: '玩家', exact: true },
-  { component: Files, path: ['files', 'files/:path'], icon: <Description />, title: '文件', exact: true }
+  { component: Files, path: 'files', icon: <Description />, title: '文件' }
 )

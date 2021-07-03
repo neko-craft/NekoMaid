@@ -9,7 +9,7 @@ html {
 }
 
 .CodeMirror {
-  height: auto !important;
+  height: 100%;
   font-family: Roboto, sans-serif !important;
   background: inherit !important;
   color: inherit !important;

@@ -27,11 +27,17 @@ const levelNames: Record<string, string> = {
 const pad = (it: number) => it.toString().padStart(2, '0')
 
 const parseStyledText = (it: string) => {
-  let [a, b = ''] = (' ' + it).split(/(?=§[lmno])/, 2)
+  it = ' ' + it
+  const index = it.search(/§[lmno]/)
+  const a = it.slice(0, index)
+  let b = it.slice(index)
   let i = 0
   const style: Record<string, string> = { }
   while (i < b.length) {
-    if (b[i] !== '§') break
+    if (b[i] !== '§') {
+      i++
+      break
+    }
     switch (b[++i]) {
       case 'l':
         style.fontWeight = 'bold'
