@@ -1,0 +1,118 @@
+// Config -----------------------------------
+@syntax-hue:          230;
+@syntax-saturation:    1%;
+@syntax-brightness:   98%;
+
+// Monochrome -----------------------------------
+@mono-1: hsl(@syntax-hue, 8%, 24%);
+@mono-2: hsl(@syntax-hue, 6%, 44%);
+@mono-3: hsl(@syntax-hue, 4%, 64%);
+
+// Colors -----------------------------------
+@hue-1:   hsl(198, 99%, 37%); // <-cyan
+@hue-2:   hsl(221, 87%, 60%); // <-blue
+@hue-3:   hsl(301, 63%, 40%); // <-purple
+@hue-4:   hsl(119, 34%, 47%); // <-green
+
+@hue-5:   hsl(  5, 74%, 59%); // <-red 1
+@hue-5-2: hsl(344, 84%, 43%); // <-red 2
+
+@hue-6:   hsl(35, 99%, 36%); // <-orange 1
+@hue-6-2: hsl(35, 99%, 40%); // <-orange 2
+
+// Base colors -----------------------------------
+@syntax-fg:     @mono-1;
+@syntax-bg:     hsl(@syntax-hue, @syntax-saturation, @syntax-brightness);
+@syntax-gutter: darken(@syntax-bg, 36%);
+@syntax-guide:  fade(@syntax-fg, 20%);
+@syntax-accent: hsl(@syntax-hue, 100%, 66% );
+
+.cm-s-one-light .CodeMirror-activeline-background {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.cm-s-one-light .cm-keyword {
+  color: @hue-3;
+}
+
+.cm-s-one-light .cm-operator {
+  color: @hue-3;
+}
+
+.cm-s-one-light .cm-variable-2 {
+  color: @mono-1;
+}
+
+.cm-s-one-light .cm-variable-3,
+.cm-s-one-light .cm-type {
+  color: @hue-1;
+}
+
+.cm-s-one-light .cm-builtin {
+  color: @hue-5;
+}
+
+.cm-s-one-light .cm-atom {
+  color: @hue-6;
+}
+
+.cm-s-one-light .cm-number {
+  color: @hue-2;
+}
+
+.cm-s-one-light .cm-def {
+  color: @hue-2;
+}
+
+.cm-s-one-light .cm-string {
+  color: @hue-4;
+}
+
+.cm-s-one-light .cm-string-2 {
+  color: @hue-4;
+}
+
+.cm-s-one-light .cm-comment {
+  color: @mono-3;
+  font-style: italic;
+}
+
+.cm-s-one-light .cm-variable {
+  color: @hue-5;
+}
+
+.cm-s-one-light .cm-tag {
+  color: @hue-5;
+}
+
+.cm-s-one-light .cm-meta {
+  color: meta;
+}
+
+.cm-s-one-light .cm-attribute {
+  color: @hue-6;
+}
+
+.cm-s-one-light .cm-property {
+  color: @mono-1;
+}
+
+.cm-s-one-light .cm-qualifier {
+  color: @mono-1;
+}
+
+.cm-s-one-light .cm-variable-3,
+.cm-s-one-light .cm-type {
+  color: @hue-1;
+}
+
+
+.cm-s-one-light .cm-error {
+  color: rgba(255, 255, 255, 1.0);
+  background-color: hsl(  0, 100%, 54%);
+}
+
+.cm-s-one-light .CodeMirror-matchingbracket {
+  text-decoration: underline;
+  color: white !important;
+}

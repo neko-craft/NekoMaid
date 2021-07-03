@@ -10,6 +10,7 @@ public final class BuiltinPlugins {
         new Dashboard(main, new File(main.getDataFolder(), "status.json"));
         console = new Console(main);
         new PlayerList(main);
+        new FilesManager(main);
     }
     public void disable() {
         console.stop();

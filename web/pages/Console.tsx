@@ -4,8 +4,7 @@ import { usePlugin } from '../Context'
 import { Send } from '@material-ui/icons'
 import { TextField, Toolbar, IconButton, Paper, Tooltip, Box, Autocomplete } from '@material-ui/core'
 import { address } from '../url'
-import { css } from '@emotion/css'
-import throttle from 'lodash.throttle'
+import throttle from 'lodash/throttle'
 import toast from '../toast'
 import More from '../components/More'
 
@@ -233,8 +232,7 @@ const Console: React.FC = () => {
         onFocus={() => getSuggestions(command)}
         onKeyUp={(e: any) => e.key === 'Enter' && (!open || !suggestions.length) && execCommand()}
         sx={{ flex: '1' }}
-        classes={{ popper: css({ marginBottom: '20px !important' }) }}
-        // classes={{ popper: css({ top: '-30px !important' }) }}
+        classes={{ popper: 'command-popper' }}
         renderInput={params => <TextField {...params as any} label='命令' />}
         getOptionLabel={it => typeof it === 'string' ? it : it[0]}
         groupBy={it => it[1] ? '历史记录' : '命令'}

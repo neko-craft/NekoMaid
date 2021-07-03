@@ -1,0 +1,34 @@
+@import './one-light.less';
+
+html {
+  overflow-x: hidden
+}
+
+.command-popper {
+  margin-bottom: 20px !important
+}
+
+.CodeMirror {
+  height: auto !important;
+  font-family: Roboto, sans-serif !important;
+  background: inherit !important;
+  color: inherit !important;
+}
+
+.CodeMirror-gutters, .CodeMirror-gutters {
+  background: #fff;
+  color: inherit !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.12) !important;
+  border-right-width: thin !important;
+}
+
+.cm-s-material.CodeMirror .CodeMirror-gutters {
+  background: #2c2c2c !important;
+  border-right-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.cm-s-material .CodeMirror-guttermarker,
+.cm-s-material .CodeMirror-guttermarker-subtle,
+.cm-s-material .CodeMirror-linenumber {
+  color: inherit;
+}

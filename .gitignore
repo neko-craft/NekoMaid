@@ -3,6 +3,7 @@
 .gradle
 build
 dist
+icons.json
 
 node_modules
 .parcel-cache
