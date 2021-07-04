@@ -14,6 +14,7 @@ import Empty from '../components/Empty'
 import Uptime from '../components/Uptime'
 import Avatar from '../components/Avatar'
 import toast from '../toast'
+import dialog from '../dialog'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }
 interface CurrentStatus { version: string, players: string[], mspt: number, tps: number, time: number, memory: number }
@@ -38,8 +39,6 @@ const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
   const his = useHistory()
   const plugin = usePlugin()
   const [page, setPage] = useState(1)
-  const [reason, setReason] = useState('')
-  const [kickName, setKickName] = useState<string | null>(null)
   const [id, update] = useState(0)
   return <Card>
     <CardHeader title='在线玩家' />
@@ -50,15 +49,27 @@ const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
         : <>
         <List sx={{ paddingTop: 0 }}>
           {players
-            ? players.slice((page - 1) * 8, page * 8).map(it => <ListItem
-              key={it}
+            ? players.slice((page - 1) * 8, page * 8).map(name => <ListItem
+              key={name}
               secondaryAction={<>
-                <IconButton edge='end' onClick={() => setKickName(it)} size='small'><ExitToApp /></IconButton>
-                <IconButton edge='end' onClick={() => his.push('/NekoMaid/playerList/' + it)} size='small'><MoreHoriz /></IconButton>
+                <IconButton
+                  edge='end'
+                  size='small'
+                  onClick={() => dialog(<>确认要将 <span className='bold'>{name}</span> 踢出游戏吗?</>, '理由')
+                    .then(it => it != null && plugin.emit('dashboard:kick', [name, it || null], res => {
+                      if (res) toast('操作成功!', 'success')
+                      else toast('操作失败!', 'error')
+                      if (!players) return
+                      players.splice(players.indexOf(it!), 1)
+                      update(id + 1)
+                    }))
+                  }
+                ><ExitToApp /></IconButton>
+                <IconButton edge='end' onClick={() => his.push('/NekoMaid/playerList/' + name)} size='small'><MoreHoriz /></IconButton>
               </>}
             >
-              <ListItemAvatar><Avatar src={`https://mc-heads.net/avatar/${it}/40`} imgProps={{ crossOrigin: 'anonymous' }} variant='rounded' /></ListItemAvatar>
-              <ListItemText primary={it} />
+              <ListItemAvatar><Avatar src={`https://mc-heads.net/avatar/${name}/40`} imgProps={{ crossOrigin: 'anonymous' }} variant='rounded' /></ListItemAvatar>
+              <ListItemText primary={name} />
             </ListItem>)
             : <LoadingList />
           }
@@ -71,37 +82,6 @@ const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
         />}
       </>}
     </CardContent>
-    <Dialog open={!!kickName} onClose={() => setKickName(null)}>
-      <DialogTitle id="form-dialog-title">Subscribe</DialogTitle>
-      <DialogContent>
-        <DialogContentText>确认要将 <span style={{ fontWeight: 'bold' }}>{kickName}</span> 踢出游戏吗?</DialogContentText>
-        <TextField
-            autoFocus
-            fullWidth
-            margin='dense'
-            label='理由'
-            variant='standard'
-            value={reason}
-            onChange={it => setReason(it.target.value)}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setKickName(null)}>取消</Button>
-        <Button onClick={() => {
-          const name = kickName
-          plugin.emit('dashboard:kick', [name, reason || null],
-            res => {
-              if (res) {
-                toast('操作成功!', 'success')
-                if (!players) return
-                players.splice(players.indexOf(name!), 1)
-                update(id + 1)
-              } else toast('操作失败!', 'error')
-            })
-          setKickName(null)
-        }}>确认</Button>
-      </DialogActions>
-    </Dialog>
   </Card>
 }
 

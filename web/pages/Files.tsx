@@ -7,13 +7,15 @@ import 'codemirror/mode/powershell/powershell'
 import 'codemirror/mode/properties/properties'
 import 'codemirror/mode/javascript/javascript'
 
-import React, { useEffect, useState, useRef, useMemo } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { styled, alpha, useTheme } from '@material-ui/core/styles'
 import { TreeView, TreeItem } from '@material-ui/lab'
 import { iconClasses } from '@material-ui/core/Icon'
 import { treeItemClasses, TreeItemProps } from '@material-ui/lab/TreeItem'
-import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, Icon, CardContent } from '@material-ui/core'
-import { ArrowDropDown, ArrowRight } from '@material-ui/icons'
+import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, Icon, CardContent, IconButton, Tooltip,
+  Menu, MenuItem, ListItemIcon, CircularProgress } from '@material-ui/core'
+import { ArrowDropDown, ArrowRight, Save, Undo, Redo, DeleteForever, CreateNewFolder, Refresh, MoreHoriz,
+  Description, Upload, Download } from '@material-ui/icons'
 import { useHistory, useLocation } from 'react-router-dom'
 import { UnControlled } from 'react-codemirror2'
 import { usePlugin } from '../Context'
@@ -21,6 +23,7 @@ import * as icons from '../../icons.json'
 import Empty from '../components/Empty'
 import Plugin from '../Plugin'
 import toast from '../toast'
+import dialog from '../dialog'
 
 const getMode = (path: string) => {
   switch (path.slice(path.lastIndexOf('.') + 1)) {
@@ -95,68 +98,121 @@ const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () 
       : <>{children}</>
   }
 
+const EMPTY = '$NekoMaid$Editor$Empty'
 const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loading: { '!#LOADING'?: boolean }, dirs: Record<string, null> }> =
   ({ plugin, editorRef, loading, dirs }) => {
+    const doc = (editorRef as any).current?.editor?.doc
     const theme = useTheme()
     const his = useHistory()
+    const lnText = useRef('')
     const path = useLocation().pathname.replace(/^\/NekoMaid\/files\/?/, '')
     const [text, setText] = useState<string | null>(null)
     const [error, setError] = useState('')
+    const [saving, setSaving] = useState(false)
+    const [notUndo, setNotUndo] = useState(true)
+    const [notRedo, setNotRedo] = useState(true)
+    const [notSave, setNotSave] = useState(true)
     useEffect(() => {
       setText(null)
       setError('')
+      lnText.current = ''
       if (!path || dirs[path] || path.endsWith('/')) return
+      loading['!#LOADING'] = true
       plugin.emit('files:content', path, data => {
+        loading['!#LOADING'] = false
         switch (data) {
-          case null:
-            toast('文件格式不支持!', 'error')
-            setError('文件格式不支持!')
-            break
-          case 0:
-            toast('文件不存在!', 'error')
-            setError('文件不存在!')
-            break
+          case null: return setError('文件格式不支持!')
+          case 0: return setError('文件不存在!')
           case 1: return his.replace('./')
-          case 2:
-            toast('文件太大了!', 'error')
-            setError('文件太大了!')
-            break
-          default: setText(data)
+          case 2: return setError('文件太大了!')
+          default:
+            setText(data)
+            lnText.current = data.replace(/\r/g, '')
+            setNotSave(true)
         }
       })
     }, [path])
     return <Card sx={{ position: 'relative' }}>
-      <CardHeader title={path ? '编辑器: ' + path : '编辑器'} />
+      <CardHeader
+        title={path ? '编辑器: ' + path : '编辑器'}
+        sx={{ position: 'relative' }}
+        action={!error && path && text != null
+          ? <Box sx={{ position: 'absolute', right: theme.spacing(1), top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center' }}>
+            <Tooltip title='撤销'><span><IconButton size='small' disabled={notUndo} onClick={() => doc?.undo()}><Undo /></IconButton></span></Tooltip>
+            <Tooltip title='重做'><span><IconButton size='small' disabled={notRedo} onClick={() => doc?.redo()}><Redo /></IconButton></span></Tooltip>
+            <Tooltip title='保存'>{saving
+              ? <CircularProgress size={24} sx={{ margin: '5px' }} />
+              : <span><IconButton
+              size='small'
+              disabled={notSave}
+              onClick={() => {
+                if (!doc) return
+                setSaving(true)
+                const data = doc.getValue(text?.includes('\r\n') ? '\r\n' : '\n')
+                plugin.emit('files:update', [path, data], res => {
+                  setSaving(false)
+                  if (!res) toast('保存失败!', 'error')
+                  lnText.current = data.replace(/\r/g, '')
+                  setText(data)
+                  setNotSave(true)
+                })
+              }}
+            ><Save /></IconButton></span>}</Tooltip>
+          </Box>
+          : undefined}
+      />
       <Divider />
       {(error || !path) && <CardContent><Empty title={error || '请先在左侧选择要编辑的文件'} /></CardContent>}
       <div style={{ position: text == null ? 'absolute' : undefined }}>
         <UnControlled
           ref={editorRef}
-          value={text || ''}
+          value={text == null ? EMPTY : text}
           options={{
             mode: text == null ? '' : getMode(path),
             theme: theme.palette.mode === 'dark' ? 'material' : 'one-light',
-            lineNumbers: true,
-            lint: true
+            lineNumbers: true
+          }}
+          onChange={(_: any, { removed }: { removed: string[] }, newText: string) => {
+            setNotSave(lnText.current === newText)
+            if (removed?.[0] === EMPTY) doc?.clearHistory()
+            const histroy = doc?.historySize()
+            if (!histroy) return
+            setNotUndo(!histroy.undo)
+            setNotRedo(!histroy.redo)
           }}
         />
       </div>
     </Card>
   }
 
+const anchorOrigin: any = {
+  vertical: 'top',
+  horizontal: 'right'
+}
 const Files: React.FC = () => {
   const plugin = usePlugin()
   const theme = useTheme()
   const his = useHistory()
   const tree = useRef<HTMLHRElement | null>(null)
   const editor = useRef<UnControlled | null>(null)
-  const ref = useRef<string[]>([])
-  const dirs = useMemo<Record<string, null>>(() => ({ }), [])
+  const prevExpanded = useRef<string[]>([])
+  const dirs = useRef<Record<string, null>>({ })
   // eslint-disable-next-line func-call-spacing
-  const loading = useMemo<Record<string, () => Promise<void>> & { '!#LOADING'?: boolean }>(() => ({ }), [])
+  const loading = useRef<Record<string, () => Promise<void>> & { '!#LOADING'?: boolean }>({ })
+  const [id, setId] = useState(0)
+  const [curPath, setCurPath] = useState('')
   const [expanded, setExpanded] = useState<string[]>([])
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
 
   const spacing = theme.spacing(3)
+  const refresh = () => {
+    loading.current = { }
+    dirs.current = { }
+    prevExpanded.current = []
+    setCurPath('')
+    setExpanded([])
+    setId(id + 1)
+  }
 
   useEffect(() => {
     if (!tree.current) return
@@ -177,7 +233,30 @@ const Files: React.FC = () => {
       <Grid container spacing={3}>
         <Grid item lg={4} md={6} xl={3} xs={12}>
           <Card sx={{ minHeight: 400 }}>
-            <CardHeader title='文件列表' />
+            <CardHeader
+              title='文件列表'
+              sx={{ position: 'relative' }}
+              action={<Box sx={{ position: 'absolute', right: theme.spacing(1), top: '50%', transform: 'translateY(-50%)' }}
+            >
+              <Tooltip title='删除'><span>
+                <IconButton
+                  disabled={!curPath}
+                  size='small'
+                  onClick={() => dialog(<>确认要删除 <span className='bold'>{curPath}</span> 吗? <span className='bold'>(不可撤销!)</span></>)
+                    .then(it => it && plugin.emit('files:update', [curPath], res => {
+                      if (!res) return toast('删除失败!', 'error')
+                      refresh()
+                      toast('删除成功!', 'success')
+                    }))
+                  }
+                ><DeleteForever /></IconButton>
+              </span></Tooltip>
+              <Tooltip title='新建文件'><IconButton size='small'><Description /></IconButton></Tooltip>
+              <Tooltip title='新建目录'><IconButton size='small'><CreateNewFolder /></IconButton></Tooltip>
+              <Tooltip title='更多...'>
+                <IconButton size='small' onClick={e => setAnchorEl(anchorEl ? null : e.currentTarget)}><MoreHoriz /></IconButton>
+              </Tooltip>
+            </Box>} />
             <Divider />
             <TreeView
               ref={tree}
@@ -186,33 +265,49 @@ const Files: React.FC = () => {
               sx={{ flexGrow: 1, width: '100%', overflowY: 'auto' }}
               expanded={expanded}
               onNodeToggle={(_: any, it: string[]) => {
-                if (it.length < ref.current.length || !loading[it[0]]) {
+                const l = loading.current
+                if (it.length < prevExpanded.current.length || !l[it[0]]) {
                   setExpanded(it)
-                  ref.current = it
+                  prevExpanded.current = it
                   return
                 }
-                loading[it[0]]().then(() => {
-                  ref.current.unshift(it[0])
-                  setExpanded([...ref.current])
-                  delete loading[it[0]]
+                l[it[0]]().then(() => {
+                  prevExpanded.current.unshift(it[0])
+                  setExpanded([...prevExpanded.current])
+                  delete l[it[0]]
                 })
-                delete loading[it[0]]
+                delete l[it[0]]
               }}
               onNodeSelect={(_: any, it: string) => {
-                if (typeof dirs[it] === 'object' || loading['!#LOADING']) return
+                setCurPath(it)
+                if (typeof dirs.current[it] === 'object' || loading.current['!#LOADING']) return
                 if (it.startsWith('/')) it = it.slice(1)
                 his.push('/NekoMaid/files/' + it)
               }}
             >
-              <Item plugin={plugin} path='' loading={loading} dirs={dirs} />
+              <Item plugin={plugin} path='' loading={loading.current} dirs={dirs.current} key={id} />
             </TreeView>
           </Card>
         </Grid>
         <Grid item lg={8} md={12} xl={9} xs={12} sx={{ maxWidth: `calc(100vw - ${theme.spacing(1)})`, paddingBottom: 3 }}>
-          <Editor plugin={plugin} editorRef={editor} loading={loading} dirs={dirs} />
+          <Editor plugin={plugin} editorRef={editor} loading={loading.current} dirs={dirs.current} />
         </Grid>
       </Grid>
     </Container>
+    <Menu
+      anchorEl={anchorEl}
+      open={Boolean(anchorEl)}
+      onClose={() => setAnchorEl(null)}
+      anchorOrigin={anchorOrigin}
+      transformOrigin={anchorOrigin}
+    >
+      <MenuItem onClick={() => {
+        refresh()
+        setAnchorEl(null)
+      }}><ListItemIcon><Refresh /></ListItemIcon>刷新</MenuItem>
+      <MenuItem><ListItemIcon><Upload /></ListItemIcon>上载文件</MenuItem>
+      <MenuItem><ListItemIcon><Download /></ListItemIcon>下传文件</MenuItem>
+    </Menu>
   </Box>
 }
 

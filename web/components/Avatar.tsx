@@ -8,7 +8,7 @@ import { getAvatarUtilityClass, AvatarClasses } from '@material-ui/core/Avatar/a
 import { SxProps } from '@material-ui/system'
 import { Theme } from '@material-ui/core/styles'
 import { OverridableStringUnion } from '@material-ui/types'
-import { OverridableComponent, OverrideProps } from '@material-ui/core/OverridableComponent'
+import { OverridableComponent } from '@material-ui/core/OverridableComponent'
 
 export interface AvatarPropsVariantOverrides {}
 

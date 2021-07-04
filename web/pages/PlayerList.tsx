@@ -3,12 +3,14 @@ import dayjs from 'dayjs'
 import toast from '../toast'
 import Empty from '../components/Empty'
 import Avatar from '../components/Avatar'
+import dialog from '../dialog'
+import Plugin from '../Plugin'
 import { usePlugin, useGlobalData } from '../Context'
 import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Today, Event,
   Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline } from '@material-ui/icons'
 import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContainer, Table, TableBody, CardContent,
-  Dialog, DialogTitle, DialogContent, TablePagination, TableHead, TableRow, TableCell, IconButton, Tooltip,
-  ToggleButtonGroup, ToggleButton, DialogContentText, TextField, DialogActions, Button, List, ListSubheader, ListItem,
+  TablePagination, TableHead, TableRow, TableCell, IconButton, Tooltip,
+  ToggleButtonGroup, ToggleButton, List, ListSubheader, ListItem,
   ListItemText, ListItemIcon, Collapse, ListItemButton, CardActions, Link } from '@material-ui/core'
 import { FXAASkinViewer, createOrbitControls, WalkingAnimation, RotatingAnimation } from 'skinview3d'
 import { useTheme } from '@material-ui/core/styles'
@@ -30,33 +32,30 @@ interface IPlayerInfo {
   tnt: number
 }
 
-const BanPlayerDialog: React.FC<{ name: string | null, onChange: (name: string | null) => void, refresh?: () => void }> = ({ name, onChange, refresh }) => {
-  const plugin = usePlugin()
-  const [reason, setReason] = useState('')
-  return <Dialog open={!!name} onClose={() => onChange(null)}>
-    <DialogTitle id="form-dialog-title">Subscribe</DialogTitle>
-    <DialogContent>
-      <DialogContentText>确认要封禁 <span style={{ fontWeight: 'bold' }}>{name}</span> 吗?</DialogContentText>
-      <TextField
-        autoFocus
-        fullWidth
-        margin='dense'
-        label='封禁理由'
-        variant='standard'
-        value={reason}
-        onChange={it => setReason(it.target.value)}
-      />
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={() => onChange(null)}>取消</Button>
-      <Button onClick={() => {
-        plugin.emit('playerList:ban', [name, reason])
-        onChange(null)
-        refresh?.()
-        toast('操作成功!', 'success')
-      }}>封禁</Button>
-    </DialogActions>
-  </Dialog>
+const banPlayer = (name: string, plugin: Plugin, refresh: () => void) => void dialog(<>确认要封禁 <span className='bold'>{name}</span> 吗?</>, '封禁原因')
+  .then(it => {
+    if (it == null) return
+    plugin.emit('playerList:ban', [name, it])
+    refresh()
+    toast('操作成功!', 'success')
+  })
+
+const pardonPlayer = (name: string, plugin: Plugin, refresh: () => void) => void dialog(<>确认要解除 <span className='bold'>{name}</span> 的封禁吗?</>)
+  .then(it => {
+    if (!it) return
+    plugin.emit('playerList:pardon', name)
+    refresh()
+    toast('操作成功!', 'success')
+  })
+
+const whitelist = (name: string, plugin: Plugin, refresh: () => void, isAdd: boolean) => {
+  const span = <span className='bold'>{name}</span>
+  dialog(isAdd ? <>确认要将玩家 {span} 添加到白名单中吗?</> : <>确认要将玩家 {span} 从白名单中移出吗?</>).then(it => {
+    if (!it) return
+    plugin.emit(`playerList:${isAdd ? 'add' : 'remove'}Whitelist`, name)
+    refresh()
+    toast('操作成功!', 'success')
+  })
 }
 
 // eslint-disable-next-line react/jsx-key
@@ -66,7 +65,6 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
   const globalData = useGlobalData()
   const [open, setOpen] = useState(false)
   const [info, setInfo] = useState<IPlayerInfo | undefined>()
-  const [banPlayer, setBanPlayer] = useState<string | null>(null)
   const refresh = () => plugin.emit('playerList:query', name, setInfo)
   useEffect(() => {
     setInfo(undefined)
@@ -131,22 +129,16 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
       </List>
       <CardActions disableSpacing sx={{ justifyContent: 'flex-end' }}>
         <Tooltip title={info.whitelisted ? '点击可将该玩家移出白名单' : '点击可将该玩家添加到白名单'}>
-          <IconButton onClick={() => {
-            plugin.emit(`playerList:${info.whitelisted ? 'remove' : 'add'}Whitelist`, name)
-            refresh()
-            toast('操作成功!', 'success')
-          }}>{info.whitelisted ? <Star color='warning' /> : <StarBorder />}</IconButton>
+          <IconButton onClick={() => whitelist(name, plugin, refresh, !info.whitelisted)}>
+            {info.whitelisted ? <Star color='warning' /> : <StarBorder />}
+          </IconButton>
         </Tooltip>
         <Tooltip title={info.ban == null ? '点击可封禁该玩家' : '点击可解除该玩家的封禁'}>
-          <IconButton onClick={() => {
-            if (info.ban == null) return setBanPlayer(name)
-            plugin.emit('playerList:pardon', name)
-            refresh()
-            toast('操作成功!', 'success')
-          }}><Block color={info.ban == null ? undefined : 'error'} /></IconButton>
+          <IconButton onClick={() => info.ban == null ? banPlayer(name, plugin, refresh) : pardonPlayer(name, plugin, refresh)}>
+            <Block color={info.ban == null ? undefined : 'error'} />
+          </IconButton>
         </Tooltip>
       </CardActions>
-      <BanPlayerDialog name={banPlayer} onChange={setBanPlayer} refresh={refresh} />
     </>
     : <></>
 }
@@ -213,7 +205,6 @@ const Players: React.FC = () => {
   const his = useHistory()
   const plugin = usePlugin()
   const [page, setPage] = useState(0)
-  const [banPlayer, setBanPlayer] = useState<string | null>(null)
   const [state, setState] = useState<number | null>(null)
   const [data, setData] = useState<{ count: number, hasWhitelist: boolean, players: PlayerData[] }>(() => ({ count: 0, hasWhitelist: false, players: [] }))
   const refresh = () => {
@@ -263,19 +254,14 @@ const Players: React.FC = () => {
             <TableCell align='right'>{dayjs(it.lastOnline).fromNow()}</TableCell>
             <TableCell align='right'>
               {(state === 1 || data.hasWhitelist) && <Tooltip title={it.whitelisted ? '点击可将该玩家移出白名单' : '点击可将该玩家添加到白名单'}>
-                <IconButton onClick={() => {
-                  plugin.emit(`playerList:${it.whitelisted ? 'remove' : 'add'}Whitelist`, it.name)
-                  refresh()
-                  toast('操作成功!', 'success')
-                }}>{it.whitelisted ? <Star color='warning' /> : <StarBorder />}</IconButton>
+                <IconButton onClick={() => whitelist(it.name, plugin, refresh, !it.whitelisted)}>
+                  {it.whitelisted ? <Star color='warning' /> : <StarBorder />}
+                </IconButton>
               </Tooltip>}
               <Tooltip title={it.ban == null ? '点击可封禁该玩家' : '已被封禁: ' + it.ban}>
-                <IconButton onClick={() => {
-                  if (it.ban == null) return setBanPlayer(it.name)
-                  plugin.emit('playerList:pardon', it.name)
-                  refresh()
-                  toast('操作成功!', 'success')
-                }}><Block color={it.ban == null ? undefined : 'error'} /></IconButton>
+                <IconButton onClick={() => it.ban == null ? banPlayer(it.name, plugin, refresh) : pardonPlayer(it.name, plugin, refresh)}>
+                  <Block color={it.ban == null ? undefined : 'error'} />
+                </IconButton>
               </Tooltip>
             </TableCell>
           </TableRow>)}
@@ -290,7 +276,6 @@ const Players: React.FC = () => {
       page={page}
       onPageChange={(_, it) => setPage(it)}
     />
-    <BanPlayerDialog name={banPlayer} onChange={setBanPlayer} refresh={refresh} />
   </Card>
 }
 

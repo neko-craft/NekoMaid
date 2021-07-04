@@ -12,6 +12,7 @@ import { address, token } from './url'
 import { Snackbars } from './toast'
 import { typography } from './theme'
 import { pluginCtx, globalCtx } from './Context'
+import { DialogWrapper } from './dialog'
 import Plugin, { Page } from './Plugin'
 import initPages from './pages/index'
 
@@ -178,6 +179,7 @@ const AppWrap: React.FC = () => {
     }
   }, zhCN), [darkMode])
   return <ThemeProvider theme={theme}>
+    <DialogWrapper />
     <Snackbars />
     <App darkMode={darkMode} setDarkMode={setDarkMode} />
   </ThemeProvider>

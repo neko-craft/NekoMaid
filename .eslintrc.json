@@ -24,6 +24,7 @@
         "react/prop-types": "off",
         "object-curly-newline": "off",
         "no-undef": "off",
-        "react/display-name": "off"
+        "react/display-name": "off",
+        "no-void": "off"
     }
 }

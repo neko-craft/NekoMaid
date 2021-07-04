@@ -4,6 +4,10 @@ html {
   overflow-x: hidden
 }
 
+.bold {
+  font-weight: bold;
+}
+
 .command-popper {
   margin-bottom: 20px !important
 }
