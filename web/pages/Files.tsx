@@ -13,13 +13,14 @@ import { TreeView, TreeItem } from '@material-ui/lab'
 import { iconClasses } from '@material-ui/core/Icon'
 import { treeItemClasses, TreeItemProps } from '@material-ui/lab/TreeItem'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, Icon, CardContent, IconButton, Tooltip,
-  Menu, MenuItem, ListItemIcon, CircularProgress } from '@material-ui/core'
+  Menu, MenuItem, ListItemIcon, CircularProgress, InputAdornment } from '@material-ui/core'
 import { ArrowDropDown, ArrowRight, Save, Undo, Redo, DeleteForever, CreateNewFolder, Refresh, MoreHoriz,
   Description, Upload, Download } from '@material-ui/icons'
 import { useHistory, useLocation } from 'react-router-dom'
 import { UnControlled } from 'react-codemirror2'
 import { usePlugin } from '../Context'
 import * as icons from '../../icons.json'
+import validFilename from 'valid-filename'
 import Empty from '../components/Empty'
 import Plugin from '../Plugin'
 import toast from '../toast'
@@ -121,7 +122,7 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
       plugin.emit('files:content', path, data => {
         loading['!#LOADING'] = false
         switch (data) {
-          case null: return setError('文件格式不支持!')
+          case null: return setError('文件格式不被支持!')
           case 0: return setError('文件不存在!')
           case 1: return his.replace('./')
           case 2: return setError('文件太大了!')
@@ -204,6 +205,8 @@ const Files: React.FC = () => {
   const [expanded, setExpanded] = useState<string[]>([])
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
 
+  const dirPath = typeof dirs.current[curPath] === 'object' ? curPath : curPath.substring(0, curPath.lastIndexOf('/'))
+
   const spacing = theme.spacing(3)
   const refresh = () => {
     loading.current = { }
@@ -252,7 +255,17 @@ const Files: React.FC = () => {
                 ><DeleteForever /></IconButton>
               </span></Tooltip>
               <Tooltip title='新建文件'><IconButton size='small'><Description /></IconButton></Tooltip>
-              <Tooltip title='新建目录'><IconButton size='small'><CreateNewFolder /></IconButton></Tooltip>
+              <Tooltip title='新建目录'>
+                <IconButton size='small' onClick={() => dialog({
+                  title: '创建文件夹',
+                  content: '请输入您要创建的文件夹名:',
+                  input: {
+                    validator: (it: string) => validFilename(it) ? null : '文件名不合法!',
+                    InputProps: {
+                      startAdornment: <InputAdornment position='start'>{dirPath}/</InputAdornment>
+                    }
+                  }
+                })}><CreateNewFolder /></IconButton></Tooltip>
               <Tooltip title='更多...'>
                 <IconButton size='small' onClick={e => setAnchorEl(anchorEl ? null : e.currentTarget)}><MoreHoriz /></IconButton>
               </Tooltip>
@@ -279,7 +292,7 @@ const Files: React.FC = () => {
                 delete l[it[0]]
               }}
               onNodeSelect={(_: any, it: string) => {
-                setCurPath(it)
+                setCurPath(it[0] === '/' ? it.slice(1) : it)
                 if (typeof dirs.current[it] === 'object' || loading.current['!#LOADING']) return
                 if (it.startsWith('/')) it = it.slice(1)
                 his.push('/NekoMaid/files/' + it)

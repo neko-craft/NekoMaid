@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import Autocomplete from '@material-ui/lab/Autocomplete'
-import { Dialog, DialogTitle, DialogContent, DialogContentText, TextField, DialogActions, Button } from '@material-ui/core'
+import { Dialog, DialogTitle, DialogContent, DialogContentText, TextField, DialogActions, Button, Autocomplete } from '@material-ui/core'
 
 const ServerSwitch: React.FC = () => {
   const [value, setValue] = useState<string>('')

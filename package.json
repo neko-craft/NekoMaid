@@ -62,7 +62,8 @@
     "skinview3d": "^2.0.1",
     "socket.io-client": "^2.4.0",
     "ts-node": "^10.0.0",
-    "typescript": "^4.3.5"
+    "typescript": "^4.3.5",
+    "valid-filename": "^3.1.0"
   },
   "devDependencies": {
     "@parcel/transformer-less": "^2.0.0-nightly.751",

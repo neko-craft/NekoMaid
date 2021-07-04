@@ -7,8 +7,7 @@ import { useTheme, alpha } from '@material-ui/core/styles'
 import { useHistory } from 'react-router-dom'
 import { usePlugin } from '../Context'
 import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeader, Divider, Skeleton,
-  LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar, Pagination, Dialog, DialogTitle,
-  DialogContent, DialogContentText, DialogActions, TextField, Button } from '@material-ui/core'
+  LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar, Pagination } from '@material-ui/core'
 import { LoadingList } from '../components/Loading'
 import Empty from '../components/Empty'
 import Uptime from '../components/Uptime'
