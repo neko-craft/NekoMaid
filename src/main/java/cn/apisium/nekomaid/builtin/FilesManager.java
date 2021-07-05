@@ -25,9 +25,11 @@ class FilesManager {
         }).onWithAck(main, "files:content", String.class, path -> {
             try {
                 Path p = Paths.get(".", path);
-                if (!p.startsWith(root) || Files.isHidden(p) || !Files.isReadable(p)) return 0;
-                if (!Files.isRegularFile(p)) return 1;
-                if (Files.size(p) > MAX_SIZE) return 2;
+                if (!p.startsWith(root)) return 0;
+                if (!Files.exists(p)) return 1;
+                if (Files.isDirectory(p)) return 2;
+                if (Files.isHidden(p) || !Files.isReadable(p) || !Files.isRegularFile(p)) return 0;
+                if (Files.size(p) > MAX_SIZE) return 3;
                 return new String(Files.readAllBytes(p), StandardCharsets.UTF_8);
             } catch (IOException e) {
                 return null;
@@ -36,8 +38,9 @@ class FilesManager {
             try {
                 if (args.length < 1) return null;
                 Path p = Paths.get(".", args[0]);
-                if (!p.startsWith(root) || Files.isHidden(p)) return false;
+                if (!p.startsWith(root)) return false;
                 if (args.length == 1) {
+                    if (Files.isHidden(p)) return false;
                     if (!Files.exists(p)) return true;
                     Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
                         @Override
@@ -53,11 +56,18 @@ class FilesManager {
                             } else throw e;
                         }
                     });
-                } else if (args[1] != null && Files.isRegularFile(p)) {
+                } else if (args[1] != null && !Files.isDirectory(p)) {
                     Files.write(p, args[1].getBytes(StandardCharsets.UTF_8));
                 } else return false;
                 return true;
-            } catch (IOException e) {
+            } catch (IOException ignored) { return false; }
+        }).onWithAck(main, "files:createDirectory", String.class, it -> {
+            Path p = Paths.get(".", it);
+            if (!p.startsWith(root) || Files.exists(p)) return false;
+            try {
+                Files.createDirectory(p);
+                return true;
+            } catch (Exception ignored) {
                 return false;
             }
         });

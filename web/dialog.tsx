@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react'
+import { ButtonProps } from '@material-ui/core/Button'
 import ValidInput, { Props } from './components/ValidInput'
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@material-ui/core'
 
 export interface DialogOptionsWithoutInput {
   content: React.ReactNode
   title?: React.ReactNode
+  okButton?: ButtonProps
 }
 
 export type DialogOptionsWithInput = DialogOptionsWithoutInput & { input: string | Props }
@@ -57,7 +59,7 @@ export const DialogWrapper: React.FC = () => {
     </DialogContent>
     <DialogActions>
       <Button onClick={cancel}>取消</Button>
-      <Button onClick={() => {
+      <Button {...data.okButton} onClick={() => {
         setOpen(false)
         setDate(undefined)
         setText('')

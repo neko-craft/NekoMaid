@@ -100,8 +100,8 @@ const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () 
   }
 
 const EMPTY = '$NekoMaid$Editor$Empty'
-const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loading: { '!#LOADING'?: boolean }, dirs: Record<string, null> }> =
-  ({ plugin, editorRef, loading, dirs }) => {
+const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loading: { '!#LOADING'?: boolean },
+  dirs: Record<string, null>, refresh: () => void }> = ({ plugin, editorRef, loading, dirs, refresh }) => {
     const doc = (editorRef as any).current?.editor?.doc
     const theme = useTheme()
     const his = useHistory()
@@ -113,9 +113,11 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
     const [notUndo, setNotUndo] = useState(true)
     const [notRedo, setNotRedo] = useState(true)
     const [notSave, setNotSave] = useState(true)
+    const [isNewFile, setIsNewFile] = useState(false)
     useEffect(() => {
       setText(null)
       setError('')
+      setIsNewFile(false)
       lnText.current = ''
       if (!path || dirs[path] || path.endsWith('/')) return
       loading['!#LOADING'] = true
@@ -124,8 +126,13 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
         switch (data) {
           case null: return setError('文件格式不被支持!')
           case 0: return setError('文件不存在!')
-          case 1: return his.replace('./')
-          case 2: return setError('文件太大了!')
+          case 1:
+            setIsNewFile(true)
+            setText('')
+            setNotSave(true)
+            break
+          case 2: return his.replace('./')
+          case 3: return setError('文件太大了!')
           default:
             setText(data)
             lnText.current = data.replace(/\r/g, '')
@@ -135,7 +142,7 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
     }, [path])
     return <Card sx={{ position: 'relative' }}>
       <CardHeader
-        title={path ? '编辑器: ' + path : '编辑器'}
+        title={<span style={{ fontWeight: 'normal' }}>编辑器{path && ': ' + path}{path && isNewFile && <span className='bold'> (新文件)</span>}</span>}
         sx={{ position: 'relative' }}
         action={!error && path && text != null
           ? <Box sx={{ position: 'absolute', right: theme.spacing(1), top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center' }}>
@@ -156,6 +163,11 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
                   lnText.current = data.replace(/\r/g, '')
                   setText(data)
                   setNotSave(true)
+                  if (isNewFile) {
+                    setIsNewFile(false)
+                    toast('保存成功!', 'success')
+                    refresh()
+                  }
                 })
               }}
             ><Save /></IconButton></span>}</Tooltip>
@@ -194,6 +206,7 @@ const Files: React.FC = () => {
   const plugin = usePlugin()
   const theme = useTheme()
   const his = useHistory()
+  const loc = useLocation()
   const tree = useRef<HTMLHRElement | null>(null)
   const editor = useRef<UnControlled | null>(null)
   const prevExpanded = useRef<string[]>([])
@@ -245,27 +258,45 @@ const Files: React.FC = () => {
                 <IconButton
                   disabled={!curPath}
                   size='small'
-                  onClick={() => dialog(<>确认要删除 <span className='bold'>{curPath}</span> 吗? <span className='bold'>(不可撤销!)</span></>)
-                    .then(it => it && plugin.emit('files:update', [curPath], res => {
-                      if (!res) return toast('删除失败!', 'error')
-                      refresh()
-                      toast('删除成功!', 'success')
-                    }))
-                  }
+                  onClick={() => dialog({
+                    okButton: { color: 'error' },
+                    content: <>确认要删除 <span className='bold'>{curPath}</span> 吗?&nbsp;
+                      <span className='bold' style={{ color: theme.palette.error.main }}>(不可撤销!)</span></>
+                  }).then(it => it && plugin.emit('files:update', [curPath], res => {
+                    if (!res) return toast('删除失败!', 'error')
+                    refresh()
+                    toast('删除成功!', 'success')
+                    if (loc.pathname.replace(/^\/NekoMaid\/files\/?/, '') === curPath) his.push('/NekoMaid/files')
+                  }))}
                 ><DeleteForever /></IconButton>
               </span></Tooltip>
-              <Tooltip title='新建文件'><IconButton size='small'><Description /></IconButton></Tooltip>
+              <Tooltip title='新建文件'>
+                <IconButton size='small' onClick={() => dialog({
+                  title: '新建文件',
+                  content: '请输入您要创建的文件名:',
+                  input: {
+                    error: true,
+                    helperText: '文件名不合法!',
+                    validator: validFilename,
+                    InputProps: { startAdornment: <InputAdornment position='start'>{dirPath}/</InputAdornment> }
+                  }
+                }).then(it => it != null && his.push(`/NekoMaid/files/${dirPath ? dirPath + '/' : ''}${it}`))}>
+              <Description /></IconButton></Tooltip>
               <Tooltip title='新建目录'>
                 <IconButton size='small' onClick={() => dialog({
                   title: '创建文件夹',
                   content: '请输入您要创建的文件夹名:',
                   input: {
-                    validator: (it: string) => validFilename(it) ? null : '文件名不合法!',
-                    InputProps: {
-                      startAdornment: <InputAdornment position='start'>{dirPath}/</InputAdornment>
-                    }
+                    error: true,
+                    helperText: '文件名不合法!',
+                    validator: validFilename,
+                    InputProps: { startAdornment: <InputAdornment position='start'>{dirPath}/</InputAdornment> }
                   }
-                })}><CreateNewFolder /></IconButton></Tooltip>
+                }).then(it => it != null && plugin.emit('files:createDirectory', dirPath + '/' + it, res => {
+                  if (!res) return toast('创建失败!', 'error')
+                  toast('创建成功!', 'success')
+                  refresh()
+                }))}><CreateNewFolder /></IconButton></Tooltip>
               <Tooltip title='更多...'>
                 <IconButton size='small' onClick={e => setAnchorEl(anchorEl ? null : e.currentTarget)}><MoreHoriz /></IconButton>
               </Tooltip>
@@ -303,7 +334,7 @@ const Files: React.FC = () => {
           </Card>
         </Grid>
         <Grid item lg={8} md={12} xl={9} xs={12} sx={{ maxWidth: `calc(100vw - ${theme.spacing(1)})`, paddingBottom: 3 }}>
-          <Editor plugin={plugin} editorRef={editor} loading={loading.current} dirs={dirs.current} />
+          <Editor plugin={plugin} editorRef={editor} loading={loading.current} dirs={dirs.current} refresh={refresh} />
         </Grid>
       </Grid>
     </Container>
@@ -318,8 +349,8 @@ const Files: React.FC = () => {
         refresh()
         setAnchorEl(null)
       }}><ListItemIcon><Refresh /></ListItemIcon>刷新</MenuItem>
-      <MenuItem><ListItemIcon><Upload /></ListItemIcon>上载文件</MenuItem>
-      <MenuItem><ListItemIcon><Download /></ListItemIcon>下传文件</MenuItem>
+      <MenuItem disabled><ListItemIcon><Upload /></ListItemIcon>上载文件</MenuItem>
+      <MenuItem disabled><ListItemIcon><Download /></ListItemIcon>下传文件</MenuItem>
     </Menu>
   </Box>
 }
