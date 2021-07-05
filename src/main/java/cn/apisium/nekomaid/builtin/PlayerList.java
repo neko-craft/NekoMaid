@@ -7,6 +7,8 @@ import org.bukkit.entity.Player;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 final class PlayerList {
     private static final class PlayerData2 {
@@ -22,46 +24,43 @@ final class PlayerList {
         public long lastOnline;
     }
     private static final class List {
-        public int count;
-        public boolean hasWhitelist;
-        public PlayerData[] players;
+        public long count;
+        public Object[] players;
 
         @SuppressWarnings("unused")
         public List() { }
-        public List(int a, boolean b, PlayerData[] c) {
+        public List(long a, Object[] c) {
             count = a;
-            hasWhitelist = b;
             players = c;
         }
     }
     private static final class Fetch {
+        public String filter;
         public int state, page;
     }
     @SuppressWarnings({"deprecation"})
     public PlayerList(NekoMaid main) {
         main.onWithAck(main, "playerList:fetchPage", Fetch.class, it -> {
-            OfflinePlayer[] list = main.getServer().getOfflinePlayers();
-            if (it.state != 0) list = Arrays.stream(list)
-                    .filter(it.state == 1 ? OfflinePlayer::isWhitelisted : OfflinePlayer::isBanned)
-                    .toArray(OfflinePlayer[]::new);
-            int start = it.page * 10;
-            if (start >= list.length) return new List(0, Bukkit.hasWhitelist(), null);
-            int end = Math.min(start + 10, list.length);
-            PlayerData[] res = new PlayerData[end - start];
+            Stream<OfflinePlayer> list = Arrays.stream(main.getServer().getOfflinePlayers());
+            if (it.state != 0 || it.filter != null) {
+                if (it.state == 1) list = list.filter(OfflinePlayer::isWhitelisted);
+                else if (it.state == 2) list = list.filter(OfflinePlayer::isBanned);
+                if (it.filter != null) list = list.filter(p -> p.getName() != null && p.getName().contains(it.filter));
+            }
+            java.util.List<OfflinePlayer> newList = list.collect(Collectors.toList());
             BanList banList = Bukkit.getBanList(BanList.Type.NAME);
-            for (int i = 0; start < end; start++, i++) {
-                OfflinePlayer p = list[start];
+            return new List(newList.size(), newList.stream().skip(it.page * 10L).limit(10).map(p -> {
                 String ban = null;
                 BanEntry be = banList.getBanEntry(Objects.requireNonNull(p.getName()));
                 if (be != null) ban = be.getReason();
-                PlayerData pd = res[i] = new PlayerData();
+                PlayerData pd = new PlayerData();
                 pd.name = p.getName();
                 pd.ban = ban;
                 pd.whitelisted = p.isWhitelisted();
                 pd.playTime = p.getStatistic(Statistic.PLAY_ONE_MINUTE);
                 pd.lastOnline = Utils.getPlayerLastPlayTime(p);
-            }
-            return new List(list.length, Bukkit.hasWhitelist(), res);
+                return pd;
+            }).toArray());
         }).on(main, "playerList:ban", String[].class, it -> {
             String msg = it[1].isEmpty() ? null : it[1];
             Bukkit.getBanList(BanList.Type.NAME).addBan(it[0], msg, null, "NekoMaid");

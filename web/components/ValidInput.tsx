@@ -1,10 +1,14 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import TextField, { TextFieldProps } from '@material-ui/core/TextField'
 
-export type Props = TextFieldProps & { validator?: (text: string) => React.ReactNode | null | undefined | boolean }
+export type Props = TextFieldProps & {
+  onStatusChange: (it: boolean) => void
+  validator?: (text: string) => React.ReactNode | null | undefined | boolean
+}
 
-const ValidInput: React.FC<Props> = ({ validator, error: defaultError, onChange, helperText, ...props }) => {
+const ValidInput: React.FC<Props> = ({ validator, error: defaultError, onChange, helperText, onStatusChange, ...props }) => {
   const [error, setError] = useState<React.ReactNode | undefined>(defaultError ? helperText : undefined)
+  if (onStatusChange) useEffect(() => onStatusChange(defaultError || false), [])
   return <TextField
     {...props}
     error={!!error}
@@ -12,10 +16,12 @@ const ValidInput: React.FC<Props> = ({ validator, error: defaultError, onChange,
     onChange={validator
       ? e => {
         const it = validator(e.target.value)
-        setError(typeof it === 'boolean' ? it ? null : helperText : it || undefined)
+        const cur = typeof it === 'boolean' ? it ? null : helperText : it || undefined
+        setError(cur)
+        if (onStatusChange && !cur !== !error) onStatusChange(!!cur)
         if (onChange) onChange(e)
       }
-      : undefined
+      : onChange
     }
   />
 }

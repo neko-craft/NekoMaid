@@ -7,11 +7,10 @@ import dialog from '../dialog'
 import Plugin from '../Plugin'
 import { usePlugin, useGlobalData } from '../Context'
 import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Today, Event,
-  Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline } from '@material-ui/icons'
+  Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline, Search } from '@material-ui/icons'
 import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContainer, Table, TableBody, CardContent,
-  TablePagination, TableHead, TableRow, TableCell, IconButton, Tooltip,
-  ToggleButtonGroup, ToggleButton, List, ListSubheader, ListItem,
-  ListItemText, ListItemIcon, Collapse, ListItemButton, CardActions, Link } from '@material-ui/core'
+  TablePagination, TableHead, TableRow, TableCell, IconButton, Tooltip, ToggleButtonGroup, ToggleButton, List,
+  ListSubheader, ListItem, ListItemText, ListItemIcon, Collapse, ListItemButton, CardActions, Link } from '@material-ui/core'
 import { FXAASkinViewer, createOrbitControls, WalkingAnimation, RotatingAnimation } from 'skinview3d'
 import { useTheme } from '@material-ui/core/styles'
 import { useParams, useHistory } from 'react-router-dom'
@@ -206,9 +205,10 @@ const Players: React.FC = () => {
   const plugin = usePlugin()
   const [page, setPage] = useState(0)
   const [state, setState] = useState<number | null>(null)
-  const [data, setData] = useState<{ count: number, hasWhitelist: boolean, players: PlayerData[] }>(() => ({ count: 0, hasWhitelist: false, players: [] }))
+  const [data, setData] = useState<{ count: number, players: PlayerData[] }>(() => ({ count: 0, players: [] }))
+  const { hasWhitelist } = useGlobalData()
   const refresh = () => {
-    plugin.emit('playerList:fetchPage', { page, state }, (it: any) => {
+    plugin.emit('playerList:fetchPage', { page, state: state === 1 || state === 2 ? state : 0, filter: null }, (it: any) => {
       if (it.players == null) it.players = []
       setData(it)
     })
@@ -224,11 +224,25 @@ const Players: React.FC = () => {
         color={(state === 1 ? 'warning' : state === 2 ? 'error' : undefined) as any}
         value={state}
         exclusive
-        onChange={(_, it) => setState(it)}
+        onChange={(_, it) => {
+          if (it === 3) return
+          setState(it)
+          if (state === 3) refresh()
+        }}
         aria-label="text alignment"
       >
         <ToggleButton value={1}><Star /></ToggleButton>
         <ToggleButton value={2}><Block /></ToggleButton>
+        <ToggleButton value={3} onClick={() => state !== 3 && dialog('请输入你要查找的游戏名:', '游戏名').then(filter => {
+          if (filter == null) return
+          his.push('/NekoMaid/playerList/' + filter)
+          setState(3)
+          plugin.emit('playerList:fetchPage', { page, state: 0, filter }, (it: any) => {
+            if (it.players == null) it.players = []
+            setPage(0)
+            setData(it)
+          })
+        })}><Search /></ToggleButton>
       </ToggleButtonGroup>
       }
     />
@@ -253,7 +267,7 @@ const Players: React.FC = () => {
             <TableCell align='right'>{dayjs.duration(it.playTime / 20, 'seconds').humanize()}</TableCell>
             <TableCell align='right'>{dayjs(it.lastOnline).fromNow()}</TableCell>
             <TableCell align='right'>
-              {(state === 1 || data.hasWhitelist) && <Tooltip title={it.whitelisted ? '点击可将该玩家移出白名单' : '点击可将该玩家添加到白名单'}>
+              {(state === 1 || hasWhitelist) && <Tooltip title={it.whitelisted ? '点击可将该玩家移出白名单' : '点击可将该玩家添加到白名单'}>
                 <IconButton onClick={() => whitelist(it.name, plugin, refresh, !it.whitelisted)}>
                   {it.whitelisted ? <Star color='warning' /> : <StarBorder />}
                 </IconButton>

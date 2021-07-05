@@ -14,6 +14,7 @@ export interface Page {
 export interface GlobalInfo {
   onlineMode: boolean
   version: String
+  hasWhitelist: boolean
 }
 
 let flag = 0

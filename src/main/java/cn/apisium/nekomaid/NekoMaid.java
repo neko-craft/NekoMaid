@@ -4,7 +4,6 @@ import cn.apisium.nekomaid.builtin.BuiltinPlugins;
 import com.corundumstudio.socketio.*;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -61,8 +60,9 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         server.setPipelineFactory(new Pipeline());
         server.addConnectListener(it -> {
             HashMap<String, Object> map = new HashMap<>();
-            map.put("version", Bukkit.getVersion());
+            map.put("version", getServer().getVersion());
             map.put("onlineMode", getServer().getOnlineMode());
+            map.put("hasWhitelist", getServer().hasWhitelist());
             it.sendEvent("globalData", map);
         });
         server.addEventListener("switchPage", PageSwitch.class, (a, b, c) -> {

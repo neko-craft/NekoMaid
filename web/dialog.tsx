@@ -18,6 +18,7 @@ type DialogOptionsWithPromise = DialogOptions & { resolve: (it: any) => void }
 let openFn: (it: DialogOptionsWithPromise) => void
 
 export const DialogWrapper: React.FC = () => {
+  const [canClick, setCanClick] = useState(true)
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
   const [data, setDate] = useState<DialogOptionsWithPromise | undefined>()
@@ -39,11 +40,13 @@ export const DialogWrapper: React.FC = () => {
   let inputElm: React.ReactNode
   if (input) {
     const props: any = {
+      key: input.label || input,
       autoFocus: true,
       fullWidth: true,
       margin: 'dense',
       variant: 'standard',
       value: text,
+      onStatusChange: setCanClick,
       onChange (it: any) { setText(it.target.value) }
     }
     if (typeof input === 'string') props.label = input
@@ -59,7 +62,7 @@ export const DialogWrapper: React.FC = () => {
     </DialogContent>
     <DialogActions>
       <Button onClick={cancel}>取消</Button>
-      <Button {...data.okButton} onClick={() => {
+      <Button {...data.okButton} disabled={canClick} onClick={() => {
         setOpen(false)
         setDate(undefined)
         setText('')

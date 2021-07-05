@@ -100,6 +100,7 @@ let i = 0
 const Console: React.FC = () => {
   const logs = useMemo<JSX.Element[]>(() => [], [])
   const ref = useRef<HTMLDivElement | null>(null)
+  const lastLog = useRef<Log>({ } as any)
   const plugin = usePlugin()
   const [, update] = useState(0)
   const [open, setOpen] = useState(false)
@@ -141,20 +142,26 @@ const Console: React.FC = () => {
 
   useEffect(() => {
     const onLog = (data: Log) => {
+      if (lastLog.current && lastLog.current.logger === data.logger && lastLog.current.time === data.time && lastLog.current.level === data.level) {
+        logs.pop()
+        lastLog.current.msg += '\n' + data.msg
+        data = lastLog.current
+      } else lastLog.current = data
       const t = new Date(data.time)
       const time = pad(t.getHours()) + ':' + pad(t.getMinutes()) + ':' + pad(t.getSeconds())
       const msg = parseMessage(data.msg)
       const isError = data.level === 'FATAL' || data.level === 'ERROR'
+      const moreLines = isError && data.msg.includes('\n')
       const elm = <p key={i} className={isError ? 'error' : data.level === 'WARN' ? 'warn' : undefined}>
         <Tooltip title={time} placement='right'>
           <span className='level'>[{levelNames[data.level] || '信息'}] </span>
         </Tooltip>
         <span className='msg'>
-          {isError && <span className='more' data-collapse='[收起]'>[展开]</span>}
+          {moreLines && <span className='more' data-collapse='[收起]'>[展开]</span>}
           {data.logger && !hideLoggerRegexp.test(data.logger) && <span className='logger'>[{data.logger}] </span>}
           {msg}</span>
       </p>
-      logs.push(isError ? <More key={i}>{elm}</More> : elm)
+      logs.push(moreLines ? <More key={i}>{elm}</More> : elm)
       update(++i)
     }
     const onLogs = (it: Log[]) => {
