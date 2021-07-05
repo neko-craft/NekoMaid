@@ -5,7 +5,7 @@ import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, Sentime
   SentimentSatisfied, AccessTime, ArrowUpward, MoreHoriz, Remove, ExitToApp } from '@material-ui/icons'
 import { useTheme, alpha } from '@material-ui/core/styles'
 import { useHistory } from 'react-router-dom'
-import { usePlugin } from '../Context'
+import { usePlugin, useGlobalData } from '../Context'
 import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeader, Divider, Skeleton,
   LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar, Pagination } from '@material-ui/core'
 import { LoadingList } from '../components/Loading'
@@ -16,7 +16,7 @@ import toast from '../toast'
 import dialog from '../dialog'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }
-interface CurrentStatus { version: string, players: string[], mspt: number, tps: number, time: number, memory: number }
+interface CurrentStatus { players: string[], mspt: number, tps: number, time: number, memory: number }
 
 const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.ReactNode, color: string }> = ({ title, content, icon, children, color }) =>
   <Card sx={{ height: '100%' }}>
@@ -202,6 +202,7 @@ const Charts: React.FC<{ data: Status[] }> = props => {
 
 const Dashboard: React.FC = () => {
   const plugin = usePlugin()
+  const { version } = useGlobalData()
   const [status, setStatus] = useState<Status[]>([])
   const [current, setCurrent] = useState<CurrentStatus | undefined>()
 
@@ -223,7 +224,7 @@ const Dashboard: React.FC = () => {
     <Container maxWidth={false}>
       <Grid container spacing={3}>
         <Grid item lg={3} sm={6} xl={3} xs={12}>
-          <TopCard title='服务端版本' content={current ? current.version : <Skeleton animation='wave' width={150} />} icon={<Handyman />} color={orange[600]}>
+          <TopCard title='服务端版本' content={current ? version : <Skeleton animation='wave' width={150} />} icon={<Handyman />} color={orange[600]}>
             <Box sx={{ pt: 2, display: 'flex', alignItems: 'flex-end' }}>
               <Check htmlColor={green[900]} />
               <Typography color='textSecondary' variant='caption'>&nbsp;当前已为最新版</Typography>

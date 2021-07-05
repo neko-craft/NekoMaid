@@ -6,12 +6,16 @@ import cn.apisium.nekomaid.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.EvictingQueue;
 import org.bukkit.Bukkit;
+import org.bukkit.Server;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -24,30 +28,46 @@ final class Dashboard {
     private CurrentStatus current;
     private Room room;
 
-    private final static record Status(long time, int players, double tps, int entities, int chunks) { }
-    private final static record CurrentStatus(String version, String[] players, double tps, double mspt, long time, int memory) { }
+    private final static class Status {
+        public long time;
+        public int players;
+        public double tps;
+        public int entities;
+        public int chunks;
+    }
+    private final static class CurrentStatus {
+        public String[] players;
+        public double tps, mspt;
+        public long time;
+        public int memory;
+    }
 
     @SuppressWarnings("deprecation")
     public Dashboard(NekoMaid main, File file) {
         try {
-            if (!file.exists()) Files.writeString(file.toPath(), "[]");
-            var arr = mapper.readValue(file, Status[].class);
+            if (!file.exists()) Files.write(file.toPath(), "[]".getBytes());
+            Status[] arr = mapper.readValue(file, Status[].class);
             if (arr.length > 0) last = arr[arr.length - 1];
             queue.addAll(Arrays.asList(arr));
         } catch (Exception e) {
             e.printStackTrace();
         }
-        var s = main.getServer();
+        Server s = main.getServer();
         s.getScheduler().runTaskTimer(main, () -> {
-            var time = new Date().getTime();
+            long time = new Date().getTime();
             if (last != null && last.time + 1000 * 60 * 55 > time) return;
-            var entities = 0;
-            var chunks = 0;
-            for (var it : s.getWorlds()) {
+            int entities = 0;
+            int chunks = 0;
+            for (World it : s.getWorlds()) {
                 entities += it.getEntities().size();
                 chunks += it.getLoadedChunks().length;
             }
-            last = new Status(time, s.getOnlinePlayers().size(), Utils.getTPS(), entities, chunks);
+            last = new Status();
+            last.time = time;
+            last.players = s.getOnlinePlayers().size();
+            last.tps = Utils.getTPS();
+            last.entities = entities;
+            last.chunks = chunks;
             queue.add(last);
             try {
                 mapper.writeValue(file, queue);
@@ -57,7 +77,7 @@ final class Dashboard {
         }, 0, 20 * 60 * 60);
         refresh();
         room = main.onWithAck(main, "dashboard:kick", String[].class, it -> {
-            var p = main.getServer().getPlayerExact(it[0]);
+            Player p = main.getServer().getPlayerExact(it[0]);
             if (p == null) return false;
             main.getServer().getScheduler().runTask(main, () -> p.kickPlayer(it[1]));
             return true;
@@ -73,11 +93,15 @@ final class Dashboard {
     }
 
     private void refresh() {
-        var list = Bukkit.getOnlinePlayers();
-        var arr = new String[list.size()];
-        var i = 0;
-        for (var it : list) arr[i++] = it.getName();
-        current = new CurrentStatus(Bukkit.getVersion(), arr, Utils.getTPS(), Utils.getMSPT(), startTime,
-                (int) (((runtime.totalMemory() - runtime.freeMemory()) / (double) runtime.maxMemory()) * 100));
+        Collection<? extends Player> list = Bukkit.getOnlinePlayers();
+        String[] arr = new String[list.size()];
+        int i = 0;
+        for (Player it : list) arr[i++] = it.getName();
+        current = new CurrentStatus();
+        current.players = arr;
+        current.tps = Utils.getTPS();
+        current.mspt = Utils.getMSPT();
+        current.time = startTime;
+        current.memory = (int) (((runtime.totalMemory() - runtime.freeMemory()) / (double) runtime.maxMemory()) * 100);
     }
 }

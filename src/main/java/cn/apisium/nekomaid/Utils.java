@@ -15,12 +15,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.FutureTask;
 
+@SuppressWarnings("deprecation")
 public final class Utils {
     private final static boolean IS_PAPER;
     private static Object server;
     private static Field recentTps, mspt;
     static {
-        var tmp = false;
+        boolean tmp = false;
         try {
             Class.forName("com.destroystokyo.paper.event.server.AsyncTabCompleteEvent");
             tmp = true;
@@ -31,11 +32,11 @@ public final class Utils {
             server = nms.getMethod("getServer").invoke(null);
             try { recentTps = nms.getField("recentTps"); } catch (Exception ignored) { }
             try {
-                for (var it : nms.getFields()) {
-                    var f = it.getModifiers();
+                for (Field it : nms.getFields()) {
+                    int f = it.getModifiers();
                     if (it.getType() == long[].class && it.getName().length() == 1 && Modifier.isPublic(f) &&
-                            Modifier.isFinal(f) && !Modifier.isStatic(f) && it.canAccess(server)) {
-                        var arr = (long[]) it.get(server);
+                            Modifier.isFinal(f) && !Modifier.isStatic(f) && it.isAccessible()) {
+                        long[] arr = (long[]) it.get(server);
                         if (arr.length == 100) mspt = it;
                     }
                 }
@@ -56,7 +57,7 @@ public final class Utils {
     public static double getMSPT() {
         if (IS_PAPER) return Bukkit.getAverageTickTime();
         try {
-            var arr = (long[]) mspt.get(server);
+            long[] arr = (long[]) mspt.get(server);
             if (arr.length == 100) {
                 long i = 0L;
                 for (final long l : arr) i += l;
@@ -73,28 +74,28 @@ public final class Utils {
     public static List<String> complete(final @NotNull String buffer) {
         try {
             if (IS_PAPER) {
-                var event = new AsyncTabCompleteEvent(Bukkit.getConsoleSender(), buffer, true, null);
+                AsyncTabCompleteEvent event = new AsyncTabCompleteEvent(Bukkit.getConsoleSender(), buffer, true, null);
                 event.callEvent();
-                var completions = event.isCancelled() ? ImmutableList.<String>of() : event.getCompletions();
+                List<String> completions = event.isCancelled() ? new ArrayList<>() : event.getCompletions();
                 if (event.isCancelled() || event.isHandled()) {
                     if (!event.isCancelled() && (TabCompleteEvent.getHandlerList().getRegisteredListeners()).length > 0) {
-                        final var finalCompletions = new ArrayList<>(completions);
-                        var future = new FutureTask<List<String>>(() -> {
-                            var syncEvent = new TabCompleteEvent(Bukkit.getConsoleSender(), buffer, finalCompletions);
+                        final ArrayList<String> finalCompletions = new ArrayList<>(completions);
+                        FutureTask<List<String>> future = new FutureTask<>(() -> {
+                            TabCompleteEvent syncEvent = new TabCompleteEvent(Bukkit.getConsoleSender(), buffer, finalCompletions);
                             return syncEvent.callEvent() ? syncEvent.getCompletions() : ImmutableList.of();
                         });
                         Bukkit.getScheduler().runTask(NekoMaid.INSTANCE, future);
-                        var legacyCompletions = future.get();
+                        List<String> legacyCompletions = future.get();
                         completions.removeIf(it -> !legacyCompletions.contains(it));
-                        loop: for (var completion : legacyCompletions) {
-                            for (var it : completions) if (it.equals(completion)) continue loop;
+                        loop: for (String completion : legacyCompletions) {
+                            for (String it : completions) if (it.equals(completion)) continue loop;
                             completions.add(completion);
                         }
                     }
                     return completions;
                 }
             }
-            var future = new FutureTask<List<String>>(() -> {
+            FutureTask<List<String>> future = new FutureTask<>(() -> {
                 List<String> offers = Bukkit.getCommandMap().tabComplete(Bukkit.getConsoleSender(), buffer);
                 TabCompleteEvent tabEvent = new TabCompleteEvent(Bukkit.getConsoleSender(), buffer, (offers == null) ? Collections.emptyList() : offers);
                 Bukkit.getPluginManager().callEvent(tabEvent);

@@ -13,6 +13,7 @@ export interface Page {
 
 export interface GlobalInfo {
   onlineMode: boolean
+  version: String
 }
 
 let flag = 0

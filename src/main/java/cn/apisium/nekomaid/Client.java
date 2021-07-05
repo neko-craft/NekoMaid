@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public final class Client implements Store {
@@ -58,7 +59,7 @@ public final class Client implements Store {
 
     @NotNull
     public List<Room> getAllRooms() {
-        return client.getAllRooms().stream().map(it -> new Room(plugin, it)).toList();
+        return client.getAllRooms().stream().map(it -> new Room(plugin, it)).collect(Collectors.toList());
     }
 
     @Override

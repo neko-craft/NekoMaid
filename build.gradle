@@ -6,6 +6,9 @@ plugins {
 group 'cn.apisium.nekomaid'
 version '1.0-SNAPSHOT'
 
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility =  JavaVersion.VERSION_1_8
+
 repositories {
     mavenCentral()
     maven {
@@ -19,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'io.papermc.paper:paper-api:1.17-R0.1-SNAPSHOT'
+    compileOnly 'com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT'
     compileOnly 'io.netty:netty-all:4.1.65.Final'
     compileOnly 'org.jetbrains:annotations:21.0.1'
     compileOnly 'org.apache.logging.log4j:log4j-core:2.14.1'

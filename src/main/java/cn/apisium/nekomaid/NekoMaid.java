@@ -4,6 +4,7 @@ import cn.apisium.nekomaid.builtin.BuiltinPlugins;
 import com.corundumstudio.socketio.*;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -19,10 +20,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.*;
-import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 @Plugin(name = "NekoMaid", version = "1.0")
@@ -38,7 +38,6 @@ public final class NekoMaid extends JavaPlugin implements Listener {
 
     private final Multimap<org.bukkit.plugin.Plugin, String> pluginEventNames = ArrayListMultimap.create();
     private final HashMap<String, HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>>> pluginPages = new HashMap<>();
-    protected final HashMap<String, AbstractMap.SimpleEntry<byte[], Long>> pluginStaticFiles = new HashMap<>();
 
     private BuiltinPlugins plugins;
 
@@ -54,33 +53,34 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             getConfig().set("token", UUID.randomUUID().toString());
             saveConfig();
         }
-        final var config = new Configuration();
+        final Configuration config = new Configuration();
         config.setPort(getConfig().getInt("port", 11451));
         config.setHostname(getConfig().getString("listenHostname", null));
         config.setAuthorizationListener(it -> getConfig().getString("token", "").equals(it.getSingleUrlParam("token")));
         server = new SocketIOServer(config);
         server.setPipelineFactory(new Pipeline());
         server.addConnectListener(it -> {
-            var map = new HashMap<String, Object>();
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("version", Bukkit.getVersion());
             map.put("onlineMode", getServer().getOnlineMode());
             it.sendEvent("globalData", map);
         });
         server.addEventListener("switchPage", PageSwitch.class, (a, b, c) -> {
-            var oldPageObj = (PageSwitch) a.get("page");
+            PageSwitch oldPageObj = a.get("page");
             Client client = null;
             if (oldPageObj != null) {
                 a.leaveRoom(oldPageObj.namespace + ":page:" + oldPageObj.page);
-                var oldPages = pluginPages.get(oldPageObj.namespace);
+                HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>> oldPages = pluginPages.get(oldPageObj.namespace);
                 if (oldPages != null) {
-                    var oldPage = oldPages.get(oldPageObj.page);
+                    AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>> oldPage = oldPages.get(oldPageObj.page);
                     if (oldPage != null && oldPage.getValue() != null) oldPage.getValue().accept(client = new Client(b.namespace + ":", a));
                 }
             }
             a.set("page", b);
             a.joinRoom(b.namespace + ":page:" + b.page);
-            var pages = pluginPages.get(b.namespace);
+            HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>> pages = pluginPages.get(b.namespace);
             if (pages == null) return;
-            var page = pages.get(b.page);
+            AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>> page = pages.get(b.page);
             if (page != null && page.getKey() != null) page.getKey().accept(client == null ? new Client(b.namespace + ":", a) : client);
         });
         server.startAsync();
@@ -213,57 +213,23 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         return new Room(plugin, "page:" + page);
     }
 
-    @Contract("_, _, _ -> this")
-    public NekoMaid addStaticFile(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String path, byte[] data) {
-        addStaticFile(plugin, path, data, 0);
-        return this;
-    }
-
-    @Contract("_, _, _, _ -> this")
-    @SuppressWarnings("UnusedReturnValue")
-    public NekoMaid addStaticFile(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String path, byte[] data, long time) {
-        pluginStaticFiles.put(plugin.getName() + "/" + path, new AbstractMap.SimpleEntry<>(data, time == 0 ? new Date().getTime() : time));
-        return this;
-    }
-
-    @Contract("_, _, _ -> this")
-    public NekoMaid addStaticFiles(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull JarFile jarFile, @NotNull String path) {
-        var iterator = jarFile.entries();
-        while (iterator.hasMoreElements()) {
-            var it = iterator.nextElement();
-            var name = it.getName();
-            if (name.startsWith(path) && !it.isDirectory()) {
-                try (var is = jarFile.getInputStream(it)) {
-                    path = name.substring(path.length());
-                    pluginStaticFiles.put(plugin.getName() + (path.startsWith("/") ? path : "/" + path),
-                            new AbstractMap.SimpleEntry<>(is.readAllBytes(), it.getTime()));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return this;
-    }
-
     @NotNull
     public List<Client> getAllClients(@NotNull org.bukkit.plugin.Plugin plugin) {
-        return server.getAllClients().stream().map(it -> new Client(plugin, it)).toList();
+        return server.getAllClients().stream().map(it -> new Client(plugin, it)).collect(Collectors.toList());
     }
 
     @EventHandler
     public void onPluginDisable(PluginDisableEvent e) {
-        var name = e.getPlugin().getName();
+        String name = e.getPlugin().getName();
         pluginPages.remove(name);
-        var list = pluginEventNames.get(e.getPlugin());
+        Collection<String> list = pluginEventNames.get(e.getPlugin());
         if (list != null) {
             list.forEach(server::removeAllListeners);
             pluginEventNames.removeAll(e.getPlugin());
         }
-        var name2 = name + "/";
-        pluginStaticFiles.keySet().removeIf(s -> s.startsWith(name2));
-        var name3 = name + ":";
+        String name2 = name + ":";
         server.getAllClients().forEach(it -> it.getAllRooms().forEach(r -> {
-            if (r.startsWith(name3)) it.leaveRoom(r);
+            if (r.startsWith(name2)) it.leaveRoom(r);
         }));
     }
 }

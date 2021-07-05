@@ -38,7 +38,11 @@ final class Console implements Appender {
 
     @Override
     public void append(LogEvent e) {
-        var obj = new Log(serializer.toSerializable(e), e.getLevel().name(), e.getLoggerName(), e.getTimeMillis());
+        Log obj = new Log();
+        obj.msg = serializer.toSerializable(e);
+        obj.level = e.getLevel().name();
+        obj.logger = e.getLoggerName();
+        obj.time = e.getTimeMillis();
         queue.add(obj);
         room.emit("console:log", obj);
     }
@@ -94,5 +98,8 @@ final class Console implements Appender {
         return false;
     }
 
-    private static final record Log(String msg, String level, String logger, long time) { }
+    private static class Log {
+        public String msg, level, logger;
+        public long time;
+    }
 }
