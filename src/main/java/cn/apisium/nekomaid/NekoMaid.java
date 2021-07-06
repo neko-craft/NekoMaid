@@ -16,6 +16,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.annotation.command.Command;
 import org.bukkit.plugin.java.annotation.command.Commands;
 import org.bukkit.plugin.java.annotation.dependency.Dependency;
+import org.bukkit.plugin.java.annotation.dependency.SoftDependency;
 import org.bukkit.plugin.java.annotation.permission.Permission;
 import org.bukkit.plugin.java.annotation.permission.Permissions;
 import org.bukkit.plugin.java.annotation.plugin.*;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
 @Commands(@Command(name = "nekomaid", permission = "neko.maid.use", desc = "Can use NekoMaid.", aliases = "nm"))
 @Permissions(@Permission(name = "neko.maid.use"))
 @Dependency("Uniporter")
+@SoftDependency("PlugMan")
 public final class NekoMaid extends JavaPlugin implements Listener {
     public static NekoMaid INSTANCE;
 
@@ -160,6 +162,26 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     @Contract("_, _, _, _ -> this")
     public <T, R> NekoMaid onWithAck(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull Function<T, R> listener) {
         mainNamespace.addEventListener(plugin.getName() + ":" + eventName, eventClass, (a, b, c) -> c.sendAckData(listener.apply(b)));
+        pluginEventNames.put(plugin, eventName);
+        return this;
+    }
+
+    @Contract("_, _, _, _ -> this")
+    public <T> NekoMaid onWithAck(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull Consumer<T> listener) {
+        mainNamespace.addEventListener(plugin.getName() + ":" + eventName, eventClass, (a, b, c) -> {
+            listener.accept(b);
+            c.sendAckData();
+        });
+        pluginEventNames.put(plugin, eventName);
+        return this;
+    }
+
+    @Contract("_, _, _ -> this")
+    public NekoMaid onWithAck(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @NotNull Runnable listener) {
+        mainNamespace.addEventListener(plugin.getName() + ":" + eventName, null, (a, b, c) -> {
+            listener.run();
+            c.sendAckData();
+        });
         pluginEventNames.put(plugin, eventName);
         return this;
     }

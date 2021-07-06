@@ -1,13 +1,13 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
+import com.rylinaux.plugman.util.PluginUtil;
 import org.apache.commons.lang.ObjectUtils;
-import org.bukkit.plugin.InvalidDescriptionException;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.SimplePluginManager;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,17 +16,33 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 final class Plugins {
+    private final static boolean HAS_PLUGMAN;
+    private final static SimplePluginManager pm = (SimplePluginManager) Bukkit.getPluginManager();
+    private final static Path pluginsDir = ((File) ObjectUtils.defaultIfNull(pm.pluginsDirectory(),
+            new File("plugins"))).toPath();
+
+    private final NekoMaid main;
+
+    static {
+        boolean flag = false;
+        try {
+            Class.forName("com.rylinaux.plugman.util.PluginUtil");
+            flag = true;
+        } catch (Exception ignored) { }
+        HAS_PLUGMAN = flag;
+    }
+
     private final static class PluginInfo {
         public String name, description, author, version, website, file;
-        public boolean enabled;
+        public boolean enabled, loaded;
         @SuppressWarnings("unused")
         public PluginInfo() { }
-        public PluginInfo(PluginDescriptionFile desc, String file, boolean enabled) {
+        public PluginInfo(PluginDescriptionFile desc, String file, boolean enabled, boolean loaded) {
             this(desc.getName(), desc.getDescription(), String.join(", ", desc.getAuthors()), desc.getVersion(),
-                    desc.getWebsite(), file, enabled);
+                    desc.getWebsite(), file, enabled, loaded);
         }
         public PluginInfo(String name, String description, String author, String version, String website, String file,
-                          boolean enabled) {
+                          boolean enabled, boolean loaded) {
             this.name = name;
             this.description = description;
             this.version = version;
@@ -34,11 +50,15 @@ final class Plugins {
             this.website = website;
             this.file = file;
             this.enabled = enabled;
+            this.loaded = loaded;
         }
     }
+    private final static class PluginsInfo {
+        public ArrayList<PluginInfo> plugins;
+        public boolean canLoadPlugin;
+    }
     public Plugins(NekoMaid main) {
-        SimplePluginManager pm = (SimplePluginManager) main.getServer().getPluginManager();
-        Path dir = ((File) ObjectUtils.defaultIfNull(pm.pluginsDirectory(), new File("plugins"))).toPath();
+        this.main = main;
         main.onWithAck(main, "plugins:fetch", () -> {
             ArrayList<PluginInfo> list = new ArrayList<>();
             HashSet<Path> files = new HashSet<>();
@@ -48,19 +68,80 @@ final class Plugins {
                             .getLocation().getPath(), "UTF-8"));
                     PluginDescriptionFile desc = it.getDescription();
                     files.add(path);
-                    list.add(new PluginInfo(desc, path.getFileName().toString(), it.isEnabled()));
+                    list.add(new PluginInfo(desc, path.getFileName().toString(), it.isEnabled(), true));
                 }
-                Files.list(dir)
+                Files.list(pluginsDir)
                         .filter(it -> (it.endsWith(".jar") || it.endsWith(".jar.disabled")) &&
                                 Files.isRegularFile(it) && !files.contains(it))
                         .forEach(it -> {
                             try {
                                 list.add(new PluginInfo(main.getPluginLoader().getPluginDescription(it.toFile()),
-                                        it.getFileName().toString(), false));
+                                        it.getFileName().toString(), false, false));
                             } catch (InvalidDescriptionException ignored) { }
                         });
             } catch (Exception ignored) { }
-            return list;
+            PluginsInfo info = new PluginsInfo();
+            info.plugins = list;
+            info.canLoadPlugin = HAS_PLUGMAN;
+            return info;
+        }).onWithAck(main, "files:enable", String.class, it -> {
+            Plugin p = Bukkit.getPluginManager().getPlugin(it);
+            if (p == null) return false;
+            if (p.isEnabled()) pm.disablePlugin(p);
+            else pm.enablePlugin(p);
+            return true;
+        }).onWithAck(main, "files:disableForever", String[].class, arr -> {
+            try {
+                Path file = pluginsDir.resolve(arr[1]);
+                if (!file.startsWith(pluginsDir) || !Files.isRegularFile(file)) return false;
+                if (arr[1].endsWith(".jar")) {
+                    Plugin pl = getPlugin(arr[1]);
+                    if (pl != null) {
+                        if (!HAS_PLUGMAN) return false;
+                        PluginUtil.unload(pl);
+                    }
+                    Files.move(file, pluginsDir.resolve(arr[1] + ".disabled"));
+                } else Files.move(file, pluginsDir.resolve(arr[1].replaceAll("\\.disabled$", "")));
+                return true;
+            } catch (Exception ignored) {
+                return false;
+            }
+        }).onWithAck(main, "files:load", String.class, it -> {
+            if (!HAS_PLUGMAN) return false;
+            try {
+                Plugin pl = getPlugin(it);
+                if (pl == null) PluginUtil.load(it);
+                else PluginUtil.unload(pl);
+                return true;
+            } catch (Exception ignored) {
+                return false;
+            }
+        }).onWithAck(main, "files:delete", String.class, it -> {
+            try {
+                Path file = pluginsDir.resolve(it);
+                if (!file.startsWith(pluginsDir) || !Files.isRegularFile(file)) return false;
+                if (it.endsWith(".jar")) {
+                    Plugin pl = getPlugin(it);
+                    if (pl != null) {
+                        if (!HAS_PLUGMAN) return false;
+                        PluginUtil.unload(pl);
+                    }
+                }
+                Files.delete(file);
+                return true;
+            } catch (Exception ignored) {
+                return false;
+            }
         });
+    }
+
+    private Plugin getPlugin(String it) throws Exception {
+        Path file = pluginsDir.resolve(it);
+        if (!file.startsWith(pluginsDir) || !Files.isRegularFile(file)) throw new IOException("This path is not a regular file!");
+        if (it.endsWith(".disabled")) Files.move(file, pluginsDir.resolve(it.replaceAll("\\.disabled$", "")));
+        if (!it.endsWith(".jar")) throw new IOException("This path is not a jar file!");
+        File f = file.toFile();
+        String name = main.getPluginLoader().getPluginDescription(f).getName();
+        return pm.getPlugin(name);
     }
 }
