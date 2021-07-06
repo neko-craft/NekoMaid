@@ -11,6 +11,7 @@ public final class BuiltinPlugins {
         console = new Console(main);
         new PlayerList(main);
         new FilesManager(main);
+        main.getServer().getScheduler().runTask(main, () -> new Plugins(main));
     }
     public void disable() {
         console.stop();

@@ -70,6 +70,17 @@ class FilesManager {
             } catch (Exception ignored) {
                 return false;
             }
+        }).onWithAck(main, "files:rename", String[].class, it -> {
+            if (it == null || it.length != 2) return false;
+            Path p0 = Paths.get(".", it[0]), p1 = Paths.get(".", it[1]);
+            if (!p0.startsWith(root) || !Files.exists(p0)) return false;
+            try {
+                if (Files.isSameFile(p0, p1) || Files.isSameFile(root, p1) || Files.isSameFile(root, p0)) return false;
+                Files.move(p0, p1);
+                return true;
+            } catch (Exception ignored) {
+                return false;
+            }
         });
     }
 }

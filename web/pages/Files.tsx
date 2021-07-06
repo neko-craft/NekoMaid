@@ -349,6 +349,23 @@ const Files: React.FC = () => {
         refresh()
         setAnchorEl(null)
       }}><ListItemIcon><Refresh /></ListItemIcon>刷新</MenuItem>
+      <MenuItem disabled={!curPath} onClick={() => {
+        setAnchorEl(null)
+        dialog({
+          title: '重命名',
+          content: '请输入您想要的新文件名:',
+          input: {
+            error: true,
+            helperText: '文件名不合法!',
+            validator: validFilename,
+            InputProps: { startAdornment: <InputAdornment position='start'>{dirPath}/</InputAdornment> }
+          }
+        }).then(it => it != null && plugin.emit('files:rename', [curPath, dirPath + '/' + it], res => {
+          if (!res) return toast('操作失败!', 'error')
+          toast('操作成功!', 'success')
+          refresh()
+        }))
+      }}><ListItemIcon><Refresh /></ListItemIcon>重命名</MenuItem>
       <MenuItem disabled><ListItemIcon><Upload /></ListItemIcon>上载文件</MenuItem>
       <MenuItem disabled><ListItemIcon><Download /></ListItemIcon>下传文件</MenuItem>
     </Menu>

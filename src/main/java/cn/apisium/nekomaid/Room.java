@@ -23,7 +23,7 @@ public final class Room {
     }
 
     private BroadcastOperations getRoom() {
-        BroadcastOperations room = NekoMaid.INSTANCE.server.getRoomOperations(roomName);
+        BroadcastOperations room = NekoMaid.INSTANCE.mainNamespace.getRoomOperations(roomName);
         return room.getClients().isEmpty() ? null : room;
     }
 
@@ -57,7 +57,7 @@ public final class Room {
 
     @NotNull
     public List<Client> getClients() {
-        return NekoMaid.INSTANCE.server.getRoomOperations(roomName).getClients().stream()
+        return NekoMaid.INSTANCE.mainNamespace.getRoomOperations(roomName).getClients().stream()
                 .map(it -> new Client(plugin, it)).collect(Collectors.toList());
     }
 }
