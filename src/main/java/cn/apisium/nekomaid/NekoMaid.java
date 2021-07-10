@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.*;
@@ -71,8 +72,10 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
         engineIoServer = new EngineIoServer();
         io = new SocketIoServer(engineIoServer).namespace("/");
         try {
-            mRoomSockets = (Map<String, Set<SocketIoSocket>>) SocketIoAdapter.class
-                    .getDeclaredField("mRoomSockets").get(io.getAdapter());
+            Field field = SocketIoAdapter.class.getDeclaredField("mRoomSockets");
+            field.setAccessible(true);
+            mRoomSockets = (Map<String, Set<SocketIoSocket>>) field.get(io.getAdapter());
+            System.out.println(mRoomSockets);
         } catch (Exception e) {
             e.printStackTrace();
             setEnabled(false);
@@ -147,14 +150,15 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
 
     @Override
     public void onDisable() {
+        Uniporter.removeHandler("NekoMaid");
         pages.clear();
         connectListeners.clear();
         if (engineIoServer != null) engineIoServer.shutdown();
         if (plugins != null) plugins.disable();
-        mRoomSockets = null;
     }
 
     public int getClientsCountInRoom(@NotNull String room) {
+        if (mRoomSockets == null) return 0;
         Set<SocketIoSocket> set = mRoomSockets.get(room);
         return set == null ? 0 : set.size();
     }

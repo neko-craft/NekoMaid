@@ -46,8 +46,10 @@ dependencies {
         exclude group: 'org.json'
     }
     implementation ('io.socket:socket.io-server:3.0.1') {
+        exclude group: 'org.json'
+        exclude group: 'com.squareup.okhttp3'
         exclude group: 'io.socket', module: 'engine.io-server'
-        exclude group: 'io.socket', module: 'socket.io-client'
+        exclude group: 'io.socket', module: 'engine.io-client'
     }
 
     annotationProcessor 'org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT'

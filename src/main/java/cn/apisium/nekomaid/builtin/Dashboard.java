@@ -10,8 +10,8 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -44,10 +44,12 @@ final class Dashboard {
     public Dashboard(NekoMaid main) {
         Path file = new File(main.getDataFolder(), "status.json").toPath();
         try {
-            if (!Files.exists(file)) Files.write(file, "[]".getBytes());
+            if (!Files.exists(file)) Files.write(file, "[]".getBytes(StandardCharsets.UTF_8));
             Status[] arr = new Gson().fromJson(Files.newBufferedReader(file), Status[].class);
-            if (arr.length > 0) last = arr[arr.length - 1];
-            queue.addAll(Arrays.asList(arr));
+            if (arr != null) {
+                if (arr.length > 0) last = arr[arr.length - 1];
+                queue.addAll(Arrays.asList(arr));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -69,8 +71,8 @@ final class Dashboard {
             last.chunks = chunks;
             queue.add(last);
             try {
-                new Gson().toJson(queue, Files.newBufferedWriter(file));
-            } catch (IOException e) {
+                Files.write(file, new Gson().toJson(queue.toArray(), Status[].class).getBytes(StandardCharsets.UTF_8));
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }, 0, 20 * 60 * 60);
