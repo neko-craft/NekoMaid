@@ -1,13 +1,19 @@
 package cn.apisium.nekomaid;
 
 import cn.apisium.nekomaid.builtin.BuiltinPlugins;
+import cn.apisium.netty.engineio.EngineIoHandler;
 import cn.apisium.uniporter.Uniporter;
-import com.corundumstudio.socketio.*;
-import com.corundumstudio.socketio.namespace.Namespace;
-import com.corundumstudio.socketio.namespace.NamespacesHub;
-import com.corundumstudio.socketio.protocol.JacksonJsonSupport;
+import cn.apisium.uniporter.router.api.Route;
+import cn.apisium.uniporter.router.api.UniporterHttpHandler;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
+import io.socket.engineio.server.EngineIoServer;
+import io.socket.socketio.server.SocketIoAdapter;
+import io.socket.socketio.server.SocketIoNamespace;
+import io.socket.socketio.server.SocketIoServer;
+import io.socket.socketio.server.SocketIoSocket;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -26,10 +32,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.*;
-import java.util.stream.Collectors;
 
-@SuppressWarnings({"unused", "UnusedReturnValue"})
+@SuppressWarnings({"UnusedReturnValue", "unused"})
 @Plugin(name = "NekoMaid", version = "1.0")
 @Description("A plugin can use Web to manage your server.")
 @Author("Shirasawa")
@@ -39,21 +45,22 @@ import java.util.stream.Collectors;
 @Permissions(@Permission(name = "neko.maid.use"))
 @Dependency("Uniporter")
 @SoftDependency("PlugMan")
-public final class NekoMaid extends JavaPlugin implements Listener {
+public final class NekoMaid extends JavaPlugin implements Listener, UniporterHttpHandler {
     public static NekoMaid INSTANCE;
-
-    private final Multimap<org.bukkit.plugin.Plugin, String> pluginEventNames = ArrayListMultimap.create();
-    private final HashMap<String, HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>>> pluginPages = new HashMap<>();
-
-    private BuiltinPlugins plugins;
-
     { INSTANCE = this; }
 
-    private static class PageSwitch { public String page, namespace; }
-    private Handler handler;
-    protected SocketIONamespace mainNamespace;
+    private final ArrayListMultimap<org.bukkit.plugin.Plugin, Consumer<Client>> connectListeners = ArrayListMultimap.create();
+    private final HashMap<String, HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>,
+            Consumer<Client>>>> pluginPages = new HashMap<>();
 
-    @SuppressWarnings("ConstantConditions")
+    private BuiltinPlugins plugins;
+    private EngineIoServer engineIoServer;
+    private final ConcurrentHashMap<SocketIoSocket, String[]> pages = new ConcurrentHashMap<>();
+    private final HashMap<SocketIoSocket, HashMap<String, Client>> clients = new HashMap<>();
+    protected SocketIoNamespace io;
+    protected Map<String, Set<SocketIoSocket>> mRoomSockets;
+
+    @SuppressWarnings({"ConstantConditions", "unchecked"})
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -61,41 +68,55 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             getConfig().set("token", UUID.randomUUID().toString());
             saveConfig();
         }
-        final Configuration config = new Configuration();
-        config.setJsonSupport(new JacksonJsonSupport());
-        config.setAuthorizationListener(it -> {
-            System.out.println(it.getSingleUrlParam("token"));
-            return getConfig().getString("token", "").equals(it.getSingleUrlParam("token"));
-        });
-        NamespacesHub namespacesHub = new NamespacesHub(config);
-        mainNamespace = namespacesHub.create(Namespace.DEFAULT_NAME);
-        handler = new Handler(config, namespacesHub);
-        mainNamespace.addConnectListener(it -> {
+        engineIoServer = new EngineIoServer();
+        io = new SocketIoServer(engineIoServer).namespace("/");
+        try {
+            mRoomSockets = (Map<String, Set<SocketIoSocket>>) SocketIoAdapter.class
+                    .getDeclaredField("mRoomSockets").get(io.getAdapter());
+        } catch (Exception e) {
+            e.printStackTrace();
+            setEnabled(false);
+            return;
+        }
+        io.on("connection", arr -> {
+            SocketIoSocket client = (SocketIoSocket) arr[0];
+            if (!getConfig().getString("token", "").equals(client.getInitialQuery().get("token"))) {
+                client.disconnect(true);
+                return;
+            }
             HashMap<String, Object> map = new HashMap<>();
             map.put("version", getServer().getVersion());
             map.put("onlineMode", getServer().getOnlineMode());
             map.put("hasWhitelist", getServer().hasWhitelist());
-            it.sendEvent("globalData", map);
-        });
-        mainNamespace.addEventListener("switchPage", PageSwitch.class, (a, b, c) -> {
-            PageSwitch oldPageObj = a.get("page");
-            Client client = null;
-            if (oldPageObj != null) {
-                a.leaveRoom(oldPageObj.namespace + ":page:" + oldPageObj.page);
-                HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>> oldPages = pluginPages.get(oldPageObj.namespace);
-                if (oldPages != null) {
-                    AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>> oldPage = oldPages.get(oldPageObj.page);
-                    if (oldPage != null && oldPage.getValue() != null) oldPage.getValue().accept(client = new Client(b.namespace + ":", a));
+            client.send("globalData", map);
+            client.once("disconnect", args -> {
+                pages.remove(client);
+                clients.remove(client);
+            }).on("switchPage", args -> {
+                String[] oldPageObj = pages.get(client);
+                Client wrappedClient = null;
+                if (oldPageObj != null) {
+                    client.leaveRoom(oldPageObj[0] + ":page:" + oldPageObj[1]);
+                    HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>> oldPages =
+                            pluginPages.get(oldPageObj[0]);
+                    if (oldPages != null) {
+                        AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>> oldPage = oldPages.get(oldPageObj[1]);
+                        if (oldPage != null && oldPage.getValue() != null) oldPage.getValue()
+                                .accept(wrappedClient = getClient(oldPageObj[0], client));
+                    }
                 }
-            }
-            a.set("page", b);
-            a.joinRoom(b.namespace + ":page:" + b.page);
-            HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>> pages = pluginPages.get(b.namespace);
-            if (pages == null) return;
-            AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>> page = pages.get(b.page);
-            if (page != null && page.getKey() != null) page.getKey().accept(client == null ? new Client(b.namespace + ":", a) : client);
+                String namespace = (String) args[0], page = (String) args[1];
+                pages.put(client, new String[]{ namespace, page });
+                client.joinRoom(namespace + ":page:" + page);
+                HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>> pages = pluginPages.get(namespace);
+                if (pages == null) return;
+                AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>> pageAction = pages.get(page);
+                if (pageAction != null && pageAction.getKey() != null) pageAction.getKey()
+                        .accept(wrappedClient == null ? getClient(namespace, client) : wrappedClient);
+            });
+            connectListeners.forEach((k, v) -> v.accept(getClient(k, client)));
         });
-        Uniporter.registerHandler("NekoMaid", handler, true);
+        Uniporter.registerHandler("NekoMaid", this, true);
 
         plugins = new BuiltinPlugins(this);
 
@@ -103,179 +124,96 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         getCommand("nekomaid").setExecutor(this);
     }
 
+    public int getClientsCount() { return clients.size(); }
+
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
+        context.channel().pipeline()
+                .addLast(new WebSocketServerCompressionHandler())
+                .addLast(new EngineIoHandler(engineIoServer, null));
+    }
+
+    @Override
+    public boolean needReFire() {
+        return true;
+    }
+
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command command,
+                             @NotNull String label, @NotNull String[] args) {
         new RuntimeException("@33").printStackTrace();
-         return true;
+        return true;
     }
 
     @Override
     public void onDisable() {
-        handler.stop();
-        plugins.disable();
+        pages.clear();
+        connectListeners.clear();
+        if (engineIoServer != null) engineIoServer.shutdown();
+        if (plugins != null) plugins.disable();
+        mRoomSockets = null;
     }
 
-    @Contract("_, _, _, _ -> this")
-    public NekoMaid emitToAll(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String name, @NotNull SocketIOClient excludedClient, @NotNull Object... data) {
-        if (!mainNamespace.getAllClients().isEmpty()) mainNamespace.getBroadcastOperations().sendEvent(plugin.getName() + ":" + name, excludedClient, data);
-        return this;
-    }
-    @Contract("_, _, _ -> this")
-    public NekoMaid emitToAll(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String name, @NotNull Object... data) {
-        if (!mainNamespace.getAllClients().isEmpty()) mainNamespace.getBroadcastOperations().sendEvent(plugin.getName() + ":" + name, data);
-        return this;
-    }
-    @Contract("_, _, _, _, _ -> this")
-    public <T> NekoMaid emitToAll(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String name, @NotNull Object data, @NotNull SocketIOClient excludedClient, @NotNull BroadcastAckCallback<T> ackCallback) {
-        if (!mainNamespace.getAllClients().isEmpty()) mainNamespace.getBroadcastOperations().sendEvent(plugin.getName() + ":" + name, data, excludedClient, ackCallback);
-        return this;
-    }
-    @Contract("_, _, _, _ -> this")
-    public <T> NekoMaid emitToAll(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String name, @NotNull Object data, @NotNull BroadcastAckCallback<T> ackCallback) {
-        if (!mainNamespace.getAllClients().isEmpty()) mainNamespace.getBroadcastOperations().sendEvent(plugin.getName() + ":" + name, data, ackCallback);
-        return this;
-    }
-
-    @Contract("_, _, _, _, _ -> this")
-    public <T> NekoMaid emit(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String name, @NotNull SocketIOClient client, @Nullable ACKCallback<T> ackCallback, @Nullable Object... data) {
-        client.sendEvent(plugin.getName() + ":" + name, ackCallback, data);
-        return this;
-    }
-    @Contract("_, _, _, _, _ -> this")
-    public <T> NekoMaid emit(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String name, @NotNull SocketIOClient client, @NotNull Runnable ackCallback, @Nullable Object... data) {
-        client.sendEvent(plugin.getName() + ":" + name, new VoidAckCallback() {
-            @Override
-            protected void onSuccess() { ackCallback.run(); }
-        }, data);
-        return this;
-    }
-    @Contract("_, _, _, _ -> this")
-    public NekoMaid emit(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String name, @NotNull SocketIOClient client, @Nullable Object... data) {
-        client.sendEvent(plugin.getName() + ":" + name, data);
-        return this;
-    }
-
-    public @NotNull Room getRoom(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String name) {
-        return new Room(plugin, name);
-    }
-
-    @Contract("_, _, _, _ -> this")
-    public <T, R> NekoMaid onWithAck(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull Function<T, R> listener) {
-        mainNamespace.addEventListener(plugin.getName() + ":" + eventName, eventClass, (a, b, c) -> c.sendAckData(listener.apply(b)));
-        pluginEventNames.put(plugin, eventName);
-        return this;
-    }
-
-    @Contract("_, _, _, _ -> this")
-    public <T> NekoMaid onWithAck(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull Consumer<T> listener) {
-        mainNamespace.addEventListener(plugin.getName() + ":" + eventName, eventClass, (a, b, c) -> {
-            listener.accept(b);
-            c.sendAckData();
-        });
-        pluginEventNames.put(plugin, eventName);
-        return this;
+    public int getClientsCountInRoom(@NotNull String room) {
+        Set<SocketIoSocket> set = mRoomSockets.get(room);
+        return set == null ? 0 : set.size();
     }
 
     @Contract("_, _, _ -> this")
-    public NekoMaid onWithAck(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @NotNull Runnable listener) {
-        mainNamespace.addEventListener(plugin.getName() + ":" + eventName, null, (a, b, c) -> {
-            listener.run();
-            c.sendAckData();
-        });
-        pluginEventNames.put(plugin, eventName);
-        return this;
-    }
-
-    @Contract("_, _, _ -> this")
-    public NekoMaid onWithAck(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @NotNull Supplier<?> listener) {
-        mainNamespace.addEventListener(plugin.getName() + ":" + eventName, null, (a, b, c) -> c.sendAckData(listener.get()));
-        pluginEventNames.put(plugin, eventName);
+    public NekoMaid broadcast(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String name, @NotNull Object... data) {
+        if (!clients.isEmpty()) io.broadcast((String) null, plugin.getName() + ":" + name, data);
         return this;
     }
 
     @Contract("_, _, _, _ -> this")
-    public <T, R> NekoMaid onWithAck(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull BiFunction<Client, T, R> listener) {
-        mainNamespace.addEventListener(plugin.getName() + ":" + eventName, eventClass, (a, b, c) -> c.sendAckData(listener.apply(new Client(plugin, a), b)));
-        pluginEventNames.put(plugin, eventName);
+    public NekoMaid broadcast(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String room,
+                              @NotNull String name, @NotNull Object... data) {
+
+        if (getClientsCountInRoom(room) != 0) io.broadcast(room, plugin.getName() + ":" + name, data);
         return this;
     }
 
-    @Contract("_, _, _, _ -> this")
-    public <T> NekoMaid on(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull DataListener<T> listener) {
-        mainNamespace.addEventListener(plugin.getName() + ":" + eventName, eventClass, (a, b, c) -> listener.onData(new Client(plugin, a), b, c));
-        pluginEventNames.put(plugin, eventName);
-        return this;
+    private Client getClient(org.bukkit.plugin.Plugin plugin, SocketIoSocket client) {
+        return getClient(plugin.getName(), client);
     }
 
-    @Contract("_, _, _, _ -> this")
-    public <T> NekoMaid on(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull BiConsumer<Client, T> listener) {
-        mainNamespace.addEventListener(plugin.getName() + ":" + eventName, eventClass, (a, b, c) -> listener.accept(new Client(plugin, a), b));
-        pluginEventNames.put(plugin, eventName);
-        return this;
-    }
-
-    @Contract("_, _, _, _ -> this")
-    public <T, R> NekoMaid on(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull Consumer<T> listener) {
-        mainNamespace.addEventListener(plugin.getName() + ":" + eventName, eventClass, (a, b, c) -> listener.accept(b));
-        pluginEventNames.put(plugin, eventName);
-        return this;
-    }
-
-    @Contract("_, _, _, _ -> this")
-    public <T> NekoMaid on(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @Nullable Class<T> eventClass, @NotNull Runnable listener) {
-        mainNamespace.addEventListener(plugin.getName() + ":" + eventName, null, (a, b, c) -> listener.run());
-        pluginEventNames.put(plugin, eventName);
-        return this;
+    private Client getClient(String plugin, SocketIoSocket client) {
+        return clients.computeIfAbsent(client, (a) -> new HashMap<>())
+                .computeIfAbsent(plugin, (a) -> new Client(plugin, client));
     }
 
     @Contract("_, _ -> this")
-    public NekoMaid off(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName) {
-        mainNamespace.removeAllListeners(plugin.getName() + ":" + eventName);
-        pluginEventNames.remove(plugin, eventName);
+    public NekoMaid onConnected(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull Consumer<Client> fn) {
+        Objects.requireNonNull(plugin);
+        Objects.requireNonNull(fn);
+        connectListeners.put(plugin, fn);
         return this;
     }
 
     @Contract("_, _, _ -> this")
-    public NekoMaid on(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String eventName, @NotNull DataListener<Void> listener) {
-        mainNamespace.addEventListener(plugin.getName() + ":" + eventName, null, (a, b, c) -> listener.onData(new Client(plugin, a), null, c));
-        pluginEventNames.put(plugin, eventName);
-        return this;
-    }
-
     @NotNull
-    public Room onSwitchPage(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String page, @Nullable Consumer<Client> onEnter) {
+    public NekoMaid onSwitchPage(@NotNull org.bukkit.plugin.Plugin plugin,
+                             @NotNull String page, @Nullable Consumer<Client> onEnter) {
         return onSwitchPage(plugin, page, onEnter, null);
     }
 
+    @Contract("_, _, _, _ -> this")
     @NotNull
-    public Room onSwitchPage(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String page, @Nullable Consumer<Client> onEnter, @Nullable Consumer<Client> onLeave) {
+    public NekoMaid onSwitchPage(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String page,
+                             @Nullable Consumer<Client> onEnter, @Nullable Consumer<Client> onLeave) {
+        Objects.requireNonNull(plugin);
+        Objects.requireNonNull(page);
         if (onEnter != null || onLeave != null)
-            pluginPages.computeIfAbsent(plugin.getName(), k -> new HashMap<>()).computeIfAbsent(page, k -> new AbstractMap.SimpleEntry<>(onEnter, onLeave));
-        return getPage(plugin, page);
-    }
-
-    @NotNull
-    public Room getPage(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String page) {
-        return new Room(plugin, "page:" + page);
-    }
-
-    @NotNull
-    public List<Client> getAllClients(@NotNull org.bukkit.plugin.Plugin plugin) {
-        return mainNamespace.getAllClients().stream().map(it -> new Client(plugin, it)).collect(Collectors.toList());
+            pluginPages.computeIfAbsent(plugin.getName(), k -> new HashMap<>())
+                    .computeIfAbsent(page, k -> new AbstractMap.SimpleEntry<>(onEnter, onLeave));
+        return this;
     }
 
     @EventHandler
     public void onPluginDisable(PluginDisableEvent e) {
         String name = e.getPlugin().getName();
         pluginPages.remove(name);
-        Collection<String> list = pluginEventNames.get(e.getPlugin());
-        if (list != null) {
-            list.forEach(mainNamespace::removeAllListeners);
-            pluginEventNames.removeAll(e.getPlugin());
-        }
-        String name2 = name + ":";
-        mainNamespace.getAllClients().forEach(it -> it.getAllRooms().forEach(r -> {
-            if (r.startsWith(name2)) it.leaveRoom(r);
-        }));
+        clients.forEach((k, v) -> v.forEach((a, b) -> b.off()));
+        connectListeners.removeAll(e.getPlugin());
     }
 }

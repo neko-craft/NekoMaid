@@ -1,10 +1,9 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
-import cn.apisium.nekomaid.Room;
 import cn.apisium.nekomaid.Utils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.EvictingQueue;
+import com.google.gson.Gson;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.World;
@@ -14,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -23,10 +23,8 @@ final class Dashboard {
     private final static Runtime runtime = Runtime.getRuntime();
     private final static long startTime = ManagementFactory.getRuntimeMXBean().getStartTime();
     private final EvictingQueue<Status> queue = EvictingQueue.create(24 * 3);
-    private final ObjectMapper mapper = new ObjectMapper();
     private Status last;
     private CurrentStatus current;
-    private Room room;
 
     private final static class Status {
         public long time;
@@ -43,10 +41,11 @@ final class Dashboard {
     }
 
     @SuppressWarnings("deprecation")
-    public Dashboard(NekoMaid main, File file) {
+    public Dashboard(NekoMaid main) {
+        Path file = new File(main.getDataFolder(), "status.json").toPath();
         try {
-            if (!file.exists()) Files.write(file.toPath(), "[]".getBytes());
-            Status[] arr = mapper.readValue(file, Status[].class);
+            if (!Files.exists(file)) Files.write(file, "[]".getBytes());
+            Status[] arr = new Gson().fromJson(Files.newBufferedReader(file), Status[].class);
             if (arr.length > 0) last = arr[arr.length - 1];
             queue.addAll(Arrays.asList(arr));
         } catch (Exception e) {
@@ -70,25 +69,25 @@ final class Dashboard {
             last.chunks = chunks;
             queue.add(last);
             try {
-                mapper.writeValue(file, queue);
+                new Gson().toJson(queue, Files.newBufferedWriter(file));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }, 0, 20 * 60 * 60);
         refresh();
-        room = main.onWithAck(main, "dashboard:kick", String[].class, it -> {
-            Player p = main.getServer().getPlayerExact(it[0]);
-            if (p == null) return false;
-            main.getServer().getScheduler().runTask(main, () -> p.kickPlayer(it[1]));
-            return true;
-        }).onSwitchPage(main, "dashboard", it -> {
-            if (room == null || room.getClients().size() == 1) refresh();
+        main.onSwitchPage(main, "dashboard", it -> {
+            if (main.getClientsCountInRoom("dashboard") != 0) refresh();
             it.emit("dashboard:info", queue).emit("dashboard:current", current);
-        });
+        }).onConnected(main, client -> client.onWithAck("dashboard:kick", args -> {
+            Player p = main.getServer().getPlayerExact((String) args[0]);
+            if (p == null) return false;
+            main.getServer().getScheduler().runTask(main, () -> p.kickPlayer((String) args[1]));
+            return true;
+        }));
         s.getScheduler().runTaskTimerAsynchronously(main, () -> {
-            if (room.getClients().isEmpty()) return;
+            if (main.getClientsCountInRoom("dashboard") == 0) return;
             refresh();
-            room.emit("dashboard:current", current);
+            main.broadcast(main, "dashboard:current", "dashboard", current);
         }, 0, 10 * 20);
     }
 

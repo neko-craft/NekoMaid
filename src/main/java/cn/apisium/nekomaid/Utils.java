@@ -71,7 +71,8 @@ public final class Utils {
     public static long getPlayerLastPlayTime(@NotNull OfflinePlayer p) { return IS_PAPER ? p.getLastLogin() : p.getLastPlayed(); }
 
     @Nullable
-    public static List<String> complete(final @NotNull String buffer) {
+    public static List<String> complete(final @NotNull Object[] args) {
+        String buffer = (String) args[0];
         try {
             if (IS_PAPER) {
                 AsyncTabCompleteEvent event = new AsyncTabCompleteEvent(Bukkit.getConsoleSender(), buffer, true, null);

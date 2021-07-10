@@ -59,7 +59,7 @@ final class Plugins {
     }
     public Plugins(NekoMaid main) {
         this.main = main;
-        main.onWithAck(main, "plugins:fetch", () -> {
+        main.onConnected(main, client -> client.onWithAck("plugins:fetch", () -> {
             ArrayList<PluginInfo> list = new ArrayList<>();
             HashSet<Path> files = new HashSet<>();
             try {
@@ -84,40 +84,39 @@ final class Plugins {
             info.plugins = list;
             info.canLoadPlugin = HAS_PLUGMAN;
             return info;
-        }).onWithAck(main, "files:enable", String.class, it -> {
-            Plugin p = Bukkit.getPluginManager().getPlugin(it);
+        }).onWithAck("files:enable", it -> {
+            Plugin p = Bukkit.getPluginManager().getPlugin((String) it[0]);
             if (p == null) return false;
             if (p.isEnabled()) pm.disablePlugin(p);
             else pm.enablePlugin(p);
             return true;
-        }).onWithAck(main, "files:disableForever", String[].class, arr -> {
+        }).onWithAck("files:disableForever", args -> {
             try {
-                Path file = pluginsDir.resolve(arr[1]);
+                String it = (String) args[0];
+                Path file = pluginsDir.resolve(it);
                 if (!file.startsWith(pluginsDir) || !Files.isRegularFile(file)) return false;
-                if (arr[1].endsWith(".jar")) {
-                    Plugin pl = getPlugin(arr[1]);
+                if (it.endsWith(".jar")) {
+                    Plugin pl = getPlugin(it);
                     if (pl != null) {
                         if (!HAS_PLUGMAN) return false;
                         PluginUtil.unload(pl);
                     }
-                    Files.move(file, pluginsDir.resolve(arr[1] + ".disabled"));
-                } else Files.move(file, pluginsDir.resolve(arr[1].replaceAll("\\.disabled$", "")));
+                    Files.move(file, pluginsDir.resolve(it + ".disabled"));
+                } else Files.move(file, pluginsDir.resolve(it.replaceAll("\\.disabled$", "")));
                 return true;
-            } catch (Exception ignored) {
-                return false;
-            }
-        }).onWithAck(main, "files:load", String.class, it -> {
+            } catch (Exception ignored) { return false; }
+        }).onWithAck("files:load", args -> {
             if (!HAS_PLUGMAN) return false;
             try {
+                String it = (String) args[0];
                 Plugin pl = getPlugin(it);
                 if (pl == null) PluginUtil.load(it);
                 else PluginUtil.unload(pl);
                 return true;
-            } catch (Exception ignored) {
-                return false;
-            }
-        }).onWithAck(main, "files:delete", String.class, it -> {
+            } catch (Exception ignored) { return false; }
+        }).onWithAck("files:delete", args -> {
             try {
+                String it = (String) args[0];
                 Path file = pluginsDir.resolve(it);
                 if (!file.startsWith(pluginsDir) || !Files.isRegularFile(file)) return false;
                 if (it.endsWith(".jar")) {
@@ -132,7 +131,7 @@ final class Plugins {
             } catch (Exception ignored) {
                 return false;
             }
-        });
+        }));
     }
 
     private Plugin getPlugin(String it) throws Exception {

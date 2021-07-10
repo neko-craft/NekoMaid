@@ -35,16 +35,19 @@ dependencies {
     compileOnly 'org.jetbrains:annotations:21.0.1'
     compileOnly 'org.apache.logging.log4j:log4j-core:2.14.1'
     compileOnly 'com.rylinaux:PlugMan:2.2.3'
-    compileOnly 'com.github.Apisium:Uniporter:c6ee7aca86'
+    compileOnly 'com.github.Apisium:Uniporter:1.1-SNAPSHOT'
     compileOnly ('org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT')  {
         exclude group: 'org.bukkit'
     }
 
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.3'
-    implementation ('com.corundumstudio.socketio:netty-socketio:1.7.18') {
-        exclude group: 'org.slf4j'
-        exclude group: 'io.netty'
-        exclude group: 'com.fasterxml.jackson.core'
+    implementation 'com.github.Apisium:netty-engine.io:e2637a1f43'
+    implementation ('io.socket:engine.io-server:5.0.0') {
+        exclude group: 'com.google.code.gson'
+        exclude group: 'org.json'
+    }
+    implementation ('io.socket:socket.io-server:3.0.1') {
+        exclude group: 'io.socket', module: 'engine.io-server'
+        exclude group: 'io.socket', module: 'socket.io-client'
     }
 
     annotationProcessor 'org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT'

@@ -1,7 +1,6 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
-import cn.apisium.nekomaid.Room;
 import cn.apisium.nekomaid.Utils;
 import com.google.common.collect.EvictingQueue;
 import org.apache.logging.log4j.LogManager;
@@ -15,23 +14,26 @@ import java.io.Serializable;
 @SuppressWarnings("UnstableApiUsage")
 final class Console implements Appender {
     private ErrorHandler handler = new DefaultErrorHandler(this);
+    private final NekoMaid main;
     private final EvictingQueue<Log> queue = EvictingQueue.create(100);
-    private final Room room;
     private final AbstractStringLayout.Serializer serializer = PatternLayout.newSerializerBuilder()
             .setPattern("%msg%xEx{full}").setDisableAnsi(true).build();
 
     public Console(NekoMaid main) {
-        room = main.onSwitchPage(main, "console", client -> client.emit("console:logs", queue));
-        main
-                .onWithAck(main, "console:complete", String.class, Utils::complete)
-                .on(main, "console:run", String.class, (c, it) -> main.getServer().getScheduler()
-                        .runTask(main, () -> {
-                            main.getLogger().info(c.getAddress() + " issued server command: /" + it);
-                            try {
-                                main.getServer().dispatchCommand(main.getServer().getConsoleSender(), it);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+        this.main = main;
+        main.onSwitchPage(main, "console", client -> client.emit("console:logs", queue))
+                .onConnected(main, client -> client.onWithAck("console:complete", Utils::complete)
+                        .on("console:run", args -> {
+                            String command = (String) args[0];
+                            main.getServer().getScheduler()
+                                    .runTask(main, () -> {
+                                        main.getLogger().info("NekoMaid issued server command: /" + command);
+                                        try {
+                                            main.getServer().dispatchCommand(main.getServer().getConsoleSender(), command);
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                    });
                         }));
         ((Logger) LogManager.getRootLogger()).addAppender(this);
     }
@@ -44,7 +46,7 @@ final class Console implements Appender {
         obj.logger = e.getLoggerName();
         obj.time = e.getTimeMillis();
         queue.add(obj);
-        room.emit("console:log", obj);
+        main.broadcast(main, "console:log", "console", obj);
     }
 
     @Override

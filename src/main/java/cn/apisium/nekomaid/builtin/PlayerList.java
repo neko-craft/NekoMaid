@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class PlayerList {
+    private PlayerList() { }
     private static final class PlayerData2 {
         public String id, ban;
         public boolean whitelisted, hasPlayedBefore, isOP;
@@ -39,8 +40,9 @@ final class PlayerList {
         public int state, page;
     }
     @SuppressWarnings({"deprecation"})
-    public PlayerList(NekoMaid main) {
-        main.onWithAck(main, "playerList:fetchPage", Fetch.class, it -> {
+    public static void initPlayerList(NekoMaid main) {
+        main.onConnected(main, client -> client.onWithAck("playerList:fetchPage", args -> {
+            Fetch it = (Fetch) args[0];
             Stream<OfflinePlayer> list = Arrays.stream(main.getServer().getOfflinePlayers());
             if (it.state != 0 || it.filter != null) {
                 if (it.state == 1) list = list.filter(OfflinePlayer::isWhitelisted);
@@ -61,24 +63,24 @@ final class PlayerList {
                 pd.lastOnline = Utils.getPlayerLastPlayTime(p);
                 return pd;
             }).toArray());
-        }).on(main, "playerList:ban", String[].class, it -> {
-            String msg = it[1].isEmpty() ? null : it[1];
-            Bukkit.getBanList(BanList.Type.NAME).addBan(it[0], msg, null, "NekoMaid");
-            Player p = Bukkit.getPlayerExact(it[0]);
+        }).on("playerList:ban", it -> {
+            String msg = ((String) it[0]).isEmpty() ? null : (String) it[0];
+            Bukkit.getBanList(BanList.Type.NAME).addBan((String) it[0], msg, null, "NekoMaid");
+            Player p = Bukkit.getPlayerExact((String) it[0]);
             if (p != null) p.kickPlayer(msg);
             main.getLogger().info("Banned " + it[0] + ": " + (msg == null ? "" : msg));
-        }).on(main, "playerList:pardon", String.class, it -> {
-            Bukkit.getBanList(BanList.Type.NAME).pardon(it);
-            main.getLogger().info("Unbanned " + it);
-        }).on(main, "playerList:addWhitelist", String.class, it -> {
-            Bukkit.getOfflinePlayer(it).setWhitelisted(true);
-            main.getLogger().info("Added " + it + " to the whitelist");
-        }).on(main, "playerList:removeWhitelist", String.class, it -> {
-            Bukkit.getOfflinePlayer(it).setWhitelisted(false);
-            main.getLogger().info("Removed " + it + " from the whitelist");
-        }).onWithAck(main, "playerList:query", String.class, it -> {
-            OfflinePlayer p = Bukkit.getOfflinePlayer(it);
-            BanEntry ban = Bukkit.getBanList(BanList.Type.NAME).getBanEntry(it);
+        }).on("playerList:pardon", it -> {
+            Bukkit.getBanList(BanList.Type.NAME).pardon((String) it[0]);
+            main.getLogger().info("Unbanned " + it[0]);
+        }).on("playerList:addWhitelist", it -> {
+            Bukkit.getOfflinePlayer((String) it[0]).setWhitelisted(true);
+            main.getLogger().info("Added " + it[0] + " to the whitelist");
+        }).on("playerList:removeWhitelist", it -> {
+            Bukkit.getOfflinePlayer((String) it[0]).setWhitelisted(false);
+            main.getLogger().info("Removed " + it[0] + " from the whitelist");
+        }).onWithAck("playerList:query", it -> {
+            OfflinePlayer p = Bukkit.getOfflinePlayer((String) it[0]);
+            BanEntry ban = Bukkit.getBanList(BanList.Type.NAME).getBanEntry((String) it[0]);
             PlayerData2 d = new PlayerData2();
             d.id = p.getUniqueId().toString();
             if (ban != null) d.ban = ban.getReason();
@@ -94,6 +96,6 @@ final class PlayerList {
             d.entityKill =  p.getStatistic(Statistic.MOB_KILLS);
             d.tnt = p.getStatistic(Statistic.USE_ITEM, Material.TNT);
             return d;
-        });
+        }));
     }
 }
