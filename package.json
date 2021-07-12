@@ -6,7 +6,8 @@
   "scripts": {
     "test": "eslint",
     "start": "parcel web/index.html",
-    "generateIcons": "ts-node generateIcons.ts",
+    "generateMaterialIcons": "ts-node scripts/generateMaterialIcons.ts",
+    "generateMinecraftIcons": "ts-node scripts/generateMinecraftIcons.ts",
     "build": "parcel build web/index.html --public-url . --no-source-maps"
   },
   "targets": {
@@ -32,7 +33,7 @@
     "staticPath": [
       {
         "staticPath": "vscode-material-icon-theme/icons",
-        "staticOutDir": "dist/icons"
+        "staticOutDir": "dist/icons/material"
       },
       {
         "staticPath": "icons",
@@ -47,14 +48,11 @@
     "@material-ui/core": "^5.0.0-beta.0",
     "@material-ui/icons": "^5.0.0-beta.0",
     "@material-ui/lab": "^5.0.0-alpha.39",
-    "@parcel/transformer-less": "^2.0.0-nightly.751",
-    "babel-plugin-transform-imports": "^2.0.0",
+    "@types/yauzl": "^2.9.2",
     "chart.js": "^3.4.1",
     "codemirror": "^5.62.0",
     "dayjs": "^1.10.6",
     "lodash": "^4.17.21",
-    "parcel": "^2.0.0-nightly.763",
-    "parcel-reporter-copystatic": "^1.1.0",
     "react": "^17.0.2",
     "react-chartjs-2": "^3.0.3",
     "react-codemirror2": "^7.2.1",
@@ -62,22 +60,29 @@
     "react-router-dom": "^5.2.0",
     "skinview3d": "^2.0.1",
     "socket.io-client": "^4.1.2",
-    "ts-node": "^10.1.0",
     "typescript": "^4.3.5",
     "valid-filename": "^3.1.0"
   },
   "devDependencies": {
+    "@parcel/transformer-less": "^2.0.0-nightly.751",
     "@types/lodash": "^4.14.171",
     "@types/react": "^17.0.14",
     "@types/react-dom": "^17.0.9",
     "@types/react-router-dom": "^5.1.8",
+    "@types/request": "^2.48.6",
     "@typescript-eslint/eslint-plugin": "^4.28.2",
     "@typescript-eslint/parser": "^4.28.2",
+    "babel-plugin-transform-imports": "^2.0.0",
     "eslint": "^7.30.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
-    "eslint-plugin-react": "^7.24.0"
+    "eslint-plugin-react": "^7.24.0",
+    "nugget": "^2.0.1",
+    "parcel": "^2.0.0-nightly.763",
+    "parcel-reporter-copystatic": "^1.1.0",
+    "ts-node": "^10.1.0",
+    "yauzl": "^2.10.0"
   }
 }

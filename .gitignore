@@ -4,6 +4,7 @@
 build
 dist
 icons.json
+icons/minecraft
 
 node_modules
 .parcel-cache

@@ -1,6 +1,6 @@
 import { writeFileSync } from 'fs'
-import { folderIcons } from './vscode-material-icon-theme/src/icons/folderIcons'
-import { fileIcons } from './vscode-material-icon-theme/src/icons/fileIcons'
+import { folderIcons } from '../vscode-material-icon-theme/src/icons/folderIcons'
+import { fileIcons } from '../vscode-material-icon-theme/src/icons/fileIcons'
 
 const icons: string[] = []
 const iconsMap: Record<string, number> = { }
