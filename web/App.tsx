@@ -30,7 +30,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   const [globalData, setGlobalData] = useState({ })
   update = useState(0)[1]
   const create = useMemo(() => {
-    const io = socketIO(origin!, { path: pathname, auth: { token } })
+    const io = socketIO(origin!, { path: pathname + 'NekoMaid', auth: { token } })
     io.on('connect', () => {
       const his: Array<{ address: string, time: number }> = JSON.parse(localStorage.getItem('NekoMaid:servers') || '[]')
       const curAddress = address!.replace('http://', '') + '?' + token

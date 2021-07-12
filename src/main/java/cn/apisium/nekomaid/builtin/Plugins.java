@@ -34,25 +34,23 @@ final class Plugins implements Listener {
         HAS_PLUGMAN = flag;
     }
 
+    @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "unused"})
     private final static class PluginInfo {
         public String name, description, author, version, website, file;
         public boolean enabled, loaded;
-        @SuppressWarnings("unused")
+        public ArrayList<String> depends;
         public PluginInfo() { }
         public PluginInfo(PluginDescriptionFile desc, String file, boolean enabled, boolean loaded) {
-            this(desc.getName(), desc.getDescription(), String.join(", ", desc.getAuthors()), desc.getVersion(),
-                    desc.getWebsite(), file, enabled, loaded);
-        }
-        public PluginInfo(String name, String description, String author, String version, String website, String file,
-                          boolean enabled, boolean loaded) {
-            this.name = name;
-            this.description = description;
-            this.version = version;
-            this.author = author;
-            this.website = website;
+            this.name = desc.getName();
+            this.description = desc.getDescription();
+            this.version = desc.getVersion();
+            this.author = String.join(", ", desc.getAuthors());
+            this.website = desc.getWebsite();
             this.file = file;
             this.enabled = enabled;
             this.loaded = loaded;
+            this.depends = new ArrayList<>(desc.getDepend());
+            depends.addAll(desc.getSoftDepend());
         }
     }
 

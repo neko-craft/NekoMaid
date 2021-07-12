@@ -131,4 +131,9 @@ public final class Utils {
         return canSerialise(object) ? object : object instanceof String ? "\ud83d\udc2e" + object
                 : "\ud83c\udf7a" + JSON.toJSONString(object);
     }
+
+    public static int checkVersion() {
+        return 0;
+//        Update
+    }
 }

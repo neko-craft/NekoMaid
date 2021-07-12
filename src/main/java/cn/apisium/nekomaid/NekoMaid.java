@@ -28,6 +28,7 @@ import org.bukkit.plugin.java.annotation.permission.Permission;
 import org.bukkit.plugin.java.annotation.permission.Permissions;
 import org.bukkit.plugin.java.annotation.plugin.*;
 import org.bukkit.plugin.java.annotation.plugin.author.Author;
+import org.bukkit.util.CachedServerIcon;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +74,8 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
                 .put("version", getServer().getVersion())
                 .put("onlineMode", getServer().getOnlineMode())
                 .put("hasWhitelist", getServer().hasWhitelist());
+        CachedServerIcon icon = getServer().getServerIcon();
+        if (icon != null && !icon.isEmpty()) GLOBAL_DATA.put("icon", icon.getData());
         if (getConfig().getString("token", null) == null) {
             getConfig().set("token", UUID.randomUUID().toString());
             saveConfig();

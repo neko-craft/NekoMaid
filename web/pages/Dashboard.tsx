@@ -1,18 +1,18 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { Line } from 'react-chartjs-2'
 import { red, green, orange, deepPurple, blue, yellow } from '@material-ui/core/colors'
 import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, SentimentDissatisfied,
   SentimentSatisfied, AccessTime, ArrowUpward, MoreHoriz, Remove, ExitToApp } from '@material-ui/icons'
-import { useTheme, alpha } from '@material-ui/core/styles'
 import { useHistory } from 'react-router-dom'
+import { useTheme } from '@material-ui/core/styles'
 import { usePlugin, useGlobalData } from '../Context'
 import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeader, Divider, Skeleton,
   LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar, Pagination } from '@material-ui/core'
 import { LoadingList } from '../components/Loading'
+import { action } from '../toast'
+import ReactECharts from 'echarts-for-react'
 import Empty from '../components/Empty'
 import Uptime from '../components/Uptime'
 import Avatar from '../components/Avatar'
-import { action } from '../toast'
 import dialog from '../dialog'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }
@@ -83,117 +83,64 @@ const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
   </Card>
 }
 
-const makeData = (title: string, color: string, yAxisID: string) => ({
-  yAxisID,
-  label: '# ' + title,
-  data: [] as number[],
-  fill: false,
-  backgroundColor: color,
-  borderColor: alpha(color, 0.2)
-})
-
+const config = [['玩家数', 'bar', 0], ['TPS', 'line', 1], ['区块数', 'line', 2], ['实体数', 'line', 2]]
 const Charts: React.FC<{ data: Status[] }> = props => {
   const theme = useTheme()
-  const gridLines = {
-    borderDash: [2],
-    borderDashOffset: [2],
-    color: theme.palette.divider,
-    drawBorder: false,
-    zeroLineBorderDash: [2],
-    zeroLineBorderDashOffset: [2],
-    zeroLineColor: theme.palette.divider
-  }
-  const options = {
-    cornerRadius: 20,
-    layout: { padding: 0 },
-    legend: { display: false },
-    maintainAspectRatio: false,
-    responsive: true,
-    scales: {
-      xAxes: {
-        barThickness: 12,
-        maxBarThickness: 10,
-        barPercentage: 0.5,
-        categoryPercentage: 0.5,
-        ticks: {
-          fontColor: theme.palette.text.secondary
-        },
-        gridLines: {
-          display: false,
-          drawBorder: false
-        }
-      },
-      players: {
-        gridLines,
-        position: 'left',
-        min: 0,
-        ticks: {
-          stepSize: 1,
-          fontColor: theme.palette.text.secondary
-        }
-      },
-      tps: {
-        gridLines,
-        position: 'left',
-        display: true,
-        beginAtZero: true,
-        suggestedMax: 20,
-        ticks: {
-          fontColor: theme.palette.text.secondary
-        }
-      },
-      entities: {
-        gridLines,
-        stepSize: 1,
-        position: 'right',
-        ticks: {
-          stepSize: 1,
-          fontColor: theme.palette.text.secondary
-        }
-      },
-      chunks: {
-        gridLines,
-        stepSize: 1,
-        position: 'right',
-        min: 0,
-        ticks: {
-          stepSize: 1,
-          fontColor: theme.palette.text.secondary
-        }
-      }
-    },
-    tooltips: {
-      backgroundColor: theme.palette.background.paper,
-      bodyFontColor: theme.palette.text.secondary,
-      borderColor: theme.palette.divider,
-      borderWidth: 1,
-      enabled: true,
-      footerFontColor: theme.palette.text.secondary,
-      intersect: false,
-      mode: 'index',
-      titleFontColor: theme.palette.text.primary
-    }
-  }
-
-  const data = {
-    labels: [] as string[],
-    datasets: [makeData('玩家数', blue[600], 'players'), makeData('TPS', orange[600], 'tps'), makeData('区块数', deepPurple[600], 'chunks'), makeData('实体数', green[600], 'entities')]
-  }
+  const labels: string[] = []
+  const data: any = config.map(it => ({ name: it[0], data: [] as number[], type: it[1], smooth: true, yAxisIndex: it[2] }))
   props.data.forEach(it => {
     const time = new Date(it.time)
-    data.labels.push(`${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`)
-    data.datasets[0].data.push(it.players)
-    data.datasets[1].data.push(it.tps)
-    data.datasets[2].data.push(it.chunks)
-    data.datasets[3].data.push(it.entities)
+    labels.push(`${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`)
+    data[0].data.push(it.players)
+    data[1].data.push(it.tps.toFixed(2))
+    data[2].data.push(it.chunks)
+    data[3].data.push(it.entities)
   })
 
   return <Card>
     <CardHeader title='概览' />
     <Divider />
     <CardContent>
-      <Box sx={{ height: 400, position: 'relative' }}>
-        <Line data={data} options={options} type='line' />
+      <Box sx={{ position: 'relative' }}>
+        <ReactECharts theme={theme.palette.mode} option={{
+          backgroundColor: 'rgba(0, 0, 0, 0)',
+          tooltip: { trigger: 'axis' },
+          legend: { data: config.map(it => it[0]) },
+          xAxis: {
+            type: 'category',
+            data: labels
+          },
+          grid: {
+            top: '11%',
+            left: '3%',
+            right: '0%',
+            bottom: '0%',
+            containLabel: true
+          },
+          yAxis: [
+            {
+              type: 'value',
+              name: '玩家数',
+              position: 'left',
+              offset: 35,
+              minInterval: 1
+            },
+            {
+              type: 'value',
+              name: 'TPS',
+              position: 'left',
+              min: 0,
+              max: 20
+            },
+            {
+              type: 'value',
+              name: '区块/实体',
+              position: 'right',
+              minInterval: 1
+            }
+          ],
+          series: data
+        }} />
       </Box>
     </CardContent>
   </Card>

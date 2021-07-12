@@ -1,3 +1,4 @@
+import React from 'react'
 import { Socket } from 'socket.io-client'
 import { pages, update } from './App'
 
@@ -27,6 +28,8 @@ const mapArgs = (args: any[]) => args.map(it => typeof it === 'string'
       : it
   : it)
 
+export const configs: Array<{ title: string, component: React.ComponentType }> = []
+
 let flag = 0
 export default class Plugin {
   #io: Socket
@@ -39,6 +42,11 @@ export default class Plugin {
     if (!args.length) return
     (pages[this.namespace] || (pages[this.namespace] = [])).push(...args)
     update(++flag)
+    return this
+  }
+
+  public addConfig (title: string, component: React.ComponentType) {
+    configs.push({ title, component })
     return this
   }
 
