@@ -18,6 +18,7 @@ export interface GlobalInfo {
   version: string
   hasWhitelist: boolean
   canLoadPlugin: boolean
+  icon?: string
 }
 
 const mapArgs = (args: any[]) => args.map(it => typeof it === 'string'

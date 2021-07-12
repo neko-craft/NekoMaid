@@ -135,13 +135,13 @@ const Plugins: React.FC = () => {
           <Card>
             <CardHeader title='依赖关系' />
             <Divider />
-            <ReactECharts theme={theme.palette.mode} option={{
+            <ReactECharts style={{ marginTop: theme.spacing(1) }} theme={theme.palette.mode === 'dark' ? 'dark' : undefined} option={{
               backgroundColor: 'rgba(0, 0, 0, 0)',
-              legend: {
-                data: ['已安装', '未启用', '可选插件']
-              },
+              legend: { data: ['已安装', '未启用', '可选插件'] },
               series: [
                 {
+                  edgeSymbol: ['none', 'arrow'],
+                  symbolSize: 13,
                   type: 'graph',
                   layout: 'force',
                   data,

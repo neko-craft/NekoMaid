@@ -102,7 +102,7 @@ const Charts: React.FC<{ data: Status[] }> = props => {
     <Divider />
     <CardContent>
       <Box sx={{ position: 'relative' }}>
-        <ReactECharts theme={theme.palette.mode} option={{
+        <ReactECharts theme={theme.palette.mode === 'dark' ? 'dark' : undefined} option={{
           backgroundColor: 'rgba(0, 0, 0, 0)',
           tooltip: { trigger: 'axis' },
           legend: { data: config.map(it => it[0]) },

@@ -141,7 +141,8 @@ const Console: React.FC = () => {
 
   useEffect(() => {
     const onLog = (data: Log) => {
-      if (lastLog.current && lastLog.current.logger === data.logger && lastLog.current.time === data.time && lastLog.current.level === data.level) {
+      if (lastLog.current && lastLog.current.logger === data.logger && (lastLog.current.time / 100 | 0) === (data.time / 100 | 0) &&
+        lastLog.current.level === data.level) {
         logs.pop()
         lastLog.current.msg += '\n' + data.msg
         data = lastLog.current

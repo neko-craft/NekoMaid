@@ -16,6 +16,8 @@ import { DialogWrapper } from './dialog'
 import Plugin, { Page } from './Plugin'
 import initPages from './pages/index'
 
+import type { ServerRecord } from './types'
+
 export const pages: Record<string, Page[]> = { }
 
 export let update: React.Dispatch<number>
@@ -31,17 +33,19 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   update = useState(0)[1]
   const create = useMemo(() => {
     const io = socketIO(origin!, { path: pathname + 'NekoMaid', auth: { token } })
-    io.on('connect', () => {
-      const his: Array<{ address: string, time: number }> = JSON.parse(localStorage.getItem('NekoMaid:servers') || '[]')
+    io.on('globalData', data => {
+      const his: ServerRecord[] = JSON.parse(localStorage.getItem('NekoMaid:servers') || '[]')
       const curAddress = address!.replace('http://', '') + '?' + token
       let cur = his.find(it => it.address === curAddress)
       if (!cur) his.push((cur = { address: curAddress, time: 0 }))
       cur.time = Date.now()
+      cur.icon = data.icon
       const arr = loc.pathname.split('/')
       if (!sent && arr.length > 2) io.emit('switchPage', arr[1], arr[2])
       sent = true
       localStorage.setItem('NekoMaid:servers', JSON.stringify(his))
-    }).on('globalData', setGlobalData)
+      setGlobalData(data)
+    })
     const map: Record<string, Plugin> = { }
     const fn = (name: string) => map[name] || (map[name] = new Plugin(io, name))
     initPages(fn('NekoMaid'))
