@@ -35,23 +35,20 @@ final class PlayerList {
             players = c;
         }
     }
-    private static final class Fetch {
-        public String filter;
-        public int state, page;
-    }
     @SuppressWarnings({"deprecation"})
     public static void initPlayerList(NekoMaid main) {
         main.onConnected(main, client -> client.onWithAck("playerList:fetchPage", args -> {
-            Fetch it = (Fetch) args[0];
             Stream<OfflinePlayer> list = Arrays.stream(main.getServer().getOfflinePlayers());
-            if (it.state != 0 || it.filter != null) {
-                if (it.state == 1) list = list.filter(OfflinePlayer::isWhitelisted);
-                else if (it.state == 2) list = list.filter(OfflinePlayer::isBanned);
-                if (it.filter != null) list = list.filter(p -> p.getName() != null && p.getName().contains(it.filter));
+            int page = (int) args[0], state = (int) args[1];
+            String filter = (String) args[2];
+            if (state != 0 || filter != null) {
+                if (state == 1) list = list.filter(OfflinePlayer::isWhitelisted);
+                else if (state == 2) list = list.filter(OfflinePlayer::isBanned);
+                if (filter != null) list = list.filter(p -> p.getName() != null && p.getName().contains(filter));
             }
             java.util.List<OfflinePlayer> newList = list.collect(Collectors.toList());
             BanList banList = Bukkit.getBanList(BanList.Type.NAME);
-            return new List(newList.size(), newList.stream().skip(it.page * 10L).limit(10).map(p -> {
+            return new List(newList.size(), newList.stream().skip(page * 10L).limit(10).map(p -> {
                 String ban = null;
                 BanEntry be = banList.getBanEntry(Objects.requireNonNull(p.getName()));
                 if (be != null) ban = be.getReason();

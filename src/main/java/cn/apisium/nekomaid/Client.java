@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.*;
 
+import static cn.apisium.nekomaid.Utils.serialize;
+
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public final class Client {
     private final String plugin;
-    private final SocketIoSocket client;
+    public final SocketIoSocket client;
     private final HashSet<String> events = new HashSet<>();
 
     protected Client(Plugin plugin, SocketIoSocket client) {
@@ -29,6 +31,7 @@ public final class Client {
     @NotNull
     public <T> Client emit(@NotNull String name, @NotNull Runnable ackCallback, @Nullable Object... data) {
         events.add(name = plugin + name);
+        serialize(data);
         client.send(name, data, args -> ackCallback.run());
         return this;
     }
@@ -36,6 +39,7 @@ public final class Client {
     @NotNull
     public Client emit(@NotNull String name, @NotNull Consumer<Object[]> ackCallback, @Nullable Object... data) {
         events.add(name = plugin + name);
+        serialize(data);
         client.send(name, data, ackCallback::accept);
         return this;
     }
@@ -43,6 +47,7 @@ public final class Client {
     @NotNull
     public Client emit(@NotNull String name, @Nullable Object... data) {
         events.add(name = plugin + name);
+        serialize(data);
         client.send(name, data);
         return this;
     }
@@ -62,7 +67,10 @@ public final class Client {
     }
 
     public void disconnect() {
-        client.disconnect(true);
+        client.disconnect(false);
+    }
+    public void disconnect(boolean close) {
+        client.disconnect(close);
     }
 
     @SuppressWarnings("RedundantCast")
@@ -71,7 +79,7 @@ public final class Client {
     public <T> Client onWithAck(@NotNull String name, @NotNull Function<Object[], T> listener) {
         events.add(name = plugin + name);
         client.on(name, args -> ((SocketIoSocket.ReceivedByLocalAcknowledgementCallback) args[args.length - 1])
-                .sendAcknowledgement((Object) listener.apply(args)));
+                .sendAcknowledgement(serialize((Object) listener.apply(args))));
         return this;
     }
 
@@ -79,8 +87,11 @@ public final class Client {
     @NotNull
     public <T> Client onWithMultiArgsAck(@NotNull String name, @NotNull Function<Object[], T[]> listener) {
         events.add(name = plugin + name);
-        client.on(name, args -> ((SocketIoSocket.ReceivedByLocalAcknowledgementCallback) args[args.length - 1])
-                .sendAcknowledgement((Object[]) listener.apply(args)));
+        client.on(name, args -> {
+            Object[] data = listener.apply(args);
+            serialize(data);
+            ((SocketIoSocket.ReceivedByLocalAcknowledgementCallback) args[args.length - 1]).sendAcknowledgement(data);
+        });
         return this;
     }
 
@@ -112,7 +123,7 @@ public final class Client {
     public <T> Client onWithAck(@NotNull String name, @NotNull Supplier<T> listener) {
         events.add(name = plugin + name);
         client.on(name, args -> ((SocketIoSocket.ReceivedByLocalAcknowledgementCallback) args[args.length - 1])
-                .sendAcknowledgement((Object) listener.get()));
+                .sendAcknowledgement(serialize((Object) listener.get())));
         return this;
     }
 
@@ -120,8 +131,11 @@ public final class Client {
     @NotNull
     public <T> Client onWithMultiArgsAck(@NotNull String name, @NotNull Supplier<T[]> listener) {
         events.add(name = plugin + name);
-        client.on(name, args -> ((SocketIoSocket.ReceivedByLocalAcknowledgementCallback) args[args.length - 1])
-                .sendAcknowledgement((Object[]) listener.get()));
+        client.on(name, args -> {
+            Object[] data = listener.get();
+            serialize(data);
+            ((SocketIoSocket.ReceivedByLocalAcknowledgementCallback) args[args.length - 1]).sendAcknowledgement(data);
+        });
         return this;
     }
 

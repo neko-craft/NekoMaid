@@ -34,7 +34,7 @@ interface IPlayerInfo {
 const banPlayer = (name: string, plugin: Plugin, refresh: () => void) => void dialog(<>确认要封禁 <span className='bold'>{name}</span> 吗?</>, '封禁原因')
   .then(it => {
     if (it == null) return
-    plugin.emit('playerList:ban', [name, it])
+    plugin.emit('playerList:ban', name, it)
     refresh()
     toast('操作成功!', 'success')
   })
@@ -64,7 +64,7 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
   const globalData = useGlobalData()
   const [open, setOpen] = useState(false)
   const [info, setInfo] = useState<IPlayerInfo | undefined>()
-  const refresh = () => plugin.emit('playerList:query', name, setInfo)
+  const refresh = () => plugin.emit('playerList:query', setInfo, name)
   useEffect(() => {
     setInfo(undefined)
     if (name) refresh()
@@ -208,10 +208,10 @@ const Players: React.FC = () => {
   const [data, setData] = useState<{ count: number, players: PlayerData[] }>(() => ({ count: 0, players: [] }))
   const { hasWhitelist } = useGlobalData()
   const refresh = () => {
-    plugin.emit('playerList:fetchPage', { page, state: state === 1 || state === 2 ? state : 0, filter: null }, (it: any) => {
+    plugin.emit('playerList:fetchPage', (it: any) => {
       if (it.players == null) it.players = []
       setData(it)
-    })
+    }, page, state === 1 || state === 2 ? state : 0, null)
   }
   useMemo(refresh, [page, state])
 
@@ -237,11 +237,11 @@ const Players: React.FC = () => {
           if (filter == null) return
           his.push('/NekoMaid/playerList/' + filter)
           setState(3)
-          plugin.emit('playerList:fetchPage', { page, state: 0, filter }, (it: any) => {
+          plugin.emit('playerList:fetchPage', (it: any) => {
             if (it.players == null) it.players = []
             setPage(0)
             setData(it)
-          })
+          }, page, 0, filter)
         })}><Search /></ToggleButton>
       </ToggleButtonGroup>
       }

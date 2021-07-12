@@ -78,7 +78,7 @@ final class Dashboard {
         }, 0, 20 * 60 * 60);
         refresh();
         main.onSwitchPage(main, "dashboard", it -> {
-            if (main.getClientsCountInRoom("dashboard") != 0) refresh();
+            if (main.getClientsCountInRoom(main, "dashboard") != 0) refresh();
             it.emit("dashboard:info", queue).emit("dashboard:current", current);
         }).onConnected(main, client -> client.onWithAck("dashboard:kick", args -> {
             Player p = main.getServer().getPlayerExact((String) args[0]);
@@ -87,9 +87,9 @@ final class Dashboard {
             return true;
         }));
         s.getScheduler().runTaskTimerAsynchronously(main, () -> {
-            if (main.getClientsCountInRoom("dashboard") == 0) return;
+            if (main.getClientsCountInRoom(main, "dashboard") == 0) return;
             refresh();
-            main.broadcast(main, "dashboard:current", "dashboard", current);
+            main.broadcast(main, "dashboard", "dashboard:current", current);
         }, 0, 10 * 20);
     }
 

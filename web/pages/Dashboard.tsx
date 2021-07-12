@@ -55,13 +55,13 @@ const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
                   edge='end'
                   size='small'
                   onClick={() => dialog(<>确认要将 <span className='bold'>{name}</span> 踢出游戏吗?</>, '理由')
-                    .then(it => it != null && plugin.emit('dashboard:kick', [name, it || null], res => {
+                    .then(it => it != null && plugin.emit('dashboard:kick', (res: boolean) => {
                       if (res) toast('操作成功!', 'success')
                       else toast('操作失败!', 'error')
                       if (!players) return
                       players.splice(players.indexOf(it!), 1)
                       update(id + 1)
-                    }))
+                    }, name, it || null))
                   }
                 ><ExitToApp /></IconButton>
                 <IconButton edge='end' onClick={() => his.push('/NekoMaid/playerList/' + name)} size='small'><MoreHoriz /></IconButton>
@@ -207,12 +207,16 @@ const Dashboard: React.FC = () => {
   const [current, setCurrent] = useState<CurrentStatus | undefined>()
 
   useEffect(() => {
-    const updateCurren = (data: CurrentStatus) => setCurrent(old => {
+    const offSetStatus = plugin.once('dashboard:info', setStatus)
+    const offCurrent = plugin.on('dashboard:current', (data: CurrentStatus) => setCurrent(old => {
       if (old && (old.players.length === data.players.length && old.players.every((it, i) => it === data.players[i]))) data.players = old.players
       return data
-    })
-    plugin.once('dashboard:info', setStatus).on('dashboard:current', updateCurren).switchPage('dashboard')
-    return () => { plugin.off('dashboard:info', setStatus).off('dashboard:current', updateCurren) }
+    }))
+    plugin.switchPage('dashboard')
+    return () => {
+      offSetStatus()
+      offCurrent()
+    }
   }, [])
 
   const playerCount = current?.players?.length || 0

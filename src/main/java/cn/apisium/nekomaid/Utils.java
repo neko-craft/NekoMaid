@@ -1,5 +1,6 @@
 package cn.apisium.nekomaid;
 
+import com.alibaba.fastjson.JSON;
 import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
 import com.google.common.collect.ImmutableList;
 import org.bukkit.Bukkit;
@@ -7,6 +8,8 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.event.server.TabCompleteEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -108,5 +111,24 @@ public final class Utils {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private static boolean canSerialise(Object object) {
+        return object == null || object == JSONObject.NULL || object instanceof JSONObject ||
+                object instanceof JSONArray || object instanceof Number || object instanceof Boolean ||
+                object instanceof byte[];
+    }
+
+    public static void serialize(Object[] args) {
+        for (int i = 0; i < args.length; i++) {
+            Object object = args[i];
+            if (canSerialise(object)) continue;
+            args[i] = object instanceof String ? "\ud83d\udc2e" + object : "\ud83c\udf7a" + JSON.toJSONString(object);
+        }
+    }
+
+    public static Object serialize(Object object) {
+        return canSerialise(object) ? object : object instanceof String ? "\ud83d\udc2e" + object
+                : "\ud83c\udf7a" + JSON.toJSONString(object);
     }
 }

@@ -65,10 +65,10 @@ const StyledTreeItem = styled((props: TreeItemProps) => <TreeItem {...props} />)
 const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () => Promise<void>>, dirs: Record<string, null> }> =
   ({ dirs, plugin, path, loading }) => {
     const [files, setFiles] = useState<[string[], string[]] | undefined>()
-    const load = () => new Promise<void>(resolve => plugin.emit('files:fetch', path, (data: any) => {
+    const load = () => new Promise<void>(resolve => plugin.emit('files:fetch', (data: any) => {
       setFiles(data)
       resolve()
-    }))
+    }, path))
     useEffect(() => {
       dirs[path] = null
       if (path) loading[path] = load; else load()
@@ -121,7 +121,7 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
       lnText.current = ''
       if (!path || dirs[path] || path.endsWith('/')) return
       loading['!#LOADING'] = true
-      plugin.emit('files:content', path, data => {
+      plugin.emit('files:content', (data: number | string | null) => {
         loading['!#LOADING'] = false
         switch (data) {
           case null: return setError('文件格式不被支持!')
@@ -134,11 +134,12 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
           case 2: return his.replace('./')
           case 3: return setError('文件太大了!')
           default:
+            if (typeof data !== 'string') return
             setText(data)
             lnText.current = data.replace(/\r/g, '')
             setNotSave(true)
         }
-      })
+      }, path)
     }, [path])
     return <Card sx={{ position: 'relative' }}>
       <CardHeader
@@ -157,7 +158,7 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
                 if (!doc) return
                 setSaving(true)
                 const data = doc.getValue(text?.includes('\r\n') ? '\r\n' : '\n')
-                plugin.emit('files:update', [path, data], res => {
+                plugin.emit('files:update', (res: boolean) => {
                   setSaving(false)
                   if (!res) toast('保存失败!', 'error')
                   lnText.current = data.replace(/\r/g, '')
@@ -168,7 +169,7 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
                     toast('保存成功!', 'success')
                     refresh()
                   }
-                })
+                }, path, data)
               }}
             ><Save /></IconButton></span>}</Tooltip>
           </Box>
@@ -262,12 +263,12 @@ const Files: React.FC = () => {
                     okButton: { color: 'error' },
                     content: <>确认要删除 <span className='bold'>{curPath}</span> 吗?&nbsp;
                       <span className='bold' style={{ color: theme.palette.error.main }}>(不可撤销!)</span></>
-                  }).then(it => it && plugin.emit('files:update', [curPath], res => {
+                  }).then(it => it && plugin.emit('files:update', (res: boolean) => {
                     if (!res) return toast('删除失败!', 'error')
                     refresh()
                     toast('删除成功!', 'success')
                     if (loc.pathname.replace(/^\/NekoMaid\/files\/?/, '') === curPath) his.push('/NekoMaid/files')
-                  }))}
+                  }, curPath))}
                 ><DeleteForever /></IconButton>
               </span></Tooltip>
               <Tooltip title='新建文件'>
@@ -292,11 +293,11 @@ const Files: React.FC = () => {
                     validator: validFilename,
                     InputProps: { startAdornment: <InputAdornment position='start'>{dirPath}/</InputAdornment> }
                   }
-                }).then(it => it != null && plugin.emit('files:createDirectory', dirPath + '/' + it, res => {
+                }).then(it => it != null && plugin.emit('files:createDirectory', (res: boolean) => {
                   if (!res) return toast('创建失败!', 'error')
                   toast('创建成功!', 'success')
                   refresh()
-                }))}><CreateNewFolder /></IconButton></Tooltip>
+                }, dirPath + '/' + it))}><CreateNewFolder /></IconButton></Tooltip>
               <Tooltip title='更多...'>
                 <IconButton size='small' onClick={e => setAnchorEl(anchorEl ? null : e.currentTarget)}><MoreHoriz /></IconButton>
               </Tooltip>
@@ -360,11 +361,11 @@ const Files: React.FC = () => {
             validator: validFilename,
             InputProps: { startAdornment: <InputAdornment position='start'>{dirPath}/</InputAdornment> }
           }
-        }).then(it => it != null && plugin.emit('files:rename', [curPath, dirPath + '/' + it], res => {
+        }).then(it => it != null && plugin.emit('files:rename', (res: boolean) => {
           if (!res) return toast('操作失败!', 'error')
           toast('操作成功!', 'success')
           refresh()
-        }))
+        }, curPath, dirPath + '/' + it))
       }}><ListItemIcon><Refresh /></ListItemIcon>重命名</MenuItem>
       <MenuItem disabled><ListItemIcon><Upload /></ListItemIcon>上载文件</MenuItem>
       <MenuItem disabled><ListItemIcon><Download /></ListItemIcon>下传文件</MenuItem>

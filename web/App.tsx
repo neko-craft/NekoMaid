@@ -2,13 +2,13 @@ import React, { useMemo, useState } from 'react'
 import socketIO from 'socket.io-client'
 import darkScrollbar from '@material-ui/core/darkScrollbar'
 import { zhCN } from '@material-ui/core/locale/index'
-import { useLocation, Route, NavLink } from 'react-router-dom'
+import { useLocation, Route, NavLink, Redirect } from 'react-router-dom'
 import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar,
   Typography, Drawer, Toolbar, IconButton, useMediaQuery } from '@material-ui/core'
 import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
 
 import { Build, Menu, Brightness4, Brightness7 } from '@material-ui/icons'
-import { address, token } from './url'
+import { address, origin, token, pathname } from './url'
 import { Snackbars } from './toast'
 import { typography } from './theme'
 import { pluginCtx, globalCtx } from './Context'
@@ -29,7 +29,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   const [globalData, setGlobalData] = useState({ })
   update = useState(0)[1]
   const create = useMemo(() => {
-    const io = socketIO(address!, { query: 'token=' + token })
+    const io = socketIO(origin!, { path: pathname, auth: { token } })
     io.on('connect', () => {
       const his: Array<{ address: string, time: number }> = JSON.parse(localStorage.getItem('NekoMaid:servers') || '[]')
       const curAddress = address!.replace('http://', '') + '?' + token
@@ -37,7 +37,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       if (!cur) his.push((cur = { address: curAddress, time: 0 }))
       cur.time = Date.now()
       const arr = loc.pathname.split('/')
-      if (!sent && arr.length > 2) io.emit('switchPage', { page: arr[1], namespace: arr[0] })
+      if (!sent && arr.length > 2) io.emit('switchPage', arr[1], arr[2])
       sent = true
       localStorage.setItem('NekoMaid:servers', JSON.stringify(his))
     }).on('globalData', setGlobalData)
@@ -157,7 +157,10 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       </Drawer>
     </Box>
     <Box component='main' sx={{ flexGrow: 1 }}>
-      <globalCtx.Provider value={globalData}>{routes}</globalCtx.Provider>
+      <globalCtx.Provider value={globalData}>
+        {routes}
+        <Redirect to='/NekoMaid/Dashboard' exact />
+      </globalCtx.Provider>
     </Box>
   </Box>
 }

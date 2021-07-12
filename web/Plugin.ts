@@ -1,3 +1,4 @@
+import { Socket } from 'socket.io-client'
 import { pages, update } from './App'
 
 export interface Page {
@@ -17,11 +18,19 @@ export interface GlobalInfo {
   hasWhitelist: boolean
 }
 
+const mapArgs = (args: any[]) => args.map(it => typeof it === 'string'
+  ? it.startsWith('\ud83d\udc2e')
+    ? it.slice(2)
+    : it.startsWith('\ud83c\udf7a')
+      ? JSON.parse(it.slice(2))
+      : it
+  : it)
+
 let flag = 0
 export default class Plugin {
-  #io: SocketIOClient.Socket
+  #io: Socket
 
-  constructor (io: SocketIOClient.Socket, public readonly namespace: string) {
+  constructor (io: Socket, public readonly namespace: string) {
     this.#io = io
   }
 
@@ -32,28 +41,36 @@ export default class Plugin {
     return this
   }
 
-  public on (event: string, fn: Function) {
-    this.#io.on(this.namespace + ':' + event, fn)
+  public on (event: string, fn: (...args: any[]) => void) {
+    event = this.namespace + ':' + event
+    const f = (...args: any[]) => fn(...mapArgs(args))
+    this.#io.on(event, f)
+    return () => this.#io.off(event, f)
+  }
+
+  public once (event: string, fn: (...args: any[]) => void) {
+    event = this.namespace + ':' + event
+    const f = (...args: any[]) => fn(...mapArgs(args))
+    this.#io.once(event, f)
+    this.emit('', 3)
+    return () => this.#io.off(event, f)
+  }
+
+  public emit (event: string, ack: (...data: any[]) => any, ...data: any[]): this
+  // eslint-disable-next-line no-dupe-class-members
+  public emit (event: string, ...data: any[]): void
+  // eslint-disable-next-line no-dupe-class-members
+  public emit (event: string, ...data: any[]): this {
+    if (typeof data[0] === 'function') {
+      const fn = data.shift()
+      data.push((...args: any[]) => fn(...mapArgs(args)))
+    }
+    this.#io.emit(this.namespace + ':' + event, ...data)
     return this
   }
 
-  public once (event: string, fn: Function) {
-    this.#io.once(this.namespace + ':' + event, fn)
-    return this
-  }
-
-  public emit (event: string, data?: any, ack?: (data?: any) => any) {
-    const name = this.namespace + ':' + event
-    const a = typeof data !== 'undefined'
-    const b = typeof ack === 'function'
-    if (a && b) this.#io.emit(name, data, ack)
-    else if (a || b) this.#io.emit(name, ack || data)
-    else this.#io.emit(name)
-    return this
-  }
-
-  public off (event: string, fn?: Function) {
-    this.#io.removeListener(this.namespace + ':' + event, fn)
+  public off (event: string) {
+    this.#io.off(this.namespace + ':' + event)
     return this
   }
 
@@ -63,7 +80,7 @@ export default class Plugin {
   }
 
   public switchPage (page: string) {
-    this.#io.emit('switchPage', { page, namespace: this.namespace })
+    this.#io.emit('switchPage', this.namespace, page)
     return this
   }
 }

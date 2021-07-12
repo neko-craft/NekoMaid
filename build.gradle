@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'idea'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 group 'cn.apisium.nekomaid'
@@ -40,10 +41,10 @@ dependencies {
         exclude group: 'org.bukkit'
     }
 
-    implementation 'com.github.Apisium:netty-engine.io:e2637a1f43'
+    implementation 'com.alibaba:fastjson:1.2.76'
+    implementation 'com.github.Apisium:netty-engine.io:eadc851739'
     implementation ('io.socket:engine.io-server:5.0.0') {
         exclude group: 'com.google.code.gson'
-        exclude group: 'org.json'
     }
     implementation ('io.socket:socket.io-server:3.0.1') {
         exclude group: 'org.json'

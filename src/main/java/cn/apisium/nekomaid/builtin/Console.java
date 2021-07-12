@@ -10,6 +10,7 @@ import org.apache.logging.log4j.core.layout.AbstractStringLayout;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 
 import java.io.Serializable;
+import java.util.concurrent.FutureTask;
 
 @SuppressWarnings("UnstableApiUsage")
 final class Console implements Appender {
@@ -23,17 +24,24 @@ final class Console implements Appender {
         this.main = main;
         main.onSwitchPage(main, "console", client -> client.emit("console:logs", queue))
                 .onConnected(main, client -> client.onWithAck("console:complete", Utils::complete)
-                        .on("console:run", args -> {
+                        .onWithAck("console:run", args -> {
                             String command = (String) args[0];
-                            main.getServer().getScheduler()
-                                    .runTask(main, () -> {
-                                        main.getLogger().info("NekoMaid issued server command: /" + command);
-                                        try {
-                                            main.getServer().dispatchCommand(main.getServer().getConsoleSender(), command);
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-                                    });
+                            FutureTask<Boolean> future = new FutureTask<>(() -> {
+                                main.getLogger().info("NekoMaid issued server command: /" + command);
+                                try {
+                                    return main.getServer()
+                                            .dispatchCommand(main.getServer().getConsoleSender(), command);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    return false;
+                                }
+                            });
+                            main.getServer().getScheduler().runTask(main, future);
+                            try {
+                                return future.get();
+                            } catch (Exception ignored) {
+                                return false;
+                            }
                         }));
         ((Logger) LogManager.getRootLogger()).addAppender(this);
     }
@@ -46,7 +54,7 @@ final class Console implements Appender {
         obj.logger = e.getLoggerName();
         obj.time = e.getTimeMillis();
         queue.add(obj);
-        main.broadcast(main, "console:log", "console", obj);
+        main.broadcastInPage(main, "console", "console:log", obj);
     }
 
     @Override

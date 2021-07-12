@@ -8,6 +8,7 @@ import cn.apisium.uniporter.router.api.UniporterHttpHandler;
 import com.google.common.collect.ArrayListMultimap;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.socket.engineio.server.EngineIoServer;
 import io.socket.socketio.server.SocketIoAdapter;
@@ -30,6 +31,7 @@ import org.bukkit.plugin.java.annotation.plugin.author.Author;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.json.JSONObject;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -58,7 +60,7 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
     private EngineIoServer engineIoServer;
     private final ConcurrentHashMap<SocketIoSocket, String[]> pages = new ConcurrentHashMap<>();
     private final HashMap<SocketIoSocket, HashMap<String, Client>> clients = new HashMap<>();
-    protected SocketIoNamespace io;
+    public SocketIoNamespace io;
     protected Map<String, Set<SocketIoSocket>> mRoomSockets;
 
     @SuppressWarnings({"ConstantConditions", "unchecked"})
@@ -75,7 +77,6 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
             Field field = SocketIoAdapter.class.getDeclaredField("mRoomSockets");
             field.setAccessible(true);
             mRoomSockets = (Map<String, Set<SocketIoSocket>>) field.get(io.getAdapter());
-            System.out.println(mRoomSockets);
         } catch (Exception e) {
             e.printStackTrace();
             setEnabled(false);
@@ -83,42 +84,46 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
         }
         io.on("connection", arr -> {
             SocketIoSocket client = (SocketIoSocket) arr[0];
-            if (!getConfig().getString("token", "").equals(client.getInitialQuery().get("token"))) {
-                client.disconnect(true);
+            Object obj = client.getConnectData();
+            if (!(obj instanceof JSONObject) ||
+                    !getConfig().getString("token", "").equals(((JSONObject) obj).getString("token"))) {
+                client.disconnect(false);
                 return;
             }
-            HashMap<String, Object> map = new HashMap<>();
-            map.put("version", getServer().getVersion());
-            map.put("onlineMode", getServer().getOnlineMode());
-            map.put("hasWhitelist", getServer().hasWhitelist());
-            client.send("globalData", map);
-            client.once("disconnect", args -> {
-                pages.remove(client);
-                clients.remove(client);
-            }).on("switchPage", args -> {
-                String[] oldPageObj = pages.get(client);
-                Client wrappedClient = null;
-                if (oldPageObj != null) {
-                    client.leaveRoom(oldPageObj[0] + ":page:" + oldPageObj[1]);
-                    HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>> oldPages =
-                            pluginPages.get(oldPageObj[0]);
-                    if (oldPages != null) {
-                        AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>> oldPage = oldPages.get(oldPageObj[1]);
-                        if (oldPage != null && oldPage.getValue() != null) oldPage.getValue()
-                                .accept(wrappedClient = getClient(oldPageObj[0], client));
+                JSONObject map = new JSONObject();
+                map.put("version", getServer().getVersion());
+                map.put("onlineMode", getServer().getOnlineMode());
+                map.put("hasWhitelist", getServer().hasWhitelist());
+                client.send("globalData", map);
+                client.once("disconnect", args -> {
+                    pages.remove(client);
+                    clients.remove(client);
+                }).on("switchPage", args -> {
+                    try {
+                    String[] oldPageObj = pages.get(client);
+                    Client wrappedClient = null;
+                    if (oldPageObj != null) {
+                        client.leaveRoom(oldPageObj[0] + ":page:" + oldPageObj[1]);
+                        HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>> oldPages =
+                                pluginPages.get(oldPageObj[0]);
+                        if (oldPages != null) {
+                            AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>> oldPage = oldPages.get(oldPageObj[1]);
+                            if (oldPage != null && oldPage.getValue() != null) oldPage.getValue()
+                                    .accept(wrappedClient = getClient(oldPageObj[0], client));
+                        }
                     }
-                }
-                String namespace = (String) args[0], page = (String) args[1];
-                pages.put(client, new String[]{ namespace, page });
-                client.joinRoom(namespace + ":page:" + page);
-                HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>> pages = pluginPages.get(namespace);
-                if (pages == null) return;
-                AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>> pageAction = pages.get(page);
-                if (pageAction != null && pageAction.getKey() != null) pageAction.getKey()
-                        .accept(wrappedClient == null ? getClient(namespace, client) : wrappedClient);
-            });
-            connectListeners.forEach((k, v) -> v.accept(getClient(k, client)));
-        });
+                    String namespace = (String) args[0], page = (String) args[1];
+                    pages.put(client, new String[]{ namespace, page });
+                    client.joinRoom(namespace + ":page:" + page);
+                    HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>>> pages = pluginPages.get(namespace);
+                    if (pages == null) return;
+                    AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>> pageAction = pages.get(page);
+                    if (pageAction != null && pageAction.getKey() != null) pageAction.getKey()
+                            .accept(wrappedClient == null ? getClient(namespace, client) : wrappedClient);
+                    } catch (Exception e) {e.printStackTrace();}
+                }).on("error", System.out::println);
+                connectListeners.forEach((k, v) -> v.accept(getClient(k, client)));
+        }).on("error", System.out::println);
         Uniporter.registerHandler("NekoMaid", this, true);
 
         plugins = new BuiltinPlugins(this);
@@ -131,9 +136,15 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
 
     @Override
     public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
-        context.channel().pipeline()
-                .addLast(new WebSocketServerCompressionHandler())
-                .addLast(new EngineIoHandler(engineIoServer, null));
+        if (route.isGzip()) context.pipeline().addLast(new HttpContentCompressor())
+                .addLast(new WebSocketServerCompressionHandler());
+        context.channel().pipeline().addLast(new EngineIoHandler(engineIoServer, null) {
+            @Override
+            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+                super.exceptionCaught(ctx, cause);
+                cause.printStackTrace();
+            }
+        });
     }
 
     @Override
@@ -157,9 +168,9 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
         if (plugins != null) plugins.disable();
     }
 
-    public int getClientsCountInRoom(@NotNull String room) {
+    public int getClientsCountInRoom(org.bukkit.plugin.Plugin plugin, @NotNull String room) {
         if (mRoomSockets == null) return 0;
-        Set<SocketIoSocket> set = mRoomSockets.get(room);
+        Set<SocketIoSocket> set = mRoomSockets.get(plugin.getName() + ":" + room);
         return set == null ? 0 : set.size();
     }
 
@@ -172,9 +183,18 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
     @Contract("_, _, _, _ -> this")
     public NekoMaid broadcast(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String room,
                               @NotNull String name, @NotNull Object... data) {
-
-        if (getClientsCountInRoom(room) != 0) io.broadcast(room, plugin.getName() + ":" + name, data);
+        if (getClientsCountInRoom(plugin, room) != 0) {
+            Utils.serialize(data);
+            String prefix = plugin.getName() + ":";
+            io.broadcast(prefix + room, prefix + name, data);
+        }
         return this;
+    }
+
+    @Contract("_, _, _, _ -> this")
+    public NekoMaid broadcastInPage(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String page,
+                              @NotNull String name, @NotNull Object... data) {
+        return broadcast(plugin, "page:" + page, name, data);
     }
 
     private Client getClient(org.bukkit.plugin.Plugin plugin, SocketIoSocket client) {

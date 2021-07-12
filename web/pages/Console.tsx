@@ -35,7 +35,6 @@ const parseStyledText = (it: string) => {
   const style: Record<string, string> = { }
   while (i < b.length) {
     if (b[i] !== '§') {
-      i++
       break
     }
     switch (b[++i]) {
@@ -54,7 +53,7 @@ const parseStyledText = (it: string) => {
     i++
   }
   b = b.slice(i)
-  return <>{a.slice(1)}{b && <span style={style}>{parseStyledText(b)}</span>}</>
+  return <>{a.slice(1)}{b && <span style={style}>{b[0] === '§' ? parseStyledText(b) : b}</span>}</>
 }
 const parseMessage = (msg: string) => {
   const arr = msg.replace(/§k/g, '').split(/(?=§[0-9a-fA-FxXrR])/g)
@@ -110,8 +109,9 @@ const Console: React.FC = () => {
     (it: string) => {
       let cmd = it.substr(0, it.lastIndexOf(' '))
       if (cmd) cmd += ' '
-      return plugin.emit('console:complete', it, (data: string[] = []) => setSuggestions(
-        JSON.parse(localStorage.getItem(`NekoMaid:${address}:commandHistory`) || '[]').concat(data.map(c => [cmd + c] as [string]))))
+      return plugin.emit('console:complete', (data: string[] = []) => {
+        setSuggestions(JSON.parse(localStorage.getItem(`NekoMaid:${address}:commandHistory`) || '[]').concat(data.map(c => [cmd + c] as [string])))
+      }, it)
     },
     500
   ), [])
@@ -131,8 +131,7 @@ const Console: React.FC = () => {
   ), [])
   const execCommand = () => {
     if (!command) return
-    plugin.emit('console:run', command)
-    toast('执行成功!', 'success')
+    plugin.emit('console:run', (res: boolean) => res ? toast('执行成功!', 'success') : toast('执行失败!', 'error'), command)
     const arr = JSON.parse(localStorage.getItem(`NekoMaid:${address}:commandHistory`) || '[]').filter((it: [string]) => it[0] !== command)
     if (arr.length === 5) arr.pop()
     arr.unshift([command, true])
@@ -151,7 +150,7 @@ const Console: React.FC = () => {
       const time = pad(t.getHours()) + ':' + pad(t.getMinutes()) + ':' + pad(t.getSeconds())
       const msg = parseMessage(data.msg)
       const isError = data.level === 'FATAL' || data.level === 'ERROR'
-      const moreLines = isError && data.msg.includes('\n')
+      const moreLines = (isError || data.level === 'WARN') && data.msg.includes('\n')
       const elm = <p key={i} className={isError ? 'error' : data.level === 'WARN' ? 'warn' : undefined}>
         <Tooltip title={time} placement='right'>
           <span className='level'>[{levelNames[data.level] || '信息'}] </span>
@@ -164,12 +163,16 @@ const Console: React.FC = () => {
       logs.push(moreLines ? <More key={i}>{elm}</More> : elm)
       update(++i)
     }
-    const onLogs = (it: Log[]) => {
+    const offLogs = plugin.on('console:logs', (it: Log[]) => {
       logs.length = 0
       it.forEach(onLog)
+    })
+    const offLog = plugin.on('console:log', onLog)
+    plugin.switchPage('console')
+    return () => {
+      offLogs()
+      offLog()
     }
-    plugin.on('console:logs', onLogs).on('console:log', onLog).switchPage('console')
-    return () => { plugin.off('console:log', onLog).off('console:logs', onLogs) }
   }, [])
 
   useEffect(() => { ref.current && scrollToEnd(ref.current) }, [logs[logs.length - 1]])
