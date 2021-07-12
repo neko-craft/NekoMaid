@@ -1,0 +1,116 @@
+import React, { useEffect, useState } from 'react'
+import { useTheme } from '@material-ui/core/styles'
+import { useGlobalData, usePlugin } from '../Context'
+import { Lock, LockOpen, DeleteForever } from '@material-ui/icons'
+import { Box, Toolbar, Container, Card, CardHeader, Divider, TableContainer, Table, TableHead,
+  TableRow, TableCell, TableBody, Checkbox, Tooltip, Link, IconButton } from '@material-ui/core'
+import { action } from '../toast'
+import dialog from '../dialog'
+
+interface Plugin {
+  name: string
+  file: string
+  author: string
+  description: string
+  website?: string
+  version: string
+  enabled: boolean
+  loaded: boolean
+}
+
+const canPluginBeDisabled = (it: string) => {
+  switch (it) {
+    case 'Uniporter':
+    case 'NekoMaid':
+    case 'PlugMan': return true
+    default: return false
+  }
+}
+
+const Plugins: React.FC = () => {
+  const plugin = usePlugin()
+  const theme = useTheme()
+  const { canLoadPlugin } = useGlobalData()
+  const [plugins, setPlugins] = useState<Plugin[]>([])
+  useEffect(() => {
+    const offList = plugin.on('plugins:list', (plugins: Plugin[]) => {
+      const arr: Plugin[] = []
+      setPlugins(plugins.filter(it => {
+        const res = canPluginBeDisabled(it.name)
+        if (res) arr.push(it)
+        return !res
+      }).concat(arr))
+    })
+    plugin.emit('plugins:fetch')
+    return () => {
+      offList()
+    }
+  }, [])
+  return <Box sx={{ minHeight: '100%', py: 3 }}>
+    <Toolbar />
+    <Container maxWidth={false}>
+      <Card>
+        <CardHeader title='插件列表' />
+        <Divider />
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ paddingRight: 0 }}>启用</TableCell>
+                <TableCell>插件名</TableCell>
+                <TableCell>版本</TableCell>
+                <TableCell>作者</TableCell>
+                <TableCell>简介</TableCell>
+                <TableCell align='right'>操作</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {plugins.map(it => {
+                const canBeDisabled = canPluginBeDisabled(it.name)
+                const disabledForever = it.file.endsWith('.disabled')
+                return <TableRow key={it.name}>
+                  <TableCell padding='checkbox'>
+                    <Checkbox
+                      color='primary'
+                      checked={it.enabled}
+                      disabled={disabledForever || canBeDisabled}
+                      onChange={() => plugin.emit('plugins:enable', it.file, it.name, action)
+                    } />
+                  </TableCell>
+                  <TableCell><Tooltip title={it.file}><span>{it.name}</span></Tooltip></TableCell>
+                  <TableCell>{it.website
+                    ? <Link underline='hover' rel='noopener' target='_blank' href={it.website}>{it.version}</Link>
+                    : it.version
+                  }</TableCell>
+                  <TableCell>{it.author}</TableCell>
+                  <TableCell>{it.description}</TableCell>
+                  <TableCell align='right' sx={{ whiteSpace: 'nowrap' }}>
+                    <Tooltip title={disabledForever ? '启用插件' : '永久禁用'}><span>
+                      <IconButton
+                        disabled={it.enabled || (it.loaded && !canLoadPlugin)}
+                        onClick={() => plugin.emit('plugins:disableForever', it.file, action)}
+                      >{disabledForever ? <LockOpen /> : <Lock />}</IconButton>
+                    </span></Tooltip>
+                    {disabledForever && <Tooltip title='删除插件'><span>
+                        <IconButton
+                          color='error'
+                          disabled={canBeDisabled}
+                          onClick={() => dialog({
+                            okButton: { color: 'error' },
+                            content: <>确认要删除插件 <span className='bold'>{it.file.replace(/\.disabled$/, '')}</span> 吗?&nbsp;
+                              <span className='bold' style={{ color: theme.palette.error.main }}>(不可撤销!)</span></>
+                          }).then(res => res && plugin.emit('plugins:delete', it.file, action))}
+                        ><DeleteForever /></IconButton>
+                      </span></Tooltip>}
+                  </TableCell>
+                </TableRow>
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+    </Container>
+  </Box>
+}
+
+export default Plugins

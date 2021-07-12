@@ -5,7 +5,7 @@ let update: (it: number) => void
 
 let i = 0
 const toasts: Record<number, SnackbarProps> = {}
-export default (props: (SnackbarProps & { autoHideDuration?: number }) | string = { }, type?: AlertColor) => {
+const toast = (props: (SnackbarProps & { autoHideDuration?: number }) | string = { }, type?: AlertColor) => {
   if (typeof props === 'string') props = { message: props }
   if (type) props.children = <Paper elevation={5}><Alert severity={type} sx={{ width: '100%' }} variant={'filled' as any}>{props.message}</Alert></Paper>
   if (!props.autoHideDuration) props.autoHideDuration = 4000
@@ -25,6 +25,7 @@ export default (props: (SnackbarProps & { autoHideDuration?: number }) | string 
   }
   update?.(++i)
 }
+export default toast
 
 export const Snackbars: React.FC = () => {
   [, update] = React.useState<number>(0)
@@ -39,3 +40,7 @@ export const Snackbars: React.FC = () => {
     alignItems: 'flex-end'
   }}><Toolbar />{Object.values(toasts).map(it => React.createElement(Snackbar, it))}</Box>
 }
+
+export const success = () => toast('操作成功!', 'success')
+export const failed = () => toast('操作失败!', 'error')
+export const action = (it: boolean) => it ? success() : failed()

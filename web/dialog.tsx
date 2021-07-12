@@ -18,7 +18,7 @@ type DialogOptionsWithPromise = DialogOptions & { resolve: (it: any) => void }
 let openFn: (it: DialogOptionsWithPromise) => void
 
 export const DialogWrapper: React.FC = () => {
-  const [canClick, setCanClick] = useState(true)
+  const [canClick, setCanClick] = useState(false)
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
   const [data, setDate] = useState<DialogOptionsWithPromise | undefined>()

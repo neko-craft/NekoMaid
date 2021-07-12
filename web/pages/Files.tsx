@@ -23,7 +23,7 @@ import * as icons from '../../icons.json'
 import validFilename from 'valid-filename'
 import Empty from '../components/Empty'
 import Plugin from '../Plugin'
-import toast from '../toast'
+import toast, { action } from '../toast'
 import dialog from '../dialog'
 
 const getMode = (path: string) => {
@@ -85,7 +85,7 @@ const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () 
             key={it}
             nodeId={path + '/' + it}
             label={<><Icon className='icon'>
-              <embed src={`/icons/${icons.icons[id] || 'file'}.svg`} />
+              <embed src={`/icons/material/${icons.icons[id] || 'file'}.svg`} />
             </Icon>{it}</>}
           />
         }))
@@ -94,7 +94,7 @@ const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () 
     const name = paths[paths.length - 1]
     return path
       ? <StyledTreeItem nodeId={path} label={<>
-        <Icon className='icon'><embed src={`/icons/${icons.icons[(icons as any).folders[name]] || 'folder'}.svg`} /></Icon>{name}
+        <Icon className='icon'><embed src={`/icons/material/${icons.icons[(icons as any).folders[name]] || 'folder'}.svg`} /></Icon>{name}
       </>}>{children}</StyledTreeItem>
       : <>{children}</>
   }
@@ -362,9 +362,8 @@ const Files: React.FC = () => {
             InputProps: { startAdornment: <InputAdornment position='start'>{dirPath}/</InputAdornment> }
           }
         }).then(it => it != null && plugin.emit('files:rename', (res: boolean) => {
-          if (!res) return toast('操作失败!', 'error')
-          toast('操作成功!', 'success')
-          refresh()
+          action(res)
+          if (res) refresh()
         }, curPath, dirPath + '/' + it))
       }}><ListItemIcon><Refresh /></ListItemIcon>重命名</MenuItem>
       <MenuItem disabled><ListItemIcon><Upload /></ListItemIcon>上载文件</MenuItem>

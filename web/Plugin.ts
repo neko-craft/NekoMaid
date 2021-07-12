@@ -14,8 +14,9 @@ export interface Page {
 
 export interface GlobalInfo {
   onlineMode: boolean
-  version: String
+  version: string
   hasWhitelist: boolean
+  canLoadPlugin: boolean
 }
 
 const mapArgs = (args: any[]) => args.map(it => typeof it === 'string'

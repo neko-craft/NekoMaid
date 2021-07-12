@@ -12,7 +12,7 @@ import { LoadingList } from '../components/Loading'
 import Empty from '../components/Empty'
 import Uptime from '../components/Uptime'
 import Avatar from '../components/Avatar'
-import toast from '../toast'
+import { action } from '../toast'
 import dialog from '../dialog'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }
@@ -56,8 +56,7 @@ const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
                   size='small'
                   onClick={() => dialog(<>确认要将 <span className='bold'>{name}</span> 踢出游戏吗?</>, '理由')
                     .then(it => it != null && plugin.emit('dashboard:kick', (res: boolean) => {
-                      if (res) toast('操作成功!', 'success')
-                      else toast('操作失败!', 'error')
+                      action(res)
                       if (!players) return
                       players.splice(players.indexOf(it!), 1)
                       update(id + 1)

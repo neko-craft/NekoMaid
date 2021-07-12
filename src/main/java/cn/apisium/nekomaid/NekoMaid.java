@@ -16,7 +16,7 @@ import io.socket.socketio.server.SocketIoNamespace;
 import io.socket.socketio.server.SocketIoServer;
 import io.socket.socketio.server.SocketIoSocket;
 import org.bukkit.command.CommandSender;
-import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -63,10 +63,16 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
     public SocketIoNamespace io;
     protected Map<String, Set<SocketIoSocket>> mRoomSockets;
 
+    final public JSONObject GLOBAL_DATA = new JSONObject();
+
     @SuppressWarnings({"ConstantConditions", "unchecked"})
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        GLOBAL_DATA
+                .put("version", getServer().getVersion())
+                .put("onlineMode", getServer().getOnlineMode())
+                .put("hasWhitelist", getServer().hasWhitelist());
         if (getConfig().getString("token", null) == null) {
             getConfig().set("token", UUID.randomUUID().toString());
             saveConfig();
@@ -90,11 +96,7 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
                 client.disconnect(false);
                 return;
             }
-                JSONObject map = new JSONObject();
-                map.put("version", getServer().getVersion());
-                map.put("onlineMode", getServer().getOnlineMode());
-                map.put("hasWhitelist", getServer().hasWhitelist());
-                client.send("globalData", map);
+                client.send("globalData", GLOBAL_DATA);
                 client.once("disconnect", args -> {
                     pages.remove(client);
                     clients.remove(client);
@@ -128,7 +130,13 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
 
         plugins = new BuiltinPlugins(this);
 
-        getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvent(PluginDisableEvent.class, this, EventPriority.NORMAL, (a, e) -> {
+            org.bukkit.plugin.Plugin p = ((PluginDisableEvent) e).getPlugin();
+            String name = p.getName();
+            pluginPages.remove(name);
+            clients.forEach((k, v) -> v.remove(name));
+            connectListeners.removeAll(p);
+        }, this);
         getCommand("nekomaid").setExecutor(this);
     }
 
@@ -148,9 +156,7 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
     }
 
     @Override
-    public boolean needReFire() {
-        return true;
-    }
+    public boolean needReFire() { return true; }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command command,
@@ -166,6 +172,12 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
         connectListeners.clear();
         if (engineIoServer != null) engineIoServer.shutdown();
         if (plugins != null) plugins.disable();
+    }
+
+    public int getClientsCountInPage(org.bukkit.plugin.Plugin plugin, @NotNull String page) {
+        if (mRoomSockets == null) return 0;
+        Set<SocketIoSocket> set = mRoomSockets.get(plugin.getName() + ":page:" + page);
+        return set == null ? 0 : set.size();
     }
 
     public int getClientsCountInRoom(org.bukkit.plugin.Plugin plugin, @NotNull String room) {
@@ -214,6 +226,14 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
         return this;
     }
 
+    @Contract("_, _ -> this")
+    public NekoMaid on(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull Consumer<Client> fn) {
+        Objects.requireNonNull(plugin);
+        Objects.requireNonNull(fn);
+        connectListeners.put(plugin, fn);
+        return this;
+    }
+
     @Contract("_, _, _ -> this")
     @NotNull
     public NekoMaid onSwitchPage(@NotNull org.bukkit.plugin.Plugin plugin,
@@ -231,13 +251,5 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
             pluginPages.computeIfAbsent(plugin.getName(), k -> new HashMap<>())
                     .computeIfAbsent(page, k -> new AbstractMap.SimpleEntry<>(onEnter, onLeave));
         return this;
-    }
-
-    @EventHandler
-    public void onPluginDisable(PluginDisableEvent e) {
-        String name = e.getPlugin().getName();
-        pluginPages.remove(name);
-        clients.forEach((k, v) -> v.forEach((a, b) -> b.off()));
-        connectListeners.removeAll(e.getPlugin());
     }
 }

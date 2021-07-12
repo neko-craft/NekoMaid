@@ -4,6 +4,10 @@ import cn.apisium.nekomaid.NekoMaid;
 import com.rylinaux.plugman.util.PluginUtil;
 import org.apache.commons.lang.ObjectUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.*;
 
 import java.io.File;
@@ -11,15 +15,13 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-final class Plugins {
+final class Plugins implements Listener {
     private final static boolean HAS_PLUGMAN;
     private final static SimplePluginManager pm = (SimplePluginManager) Bukkit.getPluginManager();
-    private final static Path pluginsDir = ((File) ObjectUtils.defaultIfNull(pm.pluginsDirectory(),
-            new File("plugins"))).toPath();
+    private final Path pluginsDir;
 
     private final NekoMaid main;
 
@@ -53,85 +55,66 @@ final class Plugins {
             this.loaded = loaded;
         }
     }
-    private final static class PluginsInfo {
-        public ArrayList<PluginInfo> plugins;
-        public boolean canLoadPlugin;
-    }
+
     public Plugins(NekoMaid main) {
         this.main = main;
-        main.onConnected(main, client -> client.onWithAck("plugins:fetch", () -> {
-            ArrayList<PluginInfo> list = new ArrayList<>();
-            HashSet<Path> files = new HashSet<>();
-            try {
-                for (Plugin it : pm.getPlugins()) {
-                    Path path = Paths.get(URLDecoder.decode(it.getClass().getProtectionDomain().getCodeSource()
-                            .getLocation().getPath(), "UTF-8"));
-                    PluginDescriptionFile desc = it.getDescription();
-                    files.add(path);
-                    list.add(new PluginInfo(desc, path.getFileName().toString(), it.isEnabled(), true));
-                }
-                Files.list(pluginsDir)
-                        .filter(it -> (it.endsWith(".jar") || it.endsWith(".jar.disabled")) &&
-                                Files.isRegularFile(it) && !files.contains(it))
-                        .forEach(it -> {
-                            try {
-                                list.add(new PluginInfo(main.getPluginLoader().getPluginDescription(it.toFile()),
-                                        it.getFileName().toString(), false, false));
-                            } catch (InvalidDescriptionException ignored) { }
-                        });
-            } catch (Exception ignored) { }
-            PluginsInfo info = new PluginsInfo();
-            info.plugins = list;
-            info.canLoadPlugin = HAS_PLUGMAN;
-            return info;
-        }).onWithAck("files:enable", it -> {
-            Plugin p = Bukkit.getPluginManager().getPlugin((String) it[0]);
-            if (p == null) return false;
-            if (p.isEnabled()) pm.disablePlugin(p);
-            else pm.enablePlugin(p);
-            return true;
-        }).onWithAck("files:disableForever", args -> {
-            try {
-                String it = (String) args[0];
-                Path file = pluginsDir.resolve(it);
-                if (!file.startsWith(pluginsDir) || !Files.isRegularFile(file)) return false;
-                if (it.endsWith(".jar")) {
-                    Plugin pl = getPlugin(it);
-                    if (pl != null) {
-                        if (!HAS_PLUGMAN) return false;
-                        PluginUtil.unload(pl);
+        main.GLOBAL_DATA.put("canLoadPlugin", HAS_PLUGMAN);
+        File dir;
+        try {
+            dir = (File) SimplePluginManager.class.getDeclaredField("pluginsDirectory").get(pm);
+        } catch (Exception ignored) {
+            dir = main.getDataFolder().getParentFile();
+        }
+        pluginsDir = ((File) ObjectUtils.defaultIfNull(dir, new File("plugins"))).toPath();
+        main.onConnected(main, client -> client.on("plugins:fetch", () -> client.emit("plugins:list", getPluginsData()))
+                .onWithAck("plugins:enable", args -> {
+                    try {
+                        String it = (String) args[0], name = it.replaceAll("\\.jar$", "");
+                        Plugin pl = getPlugin(it);
+                        if (pl == null) {
+                            if (!HAS_PLUGMAN) return false;
+                            PluginUtil.load(name);
+                            return pm.getPlugin((String) args[1]) != null;
+                        } else if (pm.isPluginEnabled(pl)) {
+                            if (HAS_PLUGMAN) PluginUtil.unload(pl);
+                            else pm.disablePlugin(pl);
+                        } else {
+                            if (HAS_PLUGMAN) PluginUtil.load(name);
+                            else pm.enablePlugin(pl);
+                        }
+                        return true;
+                    } catch (Exception ignored) { return false; }
+                }).onWithAck("plugins:disableForever", args -> {
+                    try {
+                        String it = (String) args[0];
+                        Path file = pluginsDir.resolve(it);
+                        if (!file.startsWith(pluginsDir) || !Files.isRegularFile(file)) return false;
+                        if (it.endsWith(".jar")) {
+                            Plugin pl = getPlugin(it);
+                            if (pl != null) {
+                                if (!HAS_PLUGMAN) return false;
+                                PluginUtil.unload(pl);
+                            }
+                            Files.move(file, pluginsDir.resolve(it + ".disabled"));
+                        } else Files.move(file, pluginsDir.resolve(it.replaceAll("\\.disabled$", "")));
+                        refresh();
+                        return true;
+                    } catch (Exception ignored) { return false; }
+                }).onWithAck("plugins:delete", args -> {
+                    try {
+                        String it = (String) args[0];
+                        Path file = pluginsDir.resolve(it);
+                        if (!it.endsWith(".disabled") || !file.startsWith(pluginsDir) || !Files.isRegularFile(file)) return false;
+                        Files.delete(file);
+                        refresh();
+                        return true;
+                    } catch (Exception ignored) {
+                        return false;
                     }
-                    Files.move(file, pluginsDir.resolve(it + ".disabled"));
-                } else Files.move(file, pluginsDir.resolve(it.replaceAll("\\.disabled$", "")));
-                return true;
-            } catch (Exception ignored) { return false; }
-        }).onWithAck("files:load", args -> {
-            if (!HAS_PLUGMAN) return false;
-            try {
-                String it = (String) args[0];
-                Plugin pl = getPlugin(it);
-                if (pl == null) PluginUtil.load(it);
-                else PluginUtil.unload(pl);
-                return true;
-            } catch (Exception ignored) { return false; }
-        }).onWithAck("files:delete", args -> {
-            try {
-                String it = (String) args[0];
-                Path file = pluginsDir.resolve(it);
-                if (!file.startsWith(pluginsDir) || !Files.isRegularFile(file)) return false;
-                if (it.endsWith(".jar")) {
-                    Plugin pl = getPlugin(it);
-                    if (pl != null) {
-                        if (!HAS_PLUGMAN) return false;
-                        PluginUtil.unload(pl);
-                    }
-                }
-                Files.delete(file);
-                return true;
-            } catch (Exception ignored) {
-                return false;
-            }
-        }));
+                })
+        );
+        main.getServer().getScheduler()
+                .runTask(main, () -> main.getServer().getPluginManager().registerEvents(this, main));
     }
 
     private Plugin getPlugin(String it) throws Exception {
@@ -143,4 +126,43 @@ final class Plugins {
         String name = main.getPluginLoader().getPluginDescription(f).getName();
         return pm.getPlugin(name);
     }
+
+    private ArrayList<PluginInfo> getPluginsData() {
+        ArrayList<PluginInfo> list = new ArrayList<>();
+        HashSet<String> files = new HashSet<>();
+        try {
+            for (Plugin it : pm.getPlugins()) {
+                Path path = new File(URLDecoder.decode(it.getClass().getProtectionDomain().getCodeSource()
+                        .getLocation().getPath(), "UTF-8")).toPath();
+                PluginDescriptionFile desc = it.getDescription();
+                files.add(path.getFileName().toString());
+                list.add(new PluginInfo(desc, path.getFileName().toString(), it.isEnabled(), true));
+            }
+            Files.list(pluginsDir)
+                    .filter(it -> {
+                        String fileName = it.getFileName().toString();
+                        return (fileName.endsWith(".jar") || fileName.endsWith(".jar.disabled")) &&
+                                Files.isRegularFile(it) && !files.contains(fileName);
+                    })
+                    .forEach(it -> {
+                        try {
+                            list.add(new PluginInfo(main.getPluginLoader().getPluginDescription(it.toFile()),
+                                    it.getFileName().toString(), false, false));
+                        } catch (InvalidDescriptionException ignored) { }
+                    });
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    private void refresh() {
+        if (main.getClientsCountInPage(main, "plugins") == 0) return;
+        main.getServer().getScheduler().runTaskLaterAsynchronously(main,
+                () -> main.broadcastInPage(main, "plugins", "plugins:list", getPluginsData()), 2);
+    }
+
+    @EventHandler
+    public void onPluginDisable(PluginDisableEvent e) { refresh(); }
+
+    @EventHandler
+    public void onPluginEnable(PluginEnableEvent e) { refresh(); }
 }

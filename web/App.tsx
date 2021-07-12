@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import socketIO from 'socket.io-client'
 import darkScrollbar from '@material-ui/core/darkScrollbar'
 import { zhCN } from '@material-ui/core/locale/index'
-import { useLocation, Route, NavLink, Redirect } from 'react-router-dom'
+import { useLocation, Route, NavLink, useHistory } from 'react-router-dom'
 import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar,
   Typography, Drawer, Toolbar, IconButton, useMediaQuery } from '@material-ui/core'
 import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
@@ -25,6 +25,7 @@ const drawerWidth = 240
 let sent = false
 const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = ({ darkMode, setDarkMode }) => {
   const loc = useLocation()
+  const his = useHistory()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [globalData, setGlobalData] = useState({ })
   update = useState(0)[1]
@@ -46,6 +47,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     initPages(fn('NekoMaid'))
     return fn
   }, [])
+  useEffect(() => { if (!loc.pathname || loc.pathname === '/') his.replace('/NekoMaid/dashboard') }, [loc.pathname])
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen)
 
@@ -159,7 +161,6 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     <Box component='main' sx={{ flexGrow: 1 }}>
       <globalCtx.Provider value={globalData}>
         {routes}
-        <Redirect to='/NekoMaid/Dashboard' exact />
       </globalCtx.Provider>
     </Box>
   </Box>

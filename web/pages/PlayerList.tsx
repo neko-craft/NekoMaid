@@ -1,10 +1,10 @@
 import React, { useMemo, useEffect, useState, useRef } from 'react'
 import dayjs from 'dayjs'
-import toast from '../toast'
 import Empty from '../components/Empty'
 import Avatar from '../components/Avatar'
 import dialog from '../dialog'
 import Plugin from '../Plugin'
+import { success } from '../toast'
 import { usePlugin, useGlobalData } from '../Context'
 import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Today, Event,
   Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline, Search } from '@material-ui/icons'
@@ -36,7 +36,7 @@ const banPlayer = (name: string, plugin: Plugin, refresh: () => void) => void di
     if (it == null) return
     plugin.emit('playerList:ban', name, it)
     refresh()
-    toast('操作成功!', 'success')
+    success()
   })
 
 const pardonPlayer = (name: string, plugin: Plugin, refresh: () => void) => void dialog(<>确认要解除 <span className='bold'>{name}</span> 的封禁吗?</>)
@@ -44,7 +44,7 @@ const pardonPlayer = (name: string, plugin: Plugin, refresh: () => void) => void
     if (!it) return
     plugin.emit('playerList:pardon', name)
     refresh()
-    toast('操作成功!', 'success')
+    success()
   })
 
 const whitelist = (name: string, plugin: Plugin, refresh: () => void, isAdd: boolean) => {
@@ -53,7 +53,7 @@ const whitelist = (name: string, plugin: Plugin, refresh: () => void, isAdd: boo
     if (!it) return
     plugin.emit(`playerList:${isAdd ? 'add' : 'remove'}Whitelist`, name)
     refresh()
-    toast('操作成功!', 'success')
+    success()
   })
 }
 
