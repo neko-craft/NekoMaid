@@ -61,7 +61,10 @@ const Plugins: React.FC = () => {
   plugins.forEach(it => {
     const source = map[it.name]
     it.depends.forEach(dep => {
-      if (!(dep in map)) data.push({ id: id++, name: dep, category: 2 })
+      if (!(dep in map)) {
+        map[dep] = id
+        data.push({ id: id++, name: dep, category: 2 })
+      }
       links.push({ source, target: map[dep] })
     })
   })
@@ -135,7 +138,7 @@ const Plugins: React.FC = () => {
           <Card>
             <CardHeader title='依赖关系' />
             <Divider />
-            <ReactECharts style={{ marginTop: theme.spacing(1) }} theme={theme.palette.mode === 'dark' ? 'dark' : undefined} option={{
+            <ReactECharts style={{ marginTop: theme.spacing(1), height: 450 }} theme={theme.palette.mode === 'dark' ? 'dark' : undefined} option={{
               backgroundColor: 'rgba(0, 0, 0, 0)',
               legend: { data: ['已安装', '未启用', '可选插件'] },
               series: [

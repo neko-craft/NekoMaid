@@ -19,6 +19,15 @@ export interface GlobalInfo {
   hasWhitelist: boolean
   canLoadPlugin: boolean
   icon?: string
+  hasVault?: boolean
+  hasVaultPermission?: boolean
+  hasVaultGroups?: boolean
+  hasVaultChat?: boolean
+  vaultEconomy?: {
+    singular: string
+    plural: string
+    digits: number
+  }
 }
 
 const mapArgs = (args: any[]) => args.map(it => typeof it === 'string'

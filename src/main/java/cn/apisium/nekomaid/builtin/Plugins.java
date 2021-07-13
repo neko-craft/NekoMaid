@@ -12,9 +12,9 @@ import org.bukkit.plugin.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -51,6 +51,8 @@ final class Plugins implements Listener {
             this.loaded = loaded;
             this.depends = new ArrayList<>(desc.getDepend());
             depends.addAll(desc.getSoftDepend());
+
+            if (author.length() > 50) author = author.substring(0, 49) + "...";
         }
     }
 
@@ -130,8 +132,7 @@ final class Plugins implements Listener {
         HashSet<String> files = new HashSet<>();
         try {
             for (Plugin it : pm.getPlugins()) {
-                Path path = new File(URLDecoder.decode(it.getClass().getProtectionDomain().getCodeSource()
-                        .getLocation().getPath(), "UTF-8")).toPath();
+                Path path = Paths.get(it.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
                 PluginDescriptionFile desc = it.getDescription();
                 files.add(path.getFileName().toString());
                 list.add(new PluginInfo(desc, path.getFileName().toString(), it.isEnabled(), true));
@@ -140,7 +141,7 @@ final class Plugins implements Listener {
                     .filter(it -> {
                         String fileName = it.getFileName().toString();
                         return (fileName.endsWith(".jar") || fileName.endsWith(".jar.disabled")) &&
-                                Files.isRegularFile(it) && !files.contains(fileName);
+                                 !files.contains(fileName) && Files.isRegularFile(it);
                     })
                     .forEach(it -> {
                         try {

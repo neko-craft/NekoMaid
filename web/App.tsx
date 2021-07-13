@@ -14,7 +14,7 @@ import { typography } from './theme'
 import { pluginCtx, globalCtx } from './Context'
 import { DialogWrapper } from './dialog'
 import Plugin, { Page } from './Plugin'
-import initPages from './pages/index'
+import initPages, { onGlobalDataReceived } from './pages/index'
 
 import type { ServerRecord } from './types'
 
@@ -49,6 +49,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       sent = true
       localStorage.setItem('NekoMaid:servers', JSON.stringify(his))
       setGlobalData(data)
+      onGlobalDataReceived(nekoMaid, data)
     })
     return fn
   }, [])
