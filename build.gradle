@@ -37,6 +37,7 @@ dependencies {
     compileOnly 'org.apache.logging.log4j:log4j-core:2.14.1'
     compileOnly 'com.rylinaux:PlugMan:2.2.3'
     compileOnly 'com.github.Apisium:Uniporter:1.1-SNAPSHOT'
+    compileOnly 'com.github.MilkBowl:VaultAPI:1.7'
     compileOnly ('org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT')  {
         exclude group: 'org.bukkit'
     }

@@ -8,7 +8,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 
-class FilesManager {
+final class FilesManager {
     private final static long MAX_SIZE = 4 * 1024 * 1024;
     private final static Path root = Paths.get(".");
     private FilesManager() { }

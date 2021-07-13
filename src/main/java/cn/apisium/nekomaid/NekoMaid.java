@@ -49,6 +49,7 @@ import java.util.function.*;
 @Permissions(@Permission(name = "neko.maid.use"))
 @Dependency("Uniporter")
 @SoftDependency("PlugMan")
+@SoftDependency("Vault")
 public final class NekoMaid extends JavaPlugin implements Listener, UniporterHttpHandler {
     public static NekoMaid INSTANCE;
     { INSTANCE = this; }
@@ -61,6 +62,7 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
     private EngineIoServer engineIoServer;
     private final ConcurrentHashMap<SocketIoSocket, String[]> pages = new ConcurrentHashMap<>();
     private final HashMap<SocketIoSocket, HashMap<String, Client>> clients = new HashMap<>();
+    private final JSONObject pluginScripts = new JSONObject();
     public SocketIoNamespace io;
     protected Map<String, Set<SocketIoSocket>> mRoomSockets;
 
@@ -71,6 +73,7 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
     public void onEnable() {
         saveDefaultConfig();
         GLOBAL_DATA
+                .put("plugins", pluginScripts)
                 .put("version", getServer().getVersion())
                 .put("onlineMode", getServer().getOnlineMode())
                 .put("hasWhitelist", getServer().hasWhitelist());
@@ -253,6 +256,15 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
         if (onEnter != null || onLeave != null)
             pluginPages.computeIfAbsent(plugin.getName(), k -> new HashMap<>())
                     .computeIfAbsent(page, k -> new AbstractMap.SimpleEntry<>(onEnter, onLeave));
+        return this;
+    }
+
+    @Contract("_, _ -> this")
+    @NotNull
+    public NekoMaid addScript(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String script) {
+        Objects.requireNonNull(plugin);
+        Objects.requireNonNull(script);
+        pluginScripts.put(plugin.getName(), script);
         return this;
     }
 }

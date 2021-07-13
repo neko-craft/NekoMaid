@@ -3,20 +3,33 @@ package cn.apisium.nekomaid;
 import com.alibaba.fastjson.JSON;
 import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.command.defaults.VersionCommand;
 import org.bukkit.event.server.TabCompleteEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.FutureTask;
+import java.util.stream.StreamSupport;
 
 @SuppressWarnings("deprecation")
 public final class Utils {
@@ -101,7 +114,8 @@ public final class Utils {
             }
             FutureTask<List<String>> future = new FutureTask<>(() -> {
                 List<String> offers = Bukkit.getCommandMap().tabComplete(Bukkit.getConsoleSender(), buffer);
-                TabCompleteEvent tabEvent = new TabCompleteEvent(Bukkit.getConsoleSender(), buffer, (offers == null) ? Collections.emptyList() : offers);
+                TabCompleteEvent tabEvent = new TabCompleteEvent(Bukkit.getConsoleSender(), buffer, (offers == null)
+                        ? Collections.emptyList() : offers);
                 Bukkit.getPluginManager().callEvent(tabEvent);
                 return tabEvent.isCancelled() ? Collections.emptyList() : tabEvent.getCompletions();
             });
@@ -132,8 +146,70 @@ public final class Utils {
                 : "\ud83c\udf7a" + JSON.toJSONString(object);
     }
 
-    public static int checkVersion() {
-        return 0;
-//        Update
+    public static int checkUpdate() {
+        try {
+        if (IS_PAPER) {
+            Class<?> clazz = Bukkit.getUnsafe().getVersionFetcher().getClass();
+            if (clazz == Class.forName("com.destroystokyo.paper.PaperVersionFetcher")) {
+                try {
+                    Class.forName("com.tuinity.tuinity.config.TuinityConfig");
+                    return fetchDistanceFromGitHub("Tuinity/Tuinity", "master", Bukkit.getVersion()
+                            .substring("git-Tuinity-".length()).split("[-\\s]")[0].replace("\"", ""));
+                } catch (Exception ignored) { }
+                String versionInfo = Bukkit.getVersion().substring("git-Paper-".length())
+                        .split("[-\\s]")[0].replace("\"", "");
+                try {
+                    return fetchDistanceFromSiteApi(Integer.parseInt(versionInfo), Bukkit.getMinecraftVersion());
+                } catch (Exception ignored) {
+                    return fetchDistanceFromGitHub("PaperMC/Paper", "master", versionInfo);
+                }
+            }
+        } else {
+            String version = Bukkit.getVersion();
+            String[] parts = version.substring(0, version.indexOf(' ')).split("-");
+            if (parts.length != 4 && parts.length != 3) return -1;
+            Method getDistance = VersionCommand.class.getDeclaredMethod("getDistance", String.class, String.class);
+            getDistance.setAccessible(true);
+            return parts.length == 4 ?
+                    (int) getDistance.invoke(null, "spigot", parts[2]) +
+                            (int) getDistance.invoke(null, "craftbukkit", parts[3])
+                    : (int) getDistance.invoke(null, "craftbukkit", parts[2]);
+        }
+        } catch (Exception ignored) { }
+        return -1;
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static int fetchDistanceFromGitHub(String repo, String branch, String hash) {
+        try {
+            HttpURLConnection connection = (HttpURLConnection)(new URL("https://api.github.com/repos/" + repo +
+                    "/compare/" + branch + "..." + hash)).openConnection();
+            connection.connect();
+            if (connection.getResponseCode() == 404)
+                return -2;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),
+                    StandardCharsets.UTF_8))) {
+                JsonObject obj = new Gson().fromJson(reader, JsonObject.class);
+                String status = obj.get("status").getAsString();
+                switch (status) {
+                    case "identical": return 0;
+                    case "behind": return obj.get("behind_by").getAsInt();
+                }
+            }
+        } catch (Exception ignored) { }
+        return -1;
+    }
+
+    @SuppressWarnings({"UnstableApiUsage", "OptionalGetWithoutIsPresent"})
+    private static int fetchDistanceFromSiteApi(int jenkinsBuild, @Nullable String siteApiVersion) throws Exception {
+        if (siteApiVersion == null) return -1;
+        try (BufferedReader reader = Resources.asCharSource(new URL("https://papermc.io/api/v2/projects/paper/versions/" +
+                siteApiVersion), StandardCharsets.UTF_8).openBufferedStream()) {
+            JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+            JsonArray builds = json.getAsJsonArray("builds");
+            int latest = StreamSupport.stream(builds.spliterator(), false)
+                    .mapToInt(JsonElement::getAsInt).max().getAsInt();
+            return latest - jenkinsBuild;
+        }
     }
 }

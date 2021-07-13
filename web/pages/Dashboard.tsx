@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { red, green, orange, deepPurple, blue, yellow } from '@material-ui/core/colors'
-import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, SentimentDissatisfied,
-  SentimentSatisfied, AccessTime, ArrowUpward, MoreHoriz, Remove, ExitToApp } from '@material-ui/icons'
+import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, SentimentDissatisfied, Refresh,
+  SentimentSatisfied, AccessTime, ArrowUpward, MoreHoriz, Remove, ExitToApp, Update } from '@material-ui/icons'
 import { useHistory } from 'react-router-dom'
 import { useTheme } from '@material-ui/core/styles'
 import { usePlugin, useGlobalData } from '../Context'
-import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeader, Divider, Skeleton,
+import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeader, Divider, Skeleton, Link,
   LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar, Pagination } from '@material-ui/core'
 import { LoadingList } from '../components/Loading'
-import { action } from '../toast'
+import toast, { action } from '../toast'
 import ReactECharts from 'echarts-for-react'
 import Empty from '../components/Empty'
 import Uptime from '../components/Uptime'
@@ -16,7 +16,7 @@ import Avatar from '../components/Avatar'
 import dialog from '../dialog'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }
-interface CurrentStatus { players: string[], mspt: number, tps: number, time: number, memory: number }
+interface CurrentStatus { players: string[], mspt: number, tps: number, time: number, memory: number, behinds: number }
 
 const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.ReactNode, color: string }> = ({ title, content, icon, children, color }) =>
   <Card sx={{ height: '100%' }}>
@@ -176,8 +176,19 @@ const Dashboard: React.FC = () => {
         <Grid item lg={3} sm={6} xl={3} xs={12}>
           <TopCard title='服务端版本' content={current ? version : <Skeleton animation='wave' width={150} />} icon={<Handyman />} color={orange[600]}>
             <Box sx={{ pt: 2, display: 'flex', alignItems: 'flex-end' }}>
-              <Check htmlColor={green[900]} />
-              <Typography color='textSecondary' variant='caption'>&nbsp;当前已为最新版</Typography>
+              {!current || current.behinds < 0
+                ? <Refresh htmlColor={blue[900]} />
+                : current?.behinds === 0
+                  ? <Check htmlColor={green[900]} />
+                  : <Update htmlColor={yellow[900]} />}
+              <Typography color='textSecondary' variant='caption'>&nbsp;{!current || current.behinds === -3
+                ? '检查更新中...'
+                : current.behinds < 0
+                  ? <Link underline='hover' color='inherit' sx={{ cursor: 'pointer' }} onClick={() => {
+                    toast('获取中...')
+                    plugin.emit('dashboard:checkUpdate')
+                  }}>获取失败, 点击重新获取</Link>
+                  : current.behinds === 0 ? '当前已为最新版' : `当前已落后 ${current.behinds} 个版本!`}</Typography>
             </Box>
           </TopCard>
         </Grid>

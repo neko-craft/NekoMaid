@@ -33,6 +33,10 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   update = useState(0)[1]
   const create = useMemo(() => {
     const io = socketIO(origin!, { path: pathname + 'NekoMaid', auth: { token } })
+    const map: Record<string, Plugin> = { }
+    const fn = (name: string) => map[name] || (map[name] = new Plugin(io, name))
+    const nekoMaid = fn('NekoMaid')
+    initPages(nekoMaid)
     io.on('globalData', data => {
       const his: ServerRecord[] = JSON.parse(localStorage.getItem('NekoMaid:servers') || '[]')
       const curAddress = address!.replace('http://', '') + '?' + token
@@ -46,9 +50,6 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       localStorage.setItem('NekoMaid:servers', JSON.stringify(his))
       setGlobalData(data)
     })
-    const map: Record<string, Plugin> = { }
-    const fn = (name: string) => map[name] || (map[name] = new Plugin(io, name))
-    initPages(fn('NekoMaid'))
     return fn
   }, [])
   useEffect(() => { if (!loc.pathname || loc.pathname === '/') his.replace('/NekoMaid/dashboard') }, [loc.pathname])
