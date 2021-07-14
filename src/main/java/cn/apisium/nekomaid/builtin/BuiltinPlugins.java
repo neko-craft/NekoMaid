@@ -9,8 +9,10 @@ public final class BuiltinPlugins {
         console = new Console(main);
         PlayerList.initPlayerList(main);
         FilesManager.createFilesManager(main);
-        main.getServer().getScheduler().runTask(main, () -> new Plugins(main));
-        if (main.getServer().getPluginManager().getPlugin("Vault") != null) new Vault(main);
+        main.getServer().getScheduler().runTask(main, () -> {
+            new Plugins(main);
+            if (main.getServer().getPluginManager().getPlugin("Vault") != null) new Vault(main);
+        });
     }
     public void disable() {
         console.stop();

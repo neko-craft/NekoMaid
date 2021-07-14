@@ -64,6 +64,7 @@ const StyledTreeItem = styled((props: TreeItemProps) => <TreeItem {...props} />)
 
 const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () => Promise<void>>, dirs: Record<string, null> }> =
   ({ dirs, plugin, path, loading }) => {
+    const [open, setOpen] = useState(false)
     const [files, setFiles] = useState<[string[], string[]] | undefined>()
     const load = () => new Promise<void>(resolve => plugin.emit('files:fetch', (data: any) => {
       setFiles(data)
@@ -93,8 +94,10 @@ const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () 
     const paths = path.split('/')
     const name = paths[paths.length - 1]
     return path
-      ? <StyledTreeItem nodeId={path} label={<>
-        <Icon className='icon'><embed src={`/icons/material/${icons.icons[(icons as any).folders[name]] || 'folder'}.svg`} /></Icon>{name}
+      ? <StyledTreeItem nodeId={path} onClick={() => setOpen(!open)} label={<>
+        <Icon className='icon'>
+          <embed src={`/icons/material/${icons.icons[(icons as any).folders[name]] || 'folder'}${open ? '-open' : ''}.svg`} />
+        </Icon>{name}
       </>}>{children}</StyledTreeItem>
       : <>{children}</>
   }

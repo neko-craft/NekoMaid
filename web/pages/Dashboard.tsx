@@ -66,7 +66,14 @@ const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
                 <IconButton edge='end' onClick={() => his.push('/NekoMaid/playerList/' + name)} size='small'><MoreHoriz /></IconButton>
               </>}
             >
-              <ListItemAvatar><Avatar src={`https://mc-heads.net/avatar/${name}/40`} imgProps={{ crossOrigin: 'anonymous' }} variant='rounded' /></ListItemAvatar>
+              <ListItemAvatar>
+                <Avatar
+                  src={`https://mc-heads.net/avatar/${name}/40`}
+                  imgProps={{ crossOrigin: 'anonymous', onClick () { his.push('/NekoMaid/playerList/' + name) } }}
+                  sx={{ cursor: 'pointer' }}
+                  variant='rounded'
+                />
+              </ListItemAvatar>
               <ListItemText primary={name} />
             </ListItem>)
             : <LoadingList />

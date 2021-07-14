@@ -50,6 +50,7 @@ import java.util.function.*;
 @Dependency("Uniporter")
 @SoftDependency("PlugMan")
 @SoftDependency("Vault")
+@SoftDependency("OpenInv")
 public final class NekoMaid extends JavaPlugin implements Listener, UniporterHttpHandler {
     public static NekoMaid INSTANCE;
     { INSTANCE = this; }

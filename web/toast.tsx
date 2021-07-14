@@ -34,7 +34,7 @@ export const Snackbars: React.FC = () => {
     position: 'fixed',
     top: 12,
     right: 44,
-    zIndex: (theme: any) => theme.zIndex.drawer + 1,
+    zIndex: theme => theme.zIndex.modal + 1,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-end'
