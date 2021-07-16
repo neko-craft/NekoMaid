@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 final class Plugins implements Listener {
     private final static boolean HAS_PLUGMAN;
@@ -38,19 +39,19 @@ final class Plugins implements Listener {
     private final static class PluginInfo {
         public String name, description, author, version, website, file;
         public boolean enabled, loaded;
-        public ArrayList<String> depends;
+        public List<String> depends, softDepends;
         public PluginInfo() { }
         public PluginInfo(PluginDescriptionFile desc, String file, boolean enabled, boolean loaded) {
-            this.name = desc.getName();
-            this.description = desc.getDescription();
-            this.version = desc.getVersion();
-            this.author = String.join(", ", desc.getAuthors());
-            this.website = desc.getWebsite();
+            name = desc.getName();
+            description = desc.getDescription();
+            version = desc.getVersion();
+            author = String.join(", ", desc.getAuthors());
+            website = desc.getWebsite();
             this.file = file;
             this.enabled = enabled;
             this.loaded = loaded;
-            this.depends = new ArrayList<>(desc.getDepend());
-            depends.addAll(desc.getSoftDepend());
+            depends = desc.getDepend();
+            softDepends = desc.getSoftDepend();
 
             if (author.length() > 50) author = author.substring(0, 49) + "...";
         }

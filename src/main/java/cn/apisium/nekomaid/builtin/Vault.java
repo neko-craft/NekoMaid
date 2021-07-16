@@ -45,6 +45,10 @@ final class Vault {
             try {
                 OfflinePlayer[] arr = main.getServer().getOfflinePlayers();
                 Stream<OfflinePlayer> stream = Arrays.stream(arr);
+                if (args.length == 4) {
+                    String name = (String) args[2];
+                    stream = stream.filter(it -> it.getName() != null && it.getName().toLowerCase().contains(name));
+                }
                 if (econ != null && args[1] != null) stream = "asc".equals(args[1])
                         ? stream.sorted((a, b) -> (int) (econ.getBalance(a) - econ.getBalance(b)))
                         : stream.sorted((a, b) -> (int) (econ.getBalance(b) - econ.getBalance(a)));

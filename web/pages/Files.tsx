@@ -13,7 +13,7 @@ import { TreeView, TreeItem } from '@material-ui/lab'
 import { iconClasses } from '@material-ui/core/Icon'
 import { treeItemClasses, TreeItemProps } from '@material-ui/lab/TreeItem'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, Icon, CardContent, IconButton, Tooltip,
-  Menu, MenuItem, ListItemIcon, CircularProgress, InputAdornment } from '@material-ui/core'
+  Menu, MenuItem, ListItemIcon, CircularProgress, InputAdornment, Input } from '@material-ui/core'
 import { ArrowDropDown, ArrowRight, Save, Undo, Redo, DeleteForever, CreateNewFolder, Refresh, MoreHoriz,
   Description, Upload, Download } from '@material-ui/icons'
 import { useHistory, useLocation } from 'react-router-dom'
@@ -23,8 +23,9 @@ import * as icons from '../../icons.json'
 import validFilename from 'valid-filename'
 import Empty from '../components/Empty'
 import Plugin from '../Plugin'
-import toast, { action } from '../toast'
+import toast, { action, failed } from '../toast'
 import dialog from '../dialog'
+import { address } from '../url'
 
 const getMode = (path: string) => {
   switch (path.slice(path.lastIndexOf('.') + 1)) {
@@ -62,16 +63,17 @@ const StyledTreeItem = styled((props: TreeItemProps) => <TreeItem {...props} />)
   }
 }))
 
-const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () => Promise<void>>, dirs: Record<string, null> }> =
+const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () => Promise<void>>, dirs: Record<string, boolean> }> =
   ({ dirs, plugin, path, loading }) => {
     const [open, setOpen] = useState(false)
     const [files, setFiles] = useState<[string[], string[]] | undefined>()
     const load = () => new Promise<void>(resolve => plugin.emit('files:fetch', (data: any) => {
       setFiles(data)
       resolve()
+      data[1].forEach((it: string) => (dirs[path + '/' + it] = false))
     }, path))
     useEffect(() => {
-      dirs[path] = null
+      dirs[path] = true
       if (path) loading[path] = load; else load()
     }, [])
     const children = files
@@ -104,7 +106,7 @@ const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () 
 
 const EMPTY = '$NekoMaid$Editor$Empty'
 const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loading: { '!#LOADING'?: boolean },
-  dirs: Record<string, null>, refresh: () => void }> = ({ plugin, editorRef, loading, dirs, refresh }) => {
+  dirs: Record<string, boolean>, refresh: () => void }> = ({ plugin, editorRef, loading, dirs, refresh }) => {
     const doc = (editorRef as any).current?.editor?.doc
     const theme = useTheme()
     const his = useHistory()
@@ -214,7 +216,7 @@ const Files: React.FC = () => {
   const tree = useRef<HTMLHRElement | null>(null)
   const editor = useRef<UnControlled | null>(null)
   const prevExpanded = useRef<string[]>([])
-  const dirs = useRef<Record<string, null>>({ })
+  const dirs = useRef<Record<string, boolean>>({ })
   // eslint-disable-next-line func-call-spacing
   const loading = useRef<Record<string, () => Promise<void>> & { '!#LOADING'?: boolean }>({ })
   const [id, setId] = useState(0)
@@ -222,7 +224,8 @@ const Files: React.FC = () => {
   const [expanded, setExpanded] = useState<string[]>([])
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
 
-  const dirPath = typeof dirs.current[curPath] === 'object' ? curPath : curPath.substring(0, curPath.lastIndexOf('/'))
+  const isDir = !!dirs.current[curPath]
+  const dirPath = isDir ? curPath : curPath.substring(0, curPath.lastIndexOf('/'))
 
   const spacing = theme.spacing(3)
   const refresh = () => {
@@ -250,8 +253,8 @@ const Files: React.FC = () => {
   return <Box sx={{ height: '100vh', py: 3 }}>
     <Toolbar />
     <Container maxWidth={false}>
-      <Grid container spacing={3}>
-        <Grid item lg={4} md={6} xl={3} xs={12}>
+      <Grid container spacing={3} sx={{ width: { sm: `calc(100vw - 240px - ${theme.spacing(3)})` } }}>
+        <Grid item lg={4} md={12} xl={3} xs={12}>
           <Card sx={{ minHeight: 400 }}>
             <CardHeader
               title='文件列表'
@@ -328,7 +331,7 @@ const Files: React.FC = () => {
               }}
               onNodeSelect={(_: any, it: string) => {
                 setCurPath(it[0] === '/' ? it.slice(1) : it)
-                if (typeof dirs.current[it] === 'object' || loading.current['!#LOADING']) return
+                if (dirs.current[it] || loading.current['!#LOADING']) return
                 if (it.startsWith('/')) it = it.slice(1)
                 his.push('/NekoMaid/files/' + it)
               }}
@@ -369,9 +372,40 @@ const Files: React.FC = () => {
           if (res) refresh()
         }, curPath, dirPath + '/' + it))
       }}><ListItemIcon><Refresh /></ListItemIcon>重命名</MenuItem>
-      <MenuItem disabled><ListItemIcon><Upload /></ListItemIcon>上载文件</MenuItem>
-      <MenuItem disabled><ListItemIcon><Download /></ListItemIcon>下传文件</MenuItem>
+      <MenuItem component='label' htmlFor='NekoMaid-files-upload-input' onClick={() => setAnchorEl(null)}>
+        <ListItemIcon><Upload /></ListItemIcon>上传文件
+      </MenuItem>
+      <MenuItem disabled={isDir} onClick={() => {
+        setAnchorEl(null)
+        toast('下载中...')
+        plugin.emit('files:download', (res: ArrayBuffer | null) => {
+          if (res) window.open(address! + 'NekoMaidDownload/' + res, '_blank')
+          else failed()
+        }, curPath)
+      }}><ListItemIcon><Download /></ListItemIcon>下载文件</MenuItem>
     </Menu>
+    <Input id='NekoMaid-files-upload-input' type='file' sx={{ display: 'none' }} onChange={e => {
+      const elm = e.target as HTMLInputElement
+      const file = elm.files?.[0]
+      elm.value = ''
+      if (!file) return
+      const size = file.size
+      if (size > 128 * 1024 * 1024) return failed('文件超过128MB!')
+      toast('上传中...')
+      const name = dirPath + '/' + file.name
+      if (dirs.current[name] != null) return failed('文件已存在!')
+      plugin.emit('files:upload', (res: string | null) => {
+        if (!res) return failed('文件已存在!')
+        const formdata = new FormData()
+        formdata.append('file', file)
+        console.log(formdata)
+        const xhr = new XMLHttpRequest()
+        xhr.open('post', address! + 'NekoMaidUpload/' + res)
+        xhr.onreadystatechange = () => action(xhr.readyState === 4 && xhr.status === 200)
+        xhr.upload.onprogress = e => e.lengthComputable && console.log(e.loaded / e.total * 100)
+        xhr.send(formdata)
+      }, name[0] === '/' ? name.slice(1) : name)
+    }} />
   </Box>
 }
 

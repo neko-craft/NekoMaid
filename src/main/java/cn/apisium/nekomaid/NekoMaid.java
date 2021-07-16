@@ -9,6 +9,7 @@ import com.google.common.collect.ArrayListMultimap;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpContentCompressor;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.socket.engineio.server.EngineIoServer;
 import io.socket.socketio.server.SocketIoAdapter;
@@ -51,7 +52,7 @@ import java.util.function.*;
 @SoftDependency("PlugMan")
 @SoftDependency("Vault")
 @SoftDependency("OpenInv")
-public final class NekoMaid extends JavaPlugin implements Listener, UniporterHttpHandler {
+public final class NekoMaid extends JavaPlugin implements Listener {
     public static NekoMaid INSTANCE;
     { INSTANCE = this; }
 
@@ -133,7 +134,8 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
                 }).on("error", System.out::println);
                 connectListeners.forEach((k, v) -> v.accept(getClient(k, client)));
         }).on("error", System.out::println);
-        Uniporter.registerHandler("NekoMaid", this, true);
+        Uniporter.registerHandler("NekoMaid", new MainHandler(), true);
+//        Uniporter.registerHandler("NekoMaidDownload", new MainHandler(), true);
 
         plugins = new BuiltinPlugins(this);
 
@@ -148,22 +150,6 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
     }
 
     public int getClientsCount() { return clients.size(); }
-
-    @Override
-    public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
-        if (route.isGzip()) context.pipeline().addLast(new HttpContentCompressor())
-                .addLast(new WebSocketServerCompressionHandler());
-        context.channel().pipeline().addLast(new EngineIoHandler(engineIoServer, null) {
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                super.exceptionCaught(ctx, cause);
-                cause.printStackTrace();
-            }
-        });
-    }
-
-    @Override
-    public boolean needReFire() { return true; }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command command,
@@ -267,5 +253,24 @@ public final class NekoMaid extends JavaPlugin implements Listener, UniporterHtt
         Objects.requireNonNull(script);
         pluginScripts.put(plugin.getName(), script);
         return this;
+    }
+
+    private final class MainHandler implements UniporterHttpHandler {
+        @Override
+        public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
+            if (route.isGzip()) context.pipeline().addLast(new HttpContentCompressor())
+                    .addLast(new WebSocketServerCompressionHandler());
+            context.channel().pipeline().addLast(new EngineIoHandler(engineIoServer, null,
+                    "ws://maid.neko-craft.com", 1024 * 1024 * 5) {
+                @Override
+                public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+                    super.exceptionCaught(ctx, cause);
+                    cause.printStackTrace();
+                }
+            });
+        }
+
+        @Override
+        public boolean needReFire() { return true; }
     }
 }

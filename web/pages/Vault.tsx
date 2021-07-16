@@ -3,13 +3,14 @@ import { useGlobalData, usePlugin } from '../Context'
 import Plugin from '../Plugin'
 import Avatar from '../components/Avatar'
 import throttle from 'lodash/throttle'
-import { Close, List as ListIcon, Groups as GroupsIcon, Check } from '@material-ui/icons'
+import { Close, List as ListIcon, Groups as GroupsIcon, Check, Search } from '@material-ui/icons'
 import { Box, Toolbar, Container, Card, CardHeader, Grid, DialogContent, DialogContentText, Button, Autocomplete,
   CircularProgress, Dialog, ListItemText, IconButton, ListItem, Tooltip, DialogActions, DialogTitle, TextField,
   List, ListItemIcon, Checkbox } from '@material-ui/core'
 import { DataGrid, GridCellParams } from '@material-ui/data-grid'
 import { useHistory } from 'react-router-dom'
-import { action } from '../toast'
+import { action, success } from '../toast'
+import dialog from '../dialog'
 
 interface PlayerInfo { id: string, balance?: number, group?: string, prefix?: string, suffix?: string }
 interface GroupInfo { id: string, prefix?: string, suffix?: string }
@@ -213,7 +214,15 @@ const Vault: React.FC = () => {
   }
 
   const playerList = <Card>
-    <CardHeader title='玩家列表' />
+    <CardHeader title='玩家列表' action={<IconButton onClick={() => dialog('请输入你要查找的游戏名:', '游戏名').then(filter => {
+      if (!filter) return refresh()
+      setCount(-1)
+      plugin.emit('vault:fetch', (a, b) => {
+        setCount(a)
+        setPlayers(b)
+        success()
+      }, page, sortModel.find(it => it.field === 'balance'), filter)
+    })}><Search /></IconButton>} />
     <div style={{ height: 594, width: '100%' }}>
       <DataGrid
         pagination

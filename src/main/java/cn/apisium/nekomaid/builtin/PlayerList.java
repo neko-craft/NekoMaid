@@ -44,7 +44,7 @@ final class PlayerList {
             if (state != 0 || filter != null) {
                 if (state == 1) list = list.filter(OfflinePlayer::isWhitelisted);
                 else if (state == 2) list = list.filter(OfflinePlayer::isBanned);
-                if (filter != null) list = list.filter(p -> p.getName() != null && p.getName().contains(filter));
+                if (filter != null) list = list.filter(p -> p.getName() != null && p.getName().toLowerCase().contains(filter));
             }
             java.util.List<OfflinePlayer> newList = list.collect(Collectors.toList());
             BanList banList = Bukkit.getBanList(BanList.Type.NAME);

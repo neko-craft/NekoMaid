@@ -41,6 +41,6 @@ export const Snackbars: React.FC = () => {
   }}><Toolbar />{Object.values(toasts).map(it => React.createElement(Snackbar, it))}</Box>
 }
 
-export const success = () => toast('操作成功!', 'success')
-export const failed = () => toast('操作失败!', 'error')
+export const success = (msg = '操作成功!') => toast(msg, 'success')
+export const failed = (msg = '操作失败!') => toast(msg, 'error')
 export const action = (it: boolean) => it ? success() : failed()

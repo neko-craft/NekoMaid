@@ -18,7 +18,7 @@ import initPages, { onGlobalDataReceived } from './pages/index'
 
 import type { ServerRecord } from './types'
 
-export const pages: Record<string, Page[]> = { }
+export let pages: Record<string, Page[]> = { }
 
 export let update: React.Dispatch<number>
 
@@ -36,7 +36,6 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     const map: Record<string, Plugin> = { }
     const fn = (name: string) => map[name] || (map[name] = new Plugin(io, name))
     const nekoMaid = fn('NekoMaid')
-    initPages(nekoMaid)
     io.on('globalData', data => {
       const his: ServerRecord[] = JSON.parse(localStorage.getItem('NekoMaid:servers') || '[]')
       const curAddress = address!.replace('http://', '') + '?' + token
@@ -49,7 +48,10 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       sent = true
       localStorage.setItem('NekoMaid:servers', JSON.stringify(his))
       setGlobalData(data)
+      pages = { }
+      initPages(nekoMaid)
       onGlobalDataReceived(nekoMaid, data)
+      update(Math.random())
     })
     return fn
   }, [])

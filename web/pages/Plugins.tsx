@@ -20,6 +20,7 @@ interface Plugin {
   enabled: boolean
   loaded: boolean
   depends: string[]
+  softDepends: string[]
 }
 
 const canPluginBeDisabled = (it: string) => {
@@ -61,6 +62,13 @@ const Plugins: React.FC = () => {
   plugins.forEach(it => {
     const source = map[it.name]
     it.depends.forEach(dep => {
+      if (!(dep in map)) {
+        map[dep] = id
+        data.push({ id: id++, name: dep, category: 3 })
+      }
+      links.push({ source, target: map[dep] })
+    })
+    it.softDepends.forEach(dep => {
       if (!(dep in map)) {
         map[dep] = id
         data.push({ id: id++, name: dep, category: 2 })
@@ -140,7 +148,7 @@ const Plugins: React.FC = () => {
             <Divider />
             <ReactECharts style={{ marginTop: theme.spacing(1), height: 450 }} theme={theme.palette.mode === 'dark' ? 'dark' : undefined} option={{
               backgroundColor: 'rgba(0, 0, 0, 0)',
-              legend: { data: ['已安装', '未启用', '可选插件'] },
+              legend: { data: ['已安装', '未启用', '可选插件', '缺少的前置'] },
               series: [
                 {
                   edgeSymbol: ['none', 'arrow'],
@@ -149,7 +157,8 @@ const Plugins: React.FC = () => {
                   layout: 'force',
                   data,
                   links,
-                  categories: [{ name: '已安装', base: '已安装' }, { name: '未启用', base: '未启用' }, { name: '可选插件', base: '可选插件' }],
+                  categories: [{ name: '已安装', base: '已安装' }, { name: '未启用', base: '未启用' }, { name: '可选插件', base: '可选插件' },
+                    { name: '缺少的前置', base: '缺少的前置' }],
                   roam: true,
                   label: {
                     show: true,
