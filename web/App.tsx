@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import * as colors from '@material-ui/core/colors'
 import socketIO from 'socket.io-client'
 import darkScrollbar from '@material-ui/core/darkScrollbar'
 import { zhCN } from '@material-ui/core/locale/index'
@@ -175,7 +176,9 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
 }
 
 const AppWrap: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(useMediaQuery('(prefers-color-scheme: dark)'))
+  const isDark = useMediaQuery('(prefers-color-scheme: dark)')
+  const mode = localStorage.getItem('NekoMaid:colorMode')
+  const [darkMode, setDarkMode] = useState(mode ? mode === 'dark' : isDark)
   const theme = React.useMemo(() => createTheme({
     typography,
     components: {
@@ -186,6 +189,7 @@ const AppWrap: React.FC = () => {
       }
     },
     palette: {
+      primary: (colors as any)[localStorage.getItem('NekoMaid:color') || 'blue'],
       mode: darkMode ? 'dark' : 'light',
       background: darkMode ? { default: '#212121', paper: '#212121' } : { default: '#f4f6f8', paper: '#ffffff' }
     }

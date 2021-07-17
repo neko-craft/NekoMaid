@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import dayjs from 'dayjs'
+import * as colors from '@material-ui/core/colors'
 import { success } from '../toast'
 import { configs } from '../Plugin'
-import { Delete, HelpOutline } from '@material-ui/icons'
-import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItem, IconButton,
-  ListItemAvatar, Avatar, ListItemText, Tooltip } from '@material-ui/core'
+import { Delete, HelpOutline, Check, Brightness4, Brightness7, SettingsBrightness } from '@material-ui/icons'
+import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItem, IconButton, ToggleButton,
+  ListItemAvatar, Avatar, ListItemText, Tooltip, CardContent, ToggleButtonGroup } from '@material-ui/core'
 
 import type { ServerRecord } from '../types'
 
@@ -30,6 +31,44 @@ configs.push({
         </ListItem>
       })}
     </List>
+  }
+},
+{
+  title: '主题设置',
+  component: () => {
+    const color = localStorage.getItem('NekoMaid:color') || 'blue'
+    return <CardContent sx={{ textAlign: 'center' }}>
+      <Box>
+        <ToggleButtonGroup exclusive value={localStorage.getItem('NekoMaid:colorMode') || ''} onChange={(_, it) => {
+          localStorage.setItem('NekoMaid:colorMode', it)
+          location.reload()
+        }}>
+          <ToggleButton value='light'><Brightness7 /> 亮色</ToggleButton>
+          <ToggleButton value=''><SettingsBrightness /> 随系统</ToggleButton>
+          <ToggleButton value='dark'><Brightness4 /> 暗色</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+      <Box sx={{ marginTop: 2 }}>
+        {Object.keys(colors).slice(1, 17).map((key, i) => {
+          const checked = color === key
+          const elm = <Box
+            key={key}
+            onClick={() => {
+              localStorage.setItem('NekoMaid:color', key)
+              location.reload()
+            }}
+            sx={{
+              backgroundColor: (colors as any)[key][600],
+              width: '44px',
+              height: '44px',
+              display: 'inline-block',
+              cursor: 'pointer'
+            }}
+          ><Check htmlColor='white' sx={{ top: '10px', position: 'relative', opacity: checked ? 1 : 0 }} /></Box>
+          return (i + 1) % 4 === 0 ? <React.Fragment key={key}>{elm}<br /></React.Fragment> : elm
+        })}
+      </Box>
+    </CardContent>
   }
 })
 

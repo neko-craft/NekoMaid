@@ -6,7 +6,7 @@ import throttle from 'lodash/throttle'
 import { Close, List as ListIcon, Groups as GroupsIcon, Check, Search } from '@material-ui/icons'
 import { Box, Toolbar, Container, Card, CardHeader, Grid, DialogContent, DialogContentText, Button, Autocomplete,
   CircularProgress, Dialog, ListItemText, IconButton, ListItem, Tooltip, DialogActions, DialogTitle, TextField,
-  List, ListItemIcon, Checkbox } from '@material-ui/core'
+  List, ListItemIcon, Checkbox, Divider } from '@material-ui/core'
 import { DataGrid, GridCellParams } from '@material-ui/data-grid'
 import { useHistory } from 'react-router-dom'
 import { action, success } from '../toast'
@@ -223,6 +223,7 @@ const Vault: React.FC = () => {
         success()
       }, page, sortModel.find(it => it.field === 'balance'), filter)
     })}><Search /></IconButton>} />
+    <Divider />
     <div style={{ height: 594, width: '100%' }}>
       <DataGrid
         pagination
@@ -255,7 +256,7 @@ const Vault: React.FC = () => {
     </div>
   </Card>
 
-  return <Box sx={{ minHeight: '100%', py: 3 }}>
+  return <Box sx={{ minHeight: '100%', py: 3, '& .MuiDataGrid-root': { border: 'none' } }}>
     <Toolbar />
     <Container maxWidth={false}>
       {hasVaultGroups
@@ -264,6 +265,7 @@ const Vault: React.FC = () => {
         <Grid item lg={4} md={12} xl={4} xs={12}>
           <Card>
             <CardHeader title='权限组' />
+            <Divider />
             <div style={{ height: 594, width: '100%' }}>
               <DataGrid
                 hideFooter
