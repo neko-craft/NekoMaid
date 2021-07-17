@@ -2,16 +2,52 @@
 import React, { useMemo, useEffect, useState, useRef } from 'react'
 import { usePlugin } from '../Context'
 import { Send } from '@material-ui/icons'
+import { CopyToClipboard } from 'react-copy-to-clipboard'
 import { TextField, Toolbar, IconButton, Paper, Tooltip, Box, Autocomplete } from '@material-ui/core'
 import { address } from '../url'
 import throttle from 'lodash/throttle'
 import toast from '../toast'
 import More from '../components/More'
 
-interface Log { level: string, msg: string, time: number, logger: string }
+interface LogComponent {
+  bold: boolean
+  italic: boolean
+  strikethrough: boolean
+  underlined: boolean
+  text: string
+  color: { color?: { r: number, g: number, b: number, alpha: number }, name?: string }
+  extra: LogComponent[]
+  hoverEvent?: {
+    action: 'SHOW_TEXT' | 'SHOW_ITEM'
+    contents: { value: LogComponent[] }
+  }
+  clickEvent?: {
+    action: 'OPEN_URL' | 'RUN_COMMAND' | 'SUGGEST_COMMAND' | 'COPY_TO_CLIPBOARD'
+    value: string
+  }
+}
+type Log = { level: string, msg: string, time: number, logger: string, components?: LogComponent[] }
 
 const hideLoggerRegexp = /net\.minecraft\.|Minecraft|com\.mojang\.|com\.sk89q\.|ru\.tehkode\.|Minecraft\.AWE|com\.corundumstudio\./
 
+const colorsMap: any = {
+  black: 0,
+  dark_blue: 1,
+  dark_green: 2,
+  dark_aqua: 3,
+  dark_red: 4,
+  dark_purple: 5,
+  gold: 6,
+  gray: 7,
+  dark_gray: 8,
+  blue: 9,
+  green: 10,
+  aqua: 11,
+  red: 12,
+  light_purple: 13,
+  yellow: 14,
+  white: 15
+}
 const colors = ['#212121', '#3f51b5', '#4caf50', '#00bcd4', '#b71c1c', '#9c27b0', '#ff5722', '#9e9e9e', '#616161', '#2196f3', '#8bc34a',
   '#03a9f4', '#f44336', '#ffc107', '#ff9800', '#eeeeee']
 
@@ -26,7 +62,45 @@ const levelNames: Record<string, string> = {
 
 const pad = (it: number) => it.toString().padStart(2, '0')
 
+const parseComponents = (arr: LogComponent[], runCommand: (it: string) => void, suggest: (it: string) => void) => {
+  return arr.map((it, i) => {
+    if (!it) return <br key={i} />
+    let className: string | undefined
+    const style: any = { }
+    if (it.bold) style.fontWeight = 'bold'
+    if (it.italic) style.fontStyle = 'italic'
+    if (it.underlined) style.textDecoration = 'underline'
+    if (it.strikethrough) style.textDecoration = (style.textDecoration ? style.textDecoration + ' ' : '') + 'line-through'
+    if (it.color.name && it.color.name in colorsMap) {
+      style.color = colors[colorsMap[it.color.name]]
+      if (it.color.name === 'white' || it.color.name === 'black') className = it.color.name
+    } else if (it.color.color) style.color = `rgba(${it.color.color.r},${it.color.color.g},${it.color.color.b},${it.color.color.alpha})`
+    if (style.color && !(it.color.name === 'white' || it.color.name === 'black')) style.textShadow = 'none'
+    if (it.clickEvent) style.cursor = 'pointer'
+    let elm = <span
+      key={i}
+      style={style}
+      className={className}
+      onClick={it.clickEvent
+        ? () => {
+            const value = it.clickEvent!.value
+            switch (it.clickEvent!.action) {
+              case 'OPEN_URL': return window.open(value, '_blank')
+              case 'RUN_COMMAND': return runCommand(value.slice(1))
+              case 'SUGGEST_COMMAND': return suggest(value.slice(1))
+            }
+          }
+        : undefined
+      }
+    >{parseMessage(it.text)}{it.extra && parseComponents(it.extra, runCommand, suggest)}</span>
+    if (it.hoverEvent?.action === 'SHOW_TEXT' && it.hoverEvent.contents.value) {
+      elm = <Tooltip key={i} title={<>{parseComponents(it.hoverEvent.contents.value, runCommand, suggest)}</>}>{elm}</Tooltip>
+    }
+    return it.clickEvent?.action === 'COPY_TO_CLIPBOARD' ? <CopyToClipboard text={it.clickEvent!.value} key={i}>{elm}</CopyToClipboard> : elm
+  })
+}
 const parseStyledText = (it: string) => {
+  if (!it.includes('§')) return it
   it = ' ' + it
   const index = it.search(/§[lmno]/)
   const a = it.slice(0, index)
@@ -34,9 +108,7 @@ const parseStyledText = (it: string) => {
   let i = 0
   const style: Record<string, string> = { }
   while (i < b.length) {
-    if (b[i] !== '§') {
-      break
-    }
+    if (b[i] !== '§') break
     switch (b[++i]) {
       case 'l':
         style.fontWeight = 'bold'
@@ -94,12 +166,36 @@ const parseMessage = (msg: string) => {
   }
   return res
 }
+const parseLog = (data: Log, runCommand: (it: string) => void, suggest: (it: string) => void) => {
+  const t = new Date(data.time)
+  const time = pad(t.getHours()) + ':' + pad(t.getMinutes()) + ':' + pad(t.getSeconds())
+  let moreLines = false
+  if (data.components) {
+    return <p key={i}>
+      <Tooltip title={time} placement='right'><span className='level'>[信息] </span></Tooltip>
+      <span className='msg'>{parseComponents(data.components, runCommand, suggest)}</span>
+    </p>
+  } else {
+    const msg = parseMessage(data.msg)
+    const isError = data.level === 'FATAL' || data.level === 'ERROR'
+    moreLines = (isError || data.level === 'WARN') && data.msg.includes('\n')
+    const elm = <p key={i} className={isError ? 'error' : data.level === 'WARN' ? 'warn' : undefined}>
+      <Tooltip title={time} placement='right'>
+        <span className='level'>[{levelNames[data.level] || '信息'}] </span>
+      </Tooltip>
+      <span className='msg'>
+        {moreLines && <span className='more' data-collapse='[收起]'>[展开]</span>}
+        {data.logger && !hideLoggerRegexp.test(data.logger) && <span className='logger'>[{data.logger}] </span>}
+        {msg}</span>
+    </p>
+    return moreLines ? <More key={i}>{elm}</More> : elm
+  }
+}
 
 let i = 0
 const Console: React.FC = () => {
   const logs = useMemo<JSX.Element[]>(() => [], [])
   const ref = useRef<HTMLDivElement | null>(null)
-  const lastLog = useRef<Log>({ } as any)
   const plugin = usePlugin()
   const [, update] = useState(0)
   const [open, setOpen] = useState(false)
@@ -140,28 +236,19 @@ const Console: React.FC = () => {
   }
 
   useEffect(() => {
+    const runCommand = (it: string) => plugin.emit('console:run', (res: boolean) => res ? toast('执行成功!', 'success') : toast('执行失败!', 'error'), it)
+    let lastLog: Log = {} as any
     const onLog = (data: Log) => {
-      if (lastLog.current && lastLog.current.logger === data.logger && (lastLog.current.time / 100 | 0) === (data.time / 100 | 0) &&
-        lastLog.current.level === data.level) {
+      if (lastLog.logger === data.logger && (lastLog.time / 100 | 0) === (data.time / 100 | 0) &&
+        lastLog.level === data.level && (!lastLog.components === !data.components)) {
         logs.pop()
-        lastLog.current.msg += '\n' + data.msg
-        data = lastLog.current
-      } else lastLog.current = data
-      const t = new Date(data.time)
-      const time = pad(t.getHours()) + ':' + pad(t.getMinutes()) + ':' + pad(t.getSeconds())
-      const msg = parseMessage(data.msg)
-      const isError = data.level === 'FATAL' || data.level === 'ERROR'
-      const moreLines = (isError || data.level === 'WARN') && data.msg.includes('\n')
-      const elm = <p key={i} className={isError ? 'error' : data.level === 'WARN' ? 'warn' : undefined}>
-        <Tooltip title={time} placement='right'>
-          <span className='level'>[{levelNames[data.level] || '信息'}] </span>
-        </Tooltip>
-        <span className='msg'>
-          {moreLines && <span className='more' data-collapse='[收起]'>[展开]</span>}
-          {data.logger && !hideLoggerRegexp.test(data.logger) && <span className='logger'>[{data.logger}] </span>}
-          {msg}</span>
-      </p>
-      logs.push(moreLines ? <More key={i}>{elm}</More> : elm)
+        if (data.components) {
+          lastLog.components!.push(null as any)
+          lastLog.components = lastLog.components!.concat(data.components)
+        } else lastLog.msg += '\n' + data.msg
+        data = lastLog
+      } else lastLog = data
+      logs.push(parseLog(data, runCommand, setCommand))
       update(++i)
     }
     const offLogs = plugin.on('console:logs', (it: Log[]) => {
@@ -183,7 +270,9 @@ const Console: React.FC = () => {
     height: '100vh',
     overflow: 'hidden',
     display: 'flex',
+    fontSize: '0.97rem',
     flexDirection: 'column',
+    fontFamily: '"Roboto Mono","Helvetica","Arial",sans-serif',
     '& p': {
       margin: 0,
       whiteSpace: 'pre-wrap',

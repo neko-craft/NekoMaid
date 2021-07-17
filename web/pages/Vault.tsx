@@ -261,7 +261,7 @@ const Vault: React.FC = () => {
       {hasVaultGroups
         ? <Grid container spacing={3}>
         <Grid item lg={8} md={12} xl={8} xs={12}>{playerList}</Grid>
-        <Grid item lg={4} md={6} xl={4} xs={12}>
+        <Grid item lg={4} md={12} xl={4} xs={12}>
           <Card>
             <CardHeader title='权限组' />
             <div style={{ height: 594, width: '100%' }}>
