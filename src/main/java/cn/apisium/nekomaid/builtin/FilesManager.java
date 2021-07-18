@@ -14,6 +14,16 @@ import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveInputStream;
+import org.apache.commons.compress.archivers.ArchiveOutputStream;
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.archivers.ar.ArArchiveEntry;
+import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
+import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -24,7 +34,8 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 final class FilesManager {
-    private static final DefaultHttpDataFactory factory = new DefaultHttpDataFactory(true);
+    private static final ArchiveStreamFactory archiveFactory = new ArchiveStreamFactory("UTF-8");
+    private static final DefaultHttpDataFactory factory = new DefaultHttpDataFactory();
     private final static int UPLOAD_STARTS = "/NekoMaidUpload/".length();
     private final static int DOWNLOAD_STARTS = "/NekoMaidDownload/".length();
     private final static long MAX_SIZE = 4 * 1024 * 1024; // 4MB
@@ -73,10 +84,9 @@ final class FilesManager {
                         }
                         @Override
                         public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
-                            if (e == null) {
-                                Files.delete(dir);
-                                return FileVisitResult.CONTINUE;
-                            } else throw e;
+                            if (e != null) throw e;
+                            Files.delete(dir);
+                            return FileVisitResult.CONTINUE;
                         }
                     });
                 } else if (args[1] != null && !Files.isDirectory(p)) {
@@ -125,6 +135,45 @@ final class FilesManager {
                 }
             } catch (Exception ignored) { }
             return null;
+        }).onWithAck("files:compress", args -> {
+            try {
+                Path p = Paths.get(".", (String) args[0]);
+                if (!p.startsWith(root) || !Files.exists(p)) return false;
+                if (args.length == 4) {
+                    String ext = (String) args[2];
+                    String file = args[1] + "." + ext;
+                    Path parent = Files.isSameFile(root, p) ? root : p.getParent();
+                    Path outFile = new File(parent.toFile(), file).toPath();
+                    if (!outFile.startsWith(root) || Files.exists(outFile)) return false;
+                    try (ArchiveOutputStream os = archiveFactory.createArchiveOutputStream((String) args[2],
+                            Files.newOutputStream(outFile))) {
+                        if (Files.isDirectory(p)) {
+                            Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
+                                @Override
+                                public FileVisitResult visitFile(Path f, BasicFileAttributes attrs) throws IOException {
+                                    addEntry(ext, os, parent, f);
+                                    return FileVisitResult.CONTINUE;
+                                }
+                            });
+                        } else addEntry(ext, os, parent, p);
+                        return true;
+                    }
+                } else if (Files.isRegularFile(p)) {
+                    try (ArchiveInputStream is = archiveFactory.createArchiveInputStream(
+                            new BufferedInputStream(Files.newInputStream(p)))) {
+                        ArchiveEntry archiveEntry;
+                        while ((archiveEntry = is.getNextEntry()) != null) {
+                            Path outputFile = new File(p.getParent().toFile(), archiveEntry.getName()).toPath();
+                            if (!Files.exists(outputFile.getParent())) Files.createDirectories(outputFile.getParent());
+                            try (OutputStream outputStream = Files.newOutputStream(outputFile)) {
+                                IOUtils.copy(is, outputStream);
+                            }
+                        }
+                        return true;
+                    }
+                }
+            } catch (Exception ignored) { }
+            return false;
         }));
     }
 
@@ -228,5 +277,33 @@ final class FilesManager {
                 .set("Access-Control-Allow-Credentials", "true")
                 .set("Access-Control-Allow-Methods", "POST,PUT")
                 .set("Access-Control-Allow-Headers", "origin, content-type, accept");
+    }
+
+    private static void addEntry(String ext, ArchiveOutputStream os, Path parent, Path file) throws IOException,
+            IllegalArgumentException {
+        String path = parent.relativize(file).toString();
+        ArchiveEntry archiveEntry;
+        switch (ext) {
+            case ArchiveStreamFactory.JAR:
+                archiveEntry = new JarArchiveEntry(new ZipArchiveEntry(file, path));
+                break;
+            case ArchiveStreamFactory.ZIP:
+                archiveEntry = new ZipArchiveEntry(file, path);
+                break;
+            case ArchiveStreamFactory.AR:
+                archiveEntry = new ArArchiveEntry(file, path);
+                break;
+            case ArchiveStreamFactory.TAR:
+                archiveEntry = new TarArchiveEntry(file, path);
+                break;
+            case ArchiveStreamFactory.CPIO:
+                archiveEntry = new CpioArchiveEntry(file, path);
+                break;
+            default: throw new IllegalArgumentException("Unsupported archive format: " + ext);
+        }
+
+        os.putArchiveEntry(archiveEntry);
+        try (InputStream is = Files.newInputStream(file)) { IOUtils.copy(is, os); }
+        os.closeArchiveEntry();
     }
 }

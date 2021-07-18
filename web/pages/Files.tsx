@@ -8,24 +8,25 @@ import 'codemirror/mode/properties/properties'
 import 'codemirror/mode/javascript/javascript'
 
 import React, { useEffect, useState, useRef } from 'react'
+import toast, { action, failed } from '../toast'
+import * as icons from '../../icons.json'
 import { styled, alpha, useTheme } from '@material-ui/core/styles'
 import { TreeView, TreeItem } from '@material-ui/lab'
 import { iconClasses } from '@material-ui/core/Icon'
 import { treeItemClasses, TreeItemProps } from '@material-ui/lab/TreeItem'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, Icon, CardContent, IconButton, Tooltip,
-  Menu, MenuItem, ListItemIcon, CircularProgress, InputAdornment, Input } from '@material-ui/core'
+  Menu, MenuItem, ListItemIcon, CircularProgress, InputAdornment, Input, Dialog, DialogTitle, DialogContent,
+  DialogContentText, DialogActions, Button, Select, TextField } from '@material-ui/core'
 import { ArrowDropDown, ArrowRight, Save, Undo, Redo, DeleteForever, CreateNewFolder, Refresh, MoreHoriz,
-  Description, Upload, Download } from '@material-ui/icons'
+  Description, Upload, Download, Outbox, Inbox, DriveFileRenameOutline } from '@material-ui/icons'
 import { useHistory, useLocation } from 'react-router-dom'
 import { UnControlled } from 'react-codemirror2'
 import { usePlugin } from '../Context'
-import * as icons from '../../icons.json'
+import { address } from '../url'
 import validFilename from 'valid-filename'
 import Empty from '../components/Empty'
 import Plugin from '../Plugin'
-import toast, { action, failed } from '../toast'
 import dialog from '../dialog'
-import { address } from '../url'
 
 const getMode = (path: string) => {
   switch (path.slice(path.lastIndexOf('.') + 1)) {
@@ -62,6 +63,39 @@ const StyledTreeItem = styled((props: TreeItemProps) => <TreeItem {...props} />)
     borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`
   }
 }))
+
+const compressFileExt = ['zip', 'tar', 'jar', 'ar', 'cpio']
+const CompressDialog: React.FC<{ file: string | null, dirs: Record<string, boolean>, onClose: () => void, plugin: Plugin, path: string, refresh: () => void }> =
+  ({ dirs, file, onClose, plugin, path, refresh }) => {
+    const [value, setValue] = useState('')
+    const [ext, setExt] = useState('zip')
+    useEffect(() => {
+      setValue(file || 'server')
+    }, [file])
+    let error: string | undefined
+    if (!validFilename(value)) error = '文件名不合法!'
+    else if (((path || '/') + value + '.' + ext) in dirs) error = '文件已存在!'
+    return <Dialog open={file != null} onClose={onClose}>
+      <DialogTitle>压缩文件</DialogTitle>
+      <DialogContent>
+        <DialogContentText>请输入压缩后的文件名</DialogContentText>
+        <TextField value={value} variant='standard' error={!!error} helperText={error} onChange={e => setValue(e.target.value)} />
+        <Select variant='standard' value={ext} onChange={e => setExt(e.target.value)}>
+          {compressFileExt.map(it => <MenuItem key={it} value={it}>.{it}</MenuItem>)}
+        </Select>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>取消</Button>
+        <Button disabled={!!error} onClick={() => {
+          onClose()
+          plugin.emit('files:compress', (res: boolean) => {
+            action(res)
+            refresh()
+          }, file, value, ext)
+        }}>确认</Button>
+      </DialogActions>
+    </Dialog>
+  }
 
 const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () => Promise<void>>, dirs: Record<string, boolean> }> =
   ({ dirs, plugin, path, loading }) => {
@@ -221,7 +255,9 @@ const Files: React.FC = () => {
   const loading = useRef<Record<string, () => Promise<void>> & { '!#LOADING'?: boolean }>({ })
   const [id, setId] = useState(0)
   const [curPath, setCurPath] = useState('')
+  const [progress, setProgress] = useState(-1)
   const [expanded, setExpanded] = useState<string[]>([])
+  const [compressFile, setCompressFile] = useState<string | null>(null)
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
 
   const isDir = !!dirs.current[curPath]
@@ -371,9 +407,9 @@ const Files: React.FC = () => {
           action(res)
           if (res) refresh()
         }, curPath, dirPath + '/' + it))
-      }}><ListItemIcon><Refresh /></ListItemIcon>重命名</MenuItem>
-      <MenuItem component='label' htmlFor='NekoMaid-files-upload-input' onClick={() => setAnchorEl(null)}>
-        <ListItemIcon><Upload /></ListItemIcon>上传文件
+      }}><ListItemIcon><DriveFileRenameOutline /></ListItemIcon>重命名</MenuItem>
+      <MenuItem disabled={progress !== -1} component='label' htmlFor='NekoMaid-files-upload-input' onClick={() => setAnchorEl(null)}>
+        <ListItemIcon><Upload /></ListItemIcon>{progress === -1 ? '上传文件' : `上传中... (${progress.toFixed(2)}%)`}
       </MenuItem>
       <MenuItem disabled={isDir} onClick={() => {
         setAnchorEl(null)
@@ -383,6 +419,18 @@ const Files: React.FC = () => {
           else failed()
         }, curPath)
       }}><ListItemIcon><Download /></ListItemIcon>下载文件</MenuItem>
+      <MenuItem onClick={() => {
+        setAnchorEl(null)
+        setCompressFile(curPath)
+      }}><ListItemIcon><Inbox /></ListItemIcon>压缩文件</MenuItem>
+      <MenuItem onClick={() => {
+        setAnchorEl(null)
+        toast('操作进行中...')
+        plugin.emit('files:compress', (res: boolean) => {
+          action(res)
+          refresh()
+        }, curPath)
+      }}><ListItemIcon><Outbox /></ListItemIcon>解压文件</MenuItem>
     </Menu>
     <Input id='NekoMaid-files-upload-input' type='file' sx={{ display: 'none' }} onChange={e => {
       const elm = e.target as HTMLInputElement
@@ -398,14 +446,19 @@ const Files: React.FC = () => {
         if (!res) return failed('文件已存在!')
         const formdata = new FormData()
         formdata.append('file', file)
-        console.log(formdata)
         const xhr = new XMLHttpRequest()
+        setProgress(0)
         xhr.open('post', address! + 'NekoMaidUpload/' + res)
-        xhr.onreadystatechange = () => action(xhr.readyState === 4 && xhr.status === 200)
-        xhr.upload.onprogress = e => e.lengthComputable && console.log(e.loaded / e.total * 100)
+        xhr.onreadystatechange = () => {
+          setProgress(-1)
+          action(xhr.readyState === 4 && xhr.status === 200)
+          refresh()
+        }
+        xhr.upload.onprogress = e => e.lengthComputable && setProgress(e.loaded / e.total * 100)
         xhr.send(formdata)
       }, name[0] === '/' ? name.slice(1) : name)
     }} />
+    <CompressDialog file={compressFile} path={dirPath} dirs={dirs.current} onClose={() => setCompressFile(null)} refresh={refresh} plugin={plugin} />
   </Box>
 }
 

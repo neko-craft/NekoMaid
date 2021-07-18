@@ -51,6 +51,7 @@ dependencies {
 
     implementation 'com.alibaba:fastjson:1.2.76'
     implementation 'com.github.Apisium:netty-engine.io:706eadca6a'
+    implementation 'org.apache.commons:commons-compress:1.21'
     implementation ('io.socket:engine.io-server:5.0.0') {
         exclude group: 'com.google.code.gson'
     }
