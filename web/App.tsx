@@ -25,6 +25,14 @@ export let update: React.Dispatch<number>
 
 const drawerWidth = 240
 
+const encrypt = (str: string) => {
+  const ua = navigator.userAgent
+  let len = ua.length
+  let data = ''
+  for (let i = 0; i < str.length; i++) data += String.fromCharCode(str.charCodeAt(i) ^ (--len >= 0 ? ua.charCodeAt(len) : i + 66))
+  return btoa(data)
+}
+
 let sent = false
 const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = ({ darkMode, setDarkMode }) => {
   const loc = useLocation()
@@ -33,7 +41,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   const [globalData, setGlobalData] = useState({ })
   update = useState(0)[1]
   const create = useMemo(() => {
-    const io = socketIO(origin!, { path: pathname + 'NekoMaid', auth: { token } })
+    const io = socketIO(origin!, { path: pathname + 'NekoMaid', auth: { token: encrypt(token!) } })
     const map: Record<string, Plugin> = { }
     const fn = (name: string) => map[name] || (map[name] = new Plugin(io, name))
     const nekoMaid = fn('NekoMaid')

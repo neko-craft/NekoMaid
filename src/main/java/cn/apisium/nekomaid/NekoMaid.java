@@ -9,7 +9,6 @@ import com.google.common.collect.ArrayListMultimap;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpContentCompressor;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.socket.engineio.server.EngineIoServer;
 import io.socket.socketio.server.SocketIoAdapter;
@@ -52,6 +51,7 @@ import java.util.function.*;
 @SoftDependency("PlugMan")
 @SoftDependency("Vault")
 @SoftDependency("OpenInv")
+@SoftDependency("PlaceholderAPI")
 public final class NekoMaid extends JavaPlugin implements Listener {
     public static NekoMaid INSTANCE;
     { INSTANCE = this; }
@@ -99,17 +99,26 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         io.on("connection", arr -> {
             SocketIoSocket client = (SocketIoSocket) arr[0];
             Object obj = client.getConnectData();
-            if (!(obj instanceof JSONObject) ||
-                    !getConfig().getString("token", "").equals(((JSONObject) obj).getString("token"))) {
+            if (!(obj instanceof JSONObject) || client.getInitialHeaders() == null ||
+                    !client.getInitialHeaders().containsKey("User-Agent") ||
+                    client.getInitialHeaders().get("User-Agent").isEmpty()) {
+                client.send("!");
                 client.disconnect(false);
                 return;
             }
-                client.send("globalData", GLOBAL_DATA);
-                client.once("disconnect", args -> {
-                    pages.remove(client);
-                    clients.remove(client);
-                }).on("switchPage", args -> {
-                    try {
+            String token = ((JSONObject) obj).getString("token"), ua = client.getInitialHeaders().get("User-Agent").get(0);
+            if (token == null || token.isEmpty() || token.length() > 100 || ua == null || ua.isEmpty() ||
+                    !getConfig().getString("token", "").equals(Utils.decrypt(token, ua))) {
+                client.send("!");
+                client.disconnect(false);
+                return;
+            }
+            client.send("globalData", GLOBAL_DATA);
+            client.once("disconnect", args -> {
+                pages.remove(client);
+                clients.remove(client);
+            }).on("switchPage", args -> {
+                try {
                     String[] oldPageObj = pages.get(client);
                     Client wrappedClient = null;
                     if (oldPageObj != null) {
@@ -130,9 +139,9 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                     AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>> pageAction = pages.get(page);
                     if (pageAction != null && pageAction.getKey() != null) pageAction.getKey()
                             .accept(wrappedClient == null ? getClient(namespace, client) : wrappedClient);
-                    } catch (Exception e) {e.printStackTrace();}
-                }).on("error", System.out::println);
-                connectListeners.forEach((k, v) -> v.accept(getClient(k, client)));
+                } catch (Exception e) {e.printStackTrace();}
+            }).on("error", System.out::println);
+            connectListeners.forEach((k, v) -> v.accept(getClient(k, client)));
         }).on("error", System.out::println);
         Uniporter.registerHandler("NekoMaid", new MainHandler(), true);
 //        Uniporter.registerHandler("NekoMaidDownload", new MainHandler(), true);

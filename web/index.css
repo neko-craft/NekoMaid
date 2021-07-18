@@ -24,7 +24,7 @@ input[type=number] {
 
 .CodeMirror {
   height: 100%;
-  font-family: Roboto, sans-serif !important;
+  font-family: "Roboto Mono", Helvetica, Arial, monospace, sans-serif !important;
   background: inherit !important;
   color: inherit !important;
 }

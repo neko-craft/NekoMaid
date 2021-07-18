@@ -1,5 +1,5 @@
 import React from 'react'
-import { DoubleArrow, Dashboard as DashboardIcon, People, Description, Extension, Settings, AccountBalance } from '@material-ui/icons'
+import { DoubleArrow, Dashboard as DashboardIcon, People, Description, Extension, Settings, AccountBalance, Schedule } from '@material-ui/icons'
 
 import Plugin, { GlobalInfo } from '../Plugin'
 
@@ -9,6 +9,7 @@ import PlayerList from './PlayerList'
 import Files from './Files'
 import Plugins from './Plugins'
 import Config from './Config'
+import Scheduler from './Scheduler'
 import Vault from './Vault'
 
 export default (p: Plugin) => p.addPages(
@@ -17,6 +18,7 @@ export default (p: Plugin) => p.addPages(
   { component: PlayerList, path: ['playerList', 'playerList/:name'], icon: <People />, title: '玩家', exact: true },
   { component: Files, path: 'files', icon: <Description />, title: '文件' },
   { component: Plugins, path: 'plugins', icon: <Extension />, title: '插件' },
+  { component: Scheduler, path: 'scheduler', icon: <Schedule />, title: '任务' },
   { component: Config, path: 'config', icon: <Settings />, title: '设置' }
 )
 

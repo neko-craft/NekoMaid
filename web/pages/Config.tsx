@@ -5,7 +5,7 @@ import { success } from '../toast'
 import { configs } from '../Plugin'
 import { Delete, HelpOutline, Check, Brightness4, Brightness7, SettingsBrightness } from '@material-ui/icons'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItem, IconButton, ToggleButton,
-  ListItemAvatar, Avatar, ListItemText, Tooltip, CardContent, ToggleButtonGroup } from '@material-ui/core'
+  ListItemAvatar, Avatar, ListItemText, Tooltip, CardContent, ToggleButtonGroup, Paper } from '@material-ui/core'
 
 import type { ServerRecord } from '../types'
 
@@ -48,7 +48,7 @@ configs.push({
           <ToggleButton value='dark'><Brightness4 /> 暗色</ToggleButton>
         </ToggleButtonGroup>
       </Box>
-      <Box sx={{ marginTop: 2 }}>
+      <Paper sx={{ marginTop: 2, width: '176px', overflow: 'hidden', display: 'inline-block' }}>
         {Object.keys(colors).slice(1, 17).map((key, i) => {
           const checked = color === key
           const elm = <Box
@@ -67,7 +67,7 @@ configs.push({
           ><Check htmlColor='white' sx={{ top: '10px', position: 'relative', opacity: checked ? 1 : 0 }} /></Box>
           return (i + 1) % 4 === 0 ? <React.Fragment key={key}>{elm}<br /></React.Fragment> : elm
         })}
-      </Box>
+      </Paper>
     </CardContent>
   }
 })

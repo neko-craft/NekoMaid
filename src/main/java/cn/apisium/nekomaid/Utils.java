@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.netty.handler.codec.base64.Base64Decoder;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.defaults.VersionCommand;
@@ -17,6 +18,11 @@ import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
@@ -25,7 +31,10 @@ import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.FutureTask;
@@ -33,6 +42,7 @@ import java.util.stream.StreamSupport;
 
 @SuppressWarnings("deprecation")
 public final class Utils {
+    private final static IvParameterSpec iv = new IvParameterSpec("NekoMaidIvParSpe".getBytes(StandardCharsets.UTF_8));
     private final static boolean IS_PAPER;
     private static Object server;
     private static Field recentTps, mspt;
@@ -210,6 +220,18 @@ public final class Utils {
             int latest = StreamSupport.stream(builds.spliterator(), false)
                     .mapToInt(JsonElement::getAsInt).max().getAsInt();
             return latest - jenkinsBuild;
+        }
+    }
+
+    public static String decrypt(String text, String secret) {
+        try {
+            byte[] data = Base64.getDecoder().decode(text);
+            char[] secretArr = secret.toCharArray(), out = new char[data.length];
+            int len = secretArr.length;
+            for (int i = 0; i < data.length; i++) out[i] = (char) (data[i] ^ (--len >= 0 ? secretArr[len] : i + 66));
+            return new String(out);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

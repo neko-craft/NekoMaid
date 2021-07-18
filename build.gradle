@@ -29,8 +29,8 @@ repositories {
         url = 'https://raw.githubusercontent.com/TheBlackEntity/PlugMan/repository/'
     }
     maven {
-        name = 'Yumc'
-        url = 'https://repo.yumc.pw/repository/maven-public/'
+        name = 'placeholderapi'
+        url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
     }
 }
 
@@ -42,6 +42,7 @@ dependencies {
     compileOnly 'com.rylinaux:PlugMan:2.2.3'
     compileOnly 'com.github.Apisium:Uniporter:68e39f6c49'
     compileOnly 'com.github.jikoo.OpenInv:openinvapi:2f36a4d4dc'
+    compileOnly 'me.clip:placeholderapi:2.10.10'
     compileOnly ('com.github.MilkBowl:VaultAPI:1.7') {
         exclude group: 'org.bukkit'
     }
