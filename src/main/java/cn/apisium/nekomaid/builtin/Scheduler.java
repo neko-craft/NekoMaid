@@ -74,9 +74,14 @@ class Scheduler {
     private void refresh() {
         if (scheduler != null) scheduler.stop();
         scheduler = new ConfigurationScheduler("NekoMaidScheduler");
+        scheduler.incrementScheduledItems();
+        scheduler.incrementScheduledItems();
+        scheduler.incrementScheduledItems();
+        scheduler.incrementScheduledItems();
+        scheduler.incrementScheduledItems();
         tasks.forEach(it -> {
             if (it.values.length > 0 && it.enabled) try {
-                scheduler.scheduleWithCron(new CronExpression(it.cron), () -> runTask(it));
+                scheduler.scheduleWithCron(new CronExpression("0 " + it.cron.replaceAll("\\*$", "?")), () -> runTask(it));
             } catch (Exception e) {
                 e.printStackTrace();
             }

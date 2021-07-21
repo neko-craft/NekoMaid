@@ -57,7 +57,7 @@
     "echarts": "^5.1.2",
     "echarts-for-react": "^3.0.1",
     "lodash": "^4.17.21",
-    "material-ui-cron": "^0.0.4",
+    "material-ui-cron": "^0.1.0-beta.2",
     "react": "^17.0.2",
     "react-codemirror2": "^7.2.1",
     "react-copy-to-clipboard": "^5.0.3",
