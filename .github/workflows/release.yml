@@ -65,6 +65,9 @@ jobs:
       - name: Build app
         run: npm run build
 
+      - name: Copy icons
+        run: npm run copyIcons
+
       - name: Deploy
         uses: crazy-max/ghaction-github-pages@v2
         with:
