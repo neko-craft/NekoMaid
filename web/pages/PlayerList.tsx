@@ -172,10 +172,7 @@ const PlayerActions: React.FC = () => {
   }, [ref.current])
   useEffect(() => {
     if (!viewerRef.current) return
-    if (name) {
-      viewerRef.current.loadSkin('https://mc-heads.net/skin/' + name)
-      if (viewerRef.current.renderPaused) viewerRef.current.renderPaused = false
-    } else viewerRef.current.renderPaused = true
+    if (name) viewerRef.current.loadSkin('https://mc-heads.net/skin/' + name)
   }, [name])
   const color = theme.palette.mode === 'dark' ? 255 : 0
 
