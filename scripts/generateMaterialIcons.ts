@@ -21,3 +21,4 @@ fileIcons.icons!.forEach(it => {
 })
 
 writeFileSync('icons.json', JSON.stringify({ icons, folders, files, extensions }))
+console.log('Success!')

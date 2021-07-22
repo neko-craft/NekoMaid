@@ -5,6 +5,7 @@ build
 dist
 icons.json
 icons/minecraft
+client.jar
 
 node_modules
 .parcel-cache

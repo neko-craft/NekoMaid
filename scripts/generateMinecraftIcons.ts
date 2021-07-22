@@ -18,10 +18,10 @@ request.get('https://launchermeta.mojang.com/mc/game/version_manifest.json', { j
   request.get(ver.url, { json: true }, (err, _, body) => {
     if (err) exit(err)
     console.log('Url:', body.downloads.client.url)
-    require('nugget')(body.downloads.client.url, { target: 'build/client.jar' }, function (err) {
+    require('nugget')(body.downloads.client.url, { target: 'client.jar' }, function (err) {
       if (err) exit(err)
       try {
-        const data = readFileSync('build/client.jar')
+        const data = readFileSync('client.jar')
         const hash = createHash('sha1').update(data).digest('hex')
         if (hash !== body.downloads.client.sha1) exit('Hash is not equal:', body.downloads.client.sha1, hash)
         fromBuffer(data, { lazyEntries: true }, (err, file) => {
