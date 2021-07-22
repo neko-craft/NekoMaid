@@ -1,0 +1,48 @@
+import React, { useState, useEffect } from 'react'
+// import { action } from '../toast'
+// import { Delete, Add, Save } from '@material-ui/icons'
+import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItemButton, Checkbox, ListItemIcon,
+  ListItem, IconButton, ListItemText, CardContent, TextField } from '@material-ui/core'
+import { usePlugin } from '../Context'
+// import Empty from '../components/Empty'
+// import dialog from '../dialog'
+// import { useParams } from 'react-router-dom'
+
+const Scheduler: React.FC = () => {
+  const plugin = usePlugin()
+  // const { } = useParams()
+  useEffect(() => {
+    plugin.emit('openInv:fetch', console.log, 'Shirasawa')
+  }, [])
+
+  return <Box sx={{ minHeight: '100%', py: 3 }}>
+    <Toolbar />
+    <Container maxWidth={false}>
+      <Grid container spacing={3}>
+        <Grid item lg={8} md={12} xl={8} xs={12}>
+          <Card>
+            <CardHeader
+              title='玩家的背包'
+              sx={{ position: 'relative' }}
+            />
+            <Divider />
+            <CardContent>
+
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item lg={4} md={12} xl={4} xs={12}>
+          <Card>
+            <CardHeader
+              title='任务列表'
+              sx={{ position: 'relative' }}
+            />
+            <Divider />
+          </Card>
+        </Grid>
+      </Grid>
+    </Container>
+  </Box>
+}
+
+export default Scheduler

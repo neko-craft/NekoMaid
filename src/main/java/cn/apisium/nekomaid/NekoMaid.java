@@ -15,6 +15,7 @@ import io.socket.socketio.server.SocketIoAdapter;
 import io.socket.socketio.server.SocketIoNamespace;
 import io.socket.socketio.server.SocketIoServer;
 import io.socket.socketio.server.SocketIoSocket;
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 
 import java.lang.reflect.Field;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.*;
@@ -53,6 +55,8 @@ import java.util.function.*;
 @SoftDependency("OpenInv")
 @SoftDependency("PlaceholderAPI")
 public final class NekoMaid extends JavaPlugin implements Listener {
+    private final static String URL_MESSAGE = ChatColor.translateAlternateColorCodes('&',
+            "&e[NekoMaid] &fOpen this url to manage your server: &7");
     public static NekoMaid INSTANCE;
     { INSTANCE = this; }
 
@@ -144,7 +148,6 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             connectListeners.forEach((k, v) -> v.accept(getClient(k, client)));
         }).on("error", System.out::println);
         Uniporter.registerHandler("NekoMaid", new MainHandler(), true);
-//        Uniporter.registerHandler("NekoMaidDownload", new MainHandler(), true);
 
         plugins = new BuiltinPlugins(this);
 
@@ -154,6 +157,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             pluginPages.remove(name);
             clients.forEach((k, v) -> v.remove(name));
             connectListeners.removeAll(p);
+            pluginScripts.remove(name);
         }, this);
         getCommand("nekomaid").setExecutor(this);
     }
@@ -163,7 +167,11 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        new RuntimeException("@33").printStackTrace();
+        String url = getConfig().getString("hostname", "");
+        if (!url.contains(":")) url += ":" + getServer().getPort();
+        url = url + "/?" + getConfig().getString("token");
+        try { url = URLEncoder.encode(url, "UTF-8"); } catch (Exception ignored) { }
+        sender.sendMessage(URL_MESSAGE + "http://maid.neko-craft.com/?" + url);
         return true;
     }
 

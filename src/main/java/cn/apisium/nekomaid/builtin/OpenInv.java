@@ -13,7 +13,7 @@ import java.util.Arrays;
 final class OpenInv {
     private final IOpenInv inv = (IOpenInv) Bukkit.getPluginManager().getPlugin("OpenInv");
     public OpenInv(NekoMaid main) {
-        main.onConnected(main, client -> client.onWithAck("inv:playerInv", args -> {
+        main.onConnected(main, client -> client.onWithAck("openInv:fetch", args -> {
             Inventory inv = getInventory((String) args[0]);
             if (inv == null) return null;
             return Arrays.stream(inv.getContents()).map(it -> it == null || it.getType() == Material.AIR ? null

@@ -13,7 +13,7 @@ import { address, origin, token, pathname } from './url'
 import { Snackbars } from './toast'
 import { typography } from './theme'
 import { pluginCtx, globalCtx } from './Context'
-import { DialogWrapper } from './dialog'
+import dialog, { DialogWrapper } from './dialog'
 import Plugin, { Page } from './Plugin'
 import initPages, { onGlobalDataReceived } from './pages/index'
 
@@ -56,11 +56,15 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       if (!sent && arr.length > 2) io.emit('switchPage', arr[1], arr[2])
       sent = true
       localStorage.setItem('NekoMaid:servers', JSON.stringify(his))
+      Object.entries(data.plugins as Record<string, string>).forEach(([name, file]) => import(file).then(plugin => plugin(fn(name))).catch(console.error))
       setGlobalData(data)
       pages = { }
       initPages(nekoMaid)
       onGlobalDataReceived(nekoMaid, data)
       update(Math.random())
+    }).on('!', () => {
+      io.close()
+      dialog('密钥错误!').then(() => (location.href = '//maid.neko-craft.com'))
     })
     return fn
   }, [])

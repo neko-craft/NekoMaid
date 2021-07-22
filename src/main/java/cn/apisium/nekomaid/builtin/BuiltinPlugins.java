@@ -15,7 +15,7 @@ public final class BuiltinPlugins {
             new Plugins(main);
             scheduler = new Scheduler(main);
             if (main.getServer().getPluginManager().getPlugin("Vault") != null) new Vault(main);
-            if (main.getServer().getPluginManager().getPlugin("OpenInv") != null) new OpenInv(main);
+//            if (main.getServer().getPluginManager().getPlugin("OpenInv") != null) new OpenInv(main);
         });
     }
     public void disable() {

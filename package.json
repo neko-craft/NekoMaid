@@ -3,18 +3,17 @@
   "version": "0.0.0",
   "description": "A plugin can use Web to manage your server.",
   "main": "index.js",
+  "private": true,
   "scripts": {
     "test": "eslint",
     "start": "parcel web/index.html",
+    "generateIcons": "npm run generateMaterialIcons && npm run generateMinecraftIcons",
     "generateMaterialIcons": "ts-node scripts/generateMaterialIcons.ts",
     "generateMinecraftIcons": "ts-node scripts/generateMinecraftIcons.ts",
     "build": "parcel build web/index.html --public-url . --no-source-maps"
   },
   "targets": {
     "main": false
-  },
-  "engines": {
-    "browsers": "Chrome 69"
   },
   "repository": {
     "type": "git",
@@ -57,7 +56,7 @@
     "echarts": "^5.1.2",
     "echarts-for-react": "^3.0.1",
     "lodash": "^4.17.21",
-    "material-ui-cron": "^0.1.0-beta.2",
+    "material-ui-cron": "^0.1.0-beta.1",
     "react": "^17.0.2",
     "react-codemirror2": "^7.2.1",
     "react-copy-to-clipboard": "^5.0.3",
@@ -69,7 +68,7 @@
     "valid-filename": "^3.1.0"
   },
   "devDependencies": {
-    "@parcel/transformer-less": "^2.0.0-nightly.751",
+    "@parcel/transformer-less": "^2.0.0-nightly.776",
     "@types/lodash": "^4.14.171",
     "@types/react": "^17.0.14",
     "@types/react-copy-to-clipboard": "^5.0.1",
@@ -86,7 +85,7 @@
     "eslint-plugin-promise": "^5.1.0",
     "eslint-plugin-react": "^7.24.0",
     "nugget": "^2.0.1",
-    "parcel": "^2.0.0-nightly.763",
+    "parcel": "^2.0.0-nightly.776",
     "parcel-reporter-copystatic": "^1.1.0",
     "ts-node": "^10.1.0",
     "yauzl": "^2.10.0"
