@@ -191,6 +191,8 @@ const AppWrap: React.FC = () => {
   const isDark = useMediaQuery('(prefers-color-scheme: dark)')
   const mode = localStorage.getItem('NekoMaid:colorMode')
   const [darkMode, setDarkMode] = useState(mode ? mode === 'dark' : isDark)
+  const primary = (colors as any)[localStorage.getItem('NekoMaid:color') || 'blue']
+  ;(document.getElementById('theme-color-meta') as HTMLMetaElement)?.setAttribute('content', primary.main)
   const theme = React.useMemo(() => createTheme({
     typography,
     components: {
@@ -201,7 +203,7 @@ const AppWrap: React.FC = () => {
       }
     },
     palette: {
-      primary: (colors as any)[localStorage.getItem('NekoMaid:color') || 'blue'],
+      primary,
       mode: darkMode ? 'dark' : 'light',
       background: darkMode ? { default: '#212121', paper: '#212121' } : { default: '#f4f6f8', paper: '#ffffff' }
     }

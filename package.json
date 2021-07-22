@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "description": "A plugin can use Web to manage your server.",
   "main": "index.js",
-  "private": true,
   "scripts": {
     "test": "eslint",
     "start": "parcel web/index.html",
@@ -14,6 +13,9 @@
   },
   "targets": {
     "main": false
+  },
+  "engines": {
+    "browsers": "Chrome 69"
   },
   "repository": {
     "type": "git",
@@ -68,6 +70,7 @@
     "valid-filename": "^3.1.0"
   },
   "devDependencies": {
+    "@parcel/transformer-image": "^2.0.0-nightly.2400",
     "@parcel/transformer-less": "^2.0.0-nightly.776",
     "@types/lodash": "^4.14.171",
     "@types/react": "^17.0.14",
