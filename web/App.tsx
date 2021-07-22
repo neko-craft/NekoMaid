@@ -179,7 +179,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
         {drawer}
       </Drawer>
     </Box>
-    <Box component='main' sx={{ flexGrow: 1 }}>
+    <Box component='main' sx={{ flexGrow: 1, width: '100vw' }}>
       <globalCtx.Provider value={globalData}>
         {routes}
       </globalCtx.Provider>

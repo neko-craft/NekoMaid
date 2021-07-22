@@ -9,6 +9,14 @@ jobs:
   build-plugin:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
       - uses: actions/checkout@v2
       - name: Set up JDK 16
         uses: actions/setup-java@v2
@@ -30,6 +38,14 @@ jobs:
   build-website:
     runs-on: ubuntu-latest
     steps:
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Check out git repository
         uses: actions/checkout@v2
         with:

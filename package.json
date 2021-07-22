@@ -9,7 +9,8 @@
     "generateIcons": "npm run generateMaterialIcons && npm run generateMinecraftIcons",
     "generateMaterialIcons": "ts-node scripts/generateMaterialIcons.ts",
     "generateMinecraftIcons": "ts-node scripts/generateMinecraftIcons.ts",
-    "build": "parcel build web/index.html --public-url . --no-source-maps"
+    "build": "parcel build web/index.html --public-url . --no-source-maps",
+    "copyIcons": "ncp icons dist/icons && ncp vscode-material-icon-theme/icons dist/icons/material"
   },
   "targets": {
     "main": false
@@ -30,18 +31,6 @@
     "url": "https://github.com/neko-craft/NekoMaid/issues"
   },
   "homepage": "https://github.com/neko-craft/NekoMaid#readme",
-  "staticFiles": {
-    "staticPath": [
-      {
-        "staticPath": "vscode-material-icon-theme/icons",
-        "staticOutDir": "dist/icons/material"
-      },
-      {
-        "staticPath": "icons",
-        "staticOutDir": "dist/icons"
-      }
-    ]
-  },
   "dependencies": {
     "@emotion/react": "^11.4.0",
     "@emotion/styled": "^11.3.0",
@@ -87,9 +76,9 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
     "eslint-plugin-react": "^7.24.0",
+    "ncp": "^2.0.0",
     "nugget": "^2.0.1",
     "parcel": "^2.0.0-nightly.776",
-    "parcel-reporter-copystatic": "^1.1.0",
     "ts-node": "^10.1.0",
     "yauzl": "^2.10.0"
   }
