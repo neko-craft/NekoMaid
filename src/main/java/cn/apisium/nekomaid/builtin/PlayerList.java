@@ -61,7 +61,7 @@ final class PlayerList {
                 return pd;
             }).toArray());
         }).on("playerList:ban", it -> {
-            String msg = ((String) it[0]).isEmpty() ? null : (String) it[0];
+            String msg = ((String) it[1]).isEmpty() ? null : (String) it[1];
             Bukkit.getBanList(BanList.Type.NAME).addBan((String) it[0], msg, null, "NekoMaid");
             Player p = Bukkit.getPlayerExact((String) it[0]);
             if (p != null) p.kickPlayer(msg);

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Socket } from 'socket.io-client'
 import { pages, update } from './App'
+import { actions, ActionComponent } from './pages/PlayerList'
 
 export interface Page {
   title: string
@@ -23,6 +24,7 @@ export interface GlobalInfo {
   hasVaultPermission?: boolean
   hasVaultGroups?: boolean
   hasVaultChat?: boolean
+  hasOpenInv?: boolean
   vaultEconomy?: {
     singular: string
     plural: string
@@ -49,14 +51,19 @@ export default class Plugin {
   }
 
   public addPages (...args: Page[]) {
-    if (!args.length) return
-    (pages[this.namespace] || (pages[this.namespace] = [])).push(...args)
+    if (!args.length) return this
+    ;(pages[this.namespace] || (pages[this.namespace] = [])).push(...args)
     update(++flag)
     return this
   }
 
   public addConfig (title: string, component: React.ComponentType) {
     configs.push({ title, component })
+    return this
+  }
+
+  public addPlayerAction (component: ActionComponent) {
+    actions.push(component)
     return this
   }
 

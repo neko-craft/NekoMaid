@@ -7,10 +7,10 @@ import Plugin from '../Plugin'
 import { success } from '../toast'
 import { usePlugin, useGlobalData } from '../Context'
 import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Today, Event,
-  Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline, Search } from '@material-ui/icons'
+  Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline, Search, MoreHoriz } from '@material-ui/icons'
 import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContainer, Table, TableBody, CardContent,
   TablePagination, TableHead, TableRow, TableCell, IconButton, Tooltip, ToggleButtonGroup, ToggleButton, List,
-  ListSubheader, ListItem, ListItemText, ListItemIcon, Collapse, ListItemButton, CardActions, Link } from '@material-ui/core'
+  ListSubheader, ListItem, ListItemText, ListItemIcon, Collapse, ListItemButton, CardActions, Link, Menu } from '@material-ui/core'
 import { FXAASkinViewer, createOrbitControls, WalkingAnimation, RotatingAnimation } from 'skinview3d'
 import { useTheme } from '@material-ui/core/styles'
 import { useParams, useHistory } from 'react-router-dom'
@@ -30,6 +30,9 @@ interface IPlayerInfo {
   entityKill: number
   tnt: number
 }
+
+export type ActionComponent = React.ComponentType<{ onClose: () => void, player: string | null }>
+export const actions: ActionComponent[] = []
 
 const banPlayer = (name: string, plugin: Plugin, refresh: () => void) => void dialog(<>确认要封禁 <span className='bold'>{name}</span> 吗?</>, '封禁原因')
   .then(it => {
@@ -202,6 +205,8 @@ const Players: React.FC = () => {
   const plugin = usePlugin()
   const [page, setPage] = useState(0)
   const [state, setState] = useState<number | null>(null)
+  const [activedPlayer, setActivedPlayer] = useState<string | null>(null)
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
   const [data, setData] = useState<{ count: number, players: PlayerData[] }>(() => ({ count: 0, players: [] }))
   const { hasWhitelist } = useGlobalData()
   const refresh = () => {
@@ -211,6 +216,10 @@ const Players: React.FC = () => {
     }, page, state === 1 || state === 2 ? state : 0, null)
   }
   useMemo(refresh, [page, state])
+  const close = () => {
+    setAnchorEl(null)
+    setActivedPlayer(null)
+  }
 
   return <Card>
     <CardHeader
@@ -274,6 +283,12 @@ const Players: React.FC = () => {
                   <Block color={it.ban == null ? undefined : 'error'} />
                 </IconButton>
               </Tooltip>
+              {actions.length
+                ? <IconButton onClick={e => {
+                  setActivedPlayer(anchorEl ? null : it.name)
+                  setAnchorEl(anchorEl ? null : e.currentTarget)
+                }}><MoreHoriz /></IconButton>
+                : null}
             </TableCell>
           </TableRow>)}
         </TableBody>
@@ -287,6 +302,11 @@ const Players: React.FC = () => {
       page={page}
       onPageChange={(_, it) => setPage(it)}
     />
+    <Menu
+      anchorEl={anchorEl}
+      open={Boolean(anchorEl)}
+      onClose={() => setAnchorEl(null)}
+    >{actions.map((It, i) => <It key={i} onClose={close} player={activedPlayer} />)}</Menu>
   </Card>
 }
 

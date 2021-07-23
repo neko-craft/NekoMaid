@@ -9,6 +9,7 @@
     "generateIcons": "npm run generateMaterialIcons && npm run generateMinecraftIcons",
     "generateMaterialIcons": "ts-node scripts/generateMaterialIcons.ts",
     "generateMinecraftIcons": "ts-node scripts/generateMinecraftIcons.ts",
+    "downloadMinecraftLanguage": "ts-node scripts/downloadMinecraftLanguage.ts",
     "build": "parcel build web/index.html --public-url . --no-source-maps",
     "copyIcons": "ncp icons dist/icons && ncp vscode-material-icon-theme/icons dist/icons/material"
   },

@@ -46,3 +46,8 @@ input[type=number] {
 .cm-s-material .CodeMirror-linenumber {
   color: inherit;
 }
+
+@keyframes enchants-animation {
+  from { background-position-y: 128px }
+  to { background-position-y: 0px }
+}

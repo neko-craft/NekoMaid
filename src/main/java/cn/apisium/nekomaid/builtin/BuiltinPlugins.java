@@ -1,6 +1,7 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
+import org.bukkit.plugin.PluginManager;
 
 public final class BuiltinPlugins {
     private final Console console;
@@ -14,8 +15,9 @@ public final class BuiltinPlugins {
         main.getServer().getScheduler().runTask(main, () -> {
             new Plugins(main);
             scheduler = new Scheduler(main);
-            if (main.getServer().getPluginManager().getPlugin("Vault") != null) new Vault(main);
-//            if (main.getServer().getPluginManager().getPlugin("OpenInv") != null) new OpenInv(main);
+            PluginManager pm = main.getServer().getPluginManager();
+            if (pm.getPlugin("Vault") != null) new Vault(main);
+            if (pm.getPlugin("OpenInv") != null) new OpenInv(main);
         });
     }
     public void disable() {

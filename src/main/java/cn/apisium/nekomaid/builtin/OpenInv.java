@@ -13,22 +13,39 @@ import java.util.Arrays;
 final class OpenInv {
     private final IOpenInv inv = (IOpenInv) Bukkit.getPluginManager().getPlugin("OpenInv");
     public OpenInv(NekoMaid main) {
-        main.onConnected(main, client -> client.onWithAck("openInv:fetch", args -> {
+        main.GLOBAL_DATA.put("hasOpenInv", true);
+        main.onConnected(main, client -> client.onWithAck("openInv:fetchInv", args -> {
             Inventory inv = getInventory((String) args[0]);
             if (inv == null) return null;
             return Arrays.stream(inv.getContents()).map(it -> it == null || it.getType() == Material.AIR ? null
-                    : new ItemData(it));
+                    : new ItemData(it)).toArray();
+        }).onWithAck("openInv:fetchEnderChest", args -> {
+            Inventory inv = getEnderChest((String) args[0]);
+            if (inv == null) return null;
+            return Arrays.stream(inv.getContents()).map(it -> it == null || it.getType() == Material.AIR ? null
+                    : new ItemData(it)).toArray();
         }));
     }
 
-    @SuppressWarnings("ConstantConditions")
+    @SuppressWarnings({"deprecation", "ConstantConditions"})
     private Inventory getInventory(String name) {
         try {
-            OfflinePlayer player = Bukkit.getPlayer(name);
-            if (player == null || !player.hasPlayedBefore()) return null;
+            OfflinePlayer player = Bukkit.getOfflinePlayer(name);
+            if (!player.hasPlayedBefore()) return null;
             return inv.getSpecialInventory(player.isOnline() ? player.getPlayer() : inv.loadPlayer(player), player.isOnline())
                     .getBukkitInventory();
-        } catch (InstantiationException ignored) { }
+        } catch (InstantiationException e) { e.printStackTrace(); }
+        return null;
+    }
+
+    @SuppressWarnings({"deprecation", "ConstantConditions"})
+    private Inventory getEnderChest(String name) {
+        try {
+            OfflinePlayer player = Bukkit.getOfflinePlayer(name);
+            if (!player.hasPlayedBefore()) return null;
+            return inv.getSpecialEnderChest(player.isOnline() ? player.getPlayer() : inv.loadPlayer(player), player.isOnline())
+                    .getBukkitInventory();
+        } catch (InstantiationException e) { e.printStackTrace(); }
         return null;
     }
 }

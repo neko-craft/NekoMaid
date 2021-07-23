@@ -4,7 +4,9 @@
 build
 dist
 icons.json
+minecraftIcons.json
 icons/minecraft
+languages/minecraft
 client.jar
 
 node_modules
