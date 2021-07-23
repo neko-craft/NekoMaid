@@ -51,12 +51,12 @@ public final class Utils {
         try {
             Class.forName("com.destroystokyo.paper.event.server.AsyncTabCompleteEvent");
             tmp = true;
-        } catch (Exception ignored) { }
+        } catch (Throwable ignored) { }
         IS_PAPER = tmp;
         try {
             Class<?> nms = Bukkit.getServer().getClass().getMethod("getServer").invoke(Bukkit.getServer()).getClass();
             server = nms.getMethod("getServer").invoke(null);
-            try { recentTps = nms.getField("recentTps"); } catch (Exception ignored) { }
+            try { recentTps = nms.getField("recentTps"); } catch (Throwable ignored) { }
             try {
                 for (Field it : nms.getFields()) {
                     int f = it.getModifiers();
@@ -66,8 +66,8 @@ public final class Utils {
                         if (arr.length == 100) mspt = it;
                     }
                 }
-            } catch (Exception ignored) { }
-        } catch (Exception e) {
+            } catch (Throwable ignored) { }
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }
@@ -76,7 +76,7 @@ public final class Utils {
         if (IS_PAPER) return Bukkit.getTPS()[0];
         try {
             return ((double[]) recentTps.get(server))[0];
-        } catch (Exception ignored) { }
+        } catch (Throwable ignored) { }
         return -1;
     }
 
@@ -89,7 +89,7 @@ public final class Utils {
                 for (final long l : arr) i += l;
                 return i / 100.0 * 1.0E-6D;
             }
-        } catch (Exception ignored) { }
+        } catch (Throwable ignored) { }
         return -1;
     }
 
@@ -131,7 +131,7 @@ public final class Utils {
             });
             Bukkit.getScheduler().runTask(NekoMaid.INSTANCE, future);
             return future.get();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return null;
@@ -165,12 +165,12 @@ public final class Utils {
                     Class.forName("com.tuinity.tuinity.config.TuinityConfig");
                     return fetchDistanceFromGitHub("Tuinity/Tuinity", "master", Bukkit.getVersion()
                             .substring("git-Tuinity-".length()).split("[-\\s]")[0].replace("\"", ""));
-                } catch (Exception ignored) { }
+                } catch (Throwable ignored) { }
                 String versionInfo = Bukkit.getVersion().substring("git-Paper-".length())
                         .split("[-\\s]")[0].replace("\"", "");
                 try {
                     return fetchDistanceFromSiteApi(Integer.parseInt(versionInfo), Bukkit.getMinecraftVersion());
-                } catch (Exception ignored) {
+                } catch (Throwable ignored) {
                     return fetchDistanceFromGitHub("PaperMC/Paper", "master", versionInfo);
                 }
             }
@@ -185,7 +185,7 @@ public final class Utils {
                             (int) getDistance.invoke(null, "craftbukkit", parts[3])
                     : (int) getDistance.invoke(null, "craftbukkit", parts[2]);
         }
-        } catch (Exception ignored) { }
+        } catch (Throwable ignored) { }
         return -1;
     }
 
@@ -206,12 +206,12 @@ public final class Utils {
                     case "behind": return obj.get("behind_by").getAsInt();
                 }
             }
-        } catch (Exception ignored) { }
+        } catch (Throwable ignored) { }
         return -1;
     }
 
     @SuppressWarnings({"UnstableApiUsage", "OptionalGetWithoutIsPresent"})
-    private static int fetchDistanceFromSiteApi(int jenkinsBuild, @Nullable String siteApiVersion) throws Exception {
+    private static int fetchDistanceFromSiteApi(int jenkinsBuild, @Nullable String siteApiVersion) throws Throwable {
         if (siteApiVersion == null) return -1;
         try (BufferedReader reader = Resources.asCharSource(new URL("https://papermc.io/api/v2/projects/paper/versions/" +
                 siteApiVersion), StandardCharsets.UTF_8).openBufferedStream()) {
@@ -230,7 +230,7 @@ public final class Utils {
             int len = secretArr.length;
             for (int i = 0; i < data.length; i++) out[i] = (char) (data[i] ^ (--len >= 0 ? secretArr[len] : i + 66));
             return new String(out);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return null;
         }
     }

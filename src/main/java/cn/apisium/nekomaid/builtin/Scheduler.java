@@ -22,12 +22,12 @@ class Scheduler {
         try {
             Class.forName("me.clip.placeholderapi.PlaceholderAPI");
             HAS_PLACEHOLDER_API = true;
-        } catch (Exception ignored) { }
+        } catch (Throwable ignored) { }
         Path configFile = new File(main.getDataFolder(), "scheduler.json").toPath();
         try {
             if (!Files.exists(configFile)) Files.write(configFile, "[]".getBytes(StandardCharsets.UTF_8));
             tasks = new ArrayList<>(JSONArray.parseArray(new String(Files.readAllBytes(configFile)), Task.class));
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
             tasks = new ArrayList<>();
         }
         refresh();
@@ -36,7 +36,7 @@ class Scheduler {
                     try {
                         runTask(tasks.get((int) args[0]));
                         return true;
-                    } catch (Exception ignored) {
+                    } catch (Throwable ignored) {
                         return false;
                     }
                 })
@@ -47,7 +47,7 @@ class Scheduler {
                         refresh();
                         Files.write(configFile, json.getBytes(StandardCharsets.UTF_8));
                         return true;
-                    } catch (Exception ignored) {
+                    } catch (Throwable ignored) {
                         return false;
                     }
                 }));
@@ -82,7 +82,7 @@ class Scheduler {
         tasks.forEach(it -> {
             if (it.values.length > 0 && it.enabled) try {
                 scheduler.scheduleWithCron(new CronExpression("0 " + it.cron.replaceAll("\\*$", "?")), () -> runTask(it));
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         });

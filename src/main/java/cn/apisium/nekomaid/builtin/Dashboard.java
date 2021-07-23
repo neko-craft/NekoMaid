@@ -54,7 +54,7 @@ final class Dashboard {
                 if (arr.length > 0) last = arr[arr.length - 1];
                 queue.addAll(Arrays.asList(arr));
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         Server s = main.getServer();
@@ -76,7 +76,7 @@ final class Dashboard {
             queue.add(last);
             try {
                 Files.write(file, new Gson().toJson(queue.toArray(), Status[].class).getBytes(StandardCharsets.UTF_8));
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         }, 0, 20 * 60 * 60);

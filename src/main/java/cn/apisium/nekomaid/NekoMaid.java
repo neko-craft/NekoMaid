@@ -83,8 +83,10 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                 .put("version", getServer().getVersion())
                 .put("onlineMode", getServer().getOnlineMode())
                 .put("hasWhitelist", getServer().hasWhitelist());
-        CachedServerIcon icon = getServer().getServerIcon();
-        if (icon != null && !icon.isEmpty()) GLOBAL_DATA.put("icon", icon.getData());
+        try {
+            CachedServerIcon icon = getServer().getServerIcon();
+            if (icon != null && !icon.isEmpty()) GLOBAL_DATA.put("icon", icon.getData());
+        } catch (Throwable ignored) { }
         if (getConfig().getString("token", null) == null) {
             getConfig().set("token", UUID.randomUUID().toString());
             saveConfig();
@@ -95,7 +97,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             Field field = SocketIoAdapter.class.getDeclaredField("mRoomSockets");
             field.setAccessible(true);
             mRoomSockets = (Map<String, Set<SocketIoSocket>>) field.get(io.getAdapter());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             setEnabled(false);
             return;
@@ -143,7 +145,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                     AbstractMap.SimpleEntry<Consumer<Client>, Consumer<Client>> pageAction = pages.get(page);
                     if (pageAction != null && pageAction.getKey() != null) pageAction.getKey()
                             .accept(wrappedClient == null ? getClient(namespace, client) : wrappedClient);
-                } catch (Exception e) {e.printStackTrace();}
+                } catch (Throwable e) {e.printStackTrace();}
             }).on("error", System.out::println);
             connectListeners.forEach((k, v) -> v.accept(getClient(k, client)));
         }).on("error", System.out::println);
@@ -170,7 +172,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         String url = getConfig().getString("hostname", "");
         if (!url.contains(":")) url += ":" + getServer().getPort();
         url = url + "/?" + getConfig().getString("token");
-        try { url = URLEncoder.encode(url, "UTF-8"); } catch (Exception ignored) { }
+        try { url = URLEncoder.encode(url, "UTF-8"); } catch (Throwable ignored) { }
         sender.sendMessage(URL_MESSAGE + "http://maid.neko-craft.com/?" + url);
         return true;
     }

@@ -53,7 +53,7 @@ final class FilesManager {
                 ArrayList<String> dirs = new ArrayList<>(), files = new ArrayList<>();
                 Files.list(p).forEach(it -> (Files.isDirectory(it) ? dirs : files).add(it.getFileName().toString()));
                 return new ArrayList[] { dirs, files };
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 return null;
             }
         }).onWithAck("files:content", args -> {
@@ -65,7 +65,7 @@ final class FilesManager {
                 if (Files.isHidden(p) || !Files.isReadable(p) || !Files.isRegularFile(p)) return 0;
                 if (Files.size(p) > MAX_SIZE) return 3;
                 return new String(Files.readAllBytes(p), StandardCharsets.UTF_8);
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 return null;
             }
         }).onWithAck("files:update", args -> {
@@ -93,14 +93,14 @@ final class FilesManager {
                     Files.write(p, ((String) args[1]).getBytes(StandardCharsets.UTF_8));
                 } else return false;
                 return true;
-            } catch (IOException ignored) { return false; }
+            } catch (Throwable ignored) { return false; }
         }).onWithAck("files:createDirectory", args -> {
             Path p = Paths.get(".", (String) args[0]);
             if (!p.startsWith(root) || Files.exists(p)) return false;
             try {
                 Files.createDirectory(p);
                 return true;
-            } catch (Exception ignored) {
+            } catch (Throwable ignored) {
                 return false;
             }
         }).onWithAck("files:rename", args -> {
@@ -111,7 +111,7 @@ final class FilesManager {
                 if (Files.isSameFile(p0, p1) || Files.isSameFile(root, p1) || Files.isSameFile(root, p0)) return false;
                 Files.move(p0, p1);
                 return true;
-            } catch (Exception ignored) {
+            } catch (Throwable ignored) {
                 return false;
             }
         }).onWithAck("files:download", args -> {
@@ -123,7 +123,7 @@ final class FilesManager {
                     return id;
                 }
                 return true;
-            } catch (Exception ignored) { }
+            } catch (Throwable ignored) { }
             return false;
         }).onWithAck("files:upload", args -> {
             try {
@@ -133,7 +133,7 @@ final class FilesManager {
                     uploadMap.put(id, p);
                     return id;
                 }
-            } catch (Exception ignored) { }
+            } catch (Throwable ignored) { }
             return null;
         }).onWithAck("files:compress", args -> {
             try {
@@ -172,7 +172,7 @@ final class FilesManager {
                         return true;
                     }
                 }
-            } catch (Exception ignored) { }
+            } catch (Throwable ignored) { }
             return false;
         }));
     }
@@ -261,7 +261,7 @@ final class FilesManager {
                                 : new ChunkedFile(raf), context.newProgressivePromise());
                         context.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(ChannelFutureListener.CLOSE);
                         return;
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         e.printStackTrace();
                     }
                 }

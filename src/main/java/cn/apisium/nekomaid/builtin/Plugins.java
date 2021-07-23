@@ -31,7 +31,7 @@ final class Plugins implements Listener {
         try {
             Class.forName("com.rylinaux.plugman.util.PluginUtil");
             flag = true;
-        } catch (Exception ignored) { }
+        } catch (Throwable ignored) { }
         HAS_PLUGMAN = flag;
     }
 
@@ -63,7 +63,7 @@ final class Plugins implements Listener {
         File dir;
         try {
             dir = (File) SimplePluginManager.class.getDeclaredField("pluginsDirectory").get(pm);
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
             dir = main.getDataFolder().getParentFile();
         }
         pluginsDir = ((File) ObjectUtils.defaultIfNull(dir, new File("plugins"))).toPath();
@@ -84,7 +84,7 @@ final class Plugins implements Listener {
                             else pm.enablePlugin(pl);
                         }
                         return true;
-                    } catch (Exception ignored) { return false; }
+                    } catch (Throwable ignored) { return false; }
                 }).onWithAck("plugins:disableForever", args -> {
                     try {
                         String it = (String) args[0];
@@ -100,7 +100,7 @@ final class Plugins implements Listener {
                         } else Files.move(file, pluginsDir.resolve(it.replaceAll("\\.disabled$", "")));
                         refresh();
                         return true;
-                    } catch (Exception ignored) { return false; }
+                    } catch (Throwable ignored) { return false; }
                 }).onWithAck("plugins:delete", args -> {
                     try {
                         String it = (String) args[0];
@@ -109,7 +109,7 @@ final class Plugins implements Listener {
                         Files.delete(file);
                         refresh();
                         return true;
-                    } catch (Exception ignored) {
+                    } catch (Throwable ignored) {
                         return false;
                     }
                 })
@@ -148,9 +148,9 @@ final class Plugins implements Listener {
                         try {
                             list.add(new PluginInfo(main.getPluginLoader().getPluginDescription(it.toFile()),
                                     it.getFileName().toString(), false, false));
-                        } catch (InvalidDescriptionException ignored) { }
+                        } catch (Throwable ignored) { }
                     });
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Throwable e) { e.printStackTrace(); }
         return list;
     }
 

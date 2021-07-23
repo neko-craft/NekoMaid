@@ -34,7 +34,7 @@ final class OpenInv {
             if (!player.hasPlayedBefore()) return null;
             return inv.getSpecialInventory(player.isOnline() ? player.getPlayer() : inv.loadPlayer(player), player.isOnline())
                     .getBukkitInventory();
-        } catch (InstantiationException e) { e.printStackTrace(); }
+        } catch (Throwable e) { e.printStackTrace(); }
         return null;
     }
 
@@ -45,7 +45,7 @@ final class OpenInv {
             if (!player.hasPlayedBefore()) return null;
             return inv.getSpecialEnderChest(player.isOnline() ? player.getPlayer() : inv.loadPlayer(player), player.isOnline())
                     .getBukkitInventory();
-        } catch (InstantiationException e) { e.printStackTrace(); }
+        } catch (Throwable e) { e.printStackTrace(); }
         return null;
     }
 }

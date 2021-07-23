@@ -12,7 +12,6 @@ import org.apache.logging.log4j.core.layout.AbstractStringLayout;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.SimpleMessage;
-import org.bukkit.ChatColor;
 import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -52,7 +51,7 @@ final class Console implements Appender {
                                 try {
                                     return main.getServer()
                                             .dispatchCommand(sender, command);
-                                } catch (Exception e) {
+                                } catch (Throwable e) {
                                     e.printStackTrace();
                                     return false;
                                 }
@@ -60,7 +59,7 @@ final class Console implements Appender {
                             main.getServer().getScheduler().runTask(main, future);
                             try {
                                 return future.get();
-                            } catch (Exception ignored) {
+                            } catch (Throwable ignored) {
                                 return false;
                             }
                         }));
@@ -150,7 +149,7 @@ final class Console implements Appender {
 
     private static final class ProxiedConsoleCommandSender implements ConsoleCommandSender {
         private final ConsoleCommandSender o;
-        private final ProxiedConsoleCommandSender.ProxiedSpigot spigot = new ProxiedConsoleCommandSender.ProxiedSpigot();
+        private final ProxiedConsoleCommandSender.ProxiedSpigot spigot = new ProxiedSpigot();
         public ProxiedConsoleCommandSender(ConsoleCommandSender sender) {
             o = sender;
         }
@@ -289,7 +288,7 @@ final class Console implements Appender {
         }
 
         @SuppressWarnings("deprecation")
-        public class ProxiedSpigot extends CommandSender.Spigot {
+        public static class ProxiedSpigot extends CommandSender.Spigot {
             public void sendMessage(@NotNull BaseComponent component) {
                 sendMessage(new BaseComponent[] { component });
             }

@@ -68,7 +68,7 @@ final class Vault {
                             return info;
                         }).toArray()
                 };
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
                 return null;
             }
@@ -86,7 +86,7 @@ final class Vault {
                     case 1: return permission.playerAddGroup((World) null, name, group);
                     case 2: return permission.playerRemoveGroup((World) null, name, group);
                 }
-            } catch (Exception ignored) { }
+            } catch (Throwable ignored) { }
             return false;
         }).onWithAck("vault:setChat", args -> {
             if (chat == null || !chat.isEnabled()) return false;
@@ -100,7 +100,7 @@ final class Vault {
                     else chat.setPlayerSuffix((World) null, name, text);
                 }
                 return true;
-            } catch (Exception ignored) {
+            } catch (Throwable ignored) {
                 return false;
             }
         }).onWithAck("vault:fetchGroups", () -> {
@@ -132,7 +132,7 @@ final class Vault {
                     case 1: return permission.playerAdd((World) null, name, node);
                     case 2: return permission.playerRemove((World) null, name, node);
                 }
-            } catch (Exception ignored) { }
+            } catch (Throwable ignored) { }
             return false;
         }).onWithAck("vault:getAllPermissions", () -> {
             final HashSet<String> set = new HashSet<>();
