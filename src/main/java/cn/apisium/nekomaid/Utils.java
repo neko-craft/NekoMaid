@@ -8,9 +8,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import io.netty.handler.codec.base64.Base64Decoder;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Server;
+import org.bukkit.command.CommandMap;
 import org.bukkit.command.defaults.VersionCommand;
 import org.bukkit.event.server.TabCompleteEvent;
 import org.jetbrains.annotations.NotNull;
@@ -18,11 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
@@ -31,30 +27,31 @@ import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.spec.KeySpec;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.FutureTask;
 import java.util.stream.StreamSupport;
 
 @SuppressWarnings("deprecation")
 public final class Utils {
-    private final static IvParameterSpec iv = new IvParameterSpec("NekoMaidIvParSpe".getBytes(StandardCharsets.UTF_8));
-    private final static boolean IS_PAPER;
+    private static String commitId, versionBranch = "master";
+    private static final String versionInfo;
+    private static CommandMap commandMap;
+    private static boolean IS_PAPER, IS_CAT_SERVER;
     private static Object server;
     private static Field recentTps, mspt;
     static {
-        boolean tmp = false;
         try {
             Class.forName("com.destroystokyo.paper.event.server.AsyncTabCompleteEvent");
-            tmp = true;
+            IS_PAPER = true;
         } catch (Throwable ignored) { }
-        IS_PAPER = tmp;
         try {
-            Class<?> nms = Bukkit.getServer().getClass().getMethod("getServer").invoke(Bukkit.getServer()).getClass();
+            Class.forName("catserver.server.CatServer");
+            IS_CAT_SERVER = true;
+        } catch (Throwable ignored) { }
+        try {
+            Server obcServer = Bukkit.getServer();
+            Class<?> obc = Bukkit.getServer().getClass();
+            Class<?> nms = obc.getMethod("getServer").invoke(obcServer).getClass();
             server = nms.getMethod("getServer").invoke(null);
             try { recentTps = nms.getField("recentTps"); } catch (Throwable ignored) { }
             try {
@@ -67,22 +64,35 @@ public final class Utils {
                     }
                 }
             } catch (Throwable ignored) { }
+            try {
+                Field field = obc.getDeclaredField("commandMap");
+                field.setAccessible(true);
+                commandMap = (CommandMap) field.get(obcServer);
+            } catch (Throwable ignored) { }
         } catch (Throwable e) {
             e.printStackTrace();
         }
+        versionInfo = Bukkit.getVersion().substring("git-Paper-".length())
+                .split("[-\\s]")[0].replace("\"", "");
+        if (versionInfo.length() != 7) try {
+            @SuppressWarnings("unchecked") Map<String, String> map = (Map<String, String>)
+                    Class.forName("io.papermc.paper.util.JarManifests").getField("MANIFEST_MAP").get(null);
+            versionBranch = map.get("Git-Branch");
+            commitId = map.get("Git-Commit");
+        } catch (Throwable ignored) { }
     }
 
     public static double getTPS() {
-        if (IS_PAPER) return Bukkit.getTPS()[0];
         try {
+            if (IS_PAPER) return Bukkit.getTPS()[0];
             return ((double[]) recentTps.get(server))[0];
         } catch (Throwable ignored) { }
         return -1;
     }
 
     public static double getMSPT() {
-        if (IS_PAPER) return Bukkit.getAverageTickTime();
         try {
+            if (IS_PAPER) return Bukkit.getAverageTickTime();
             long[] arr = (long[]) mspt.get(server);
             if (arr.length == 100) {
                 long i = 0L;
@@ -94,7 +104,12 @@ public final class Utils {
     }
 
     @SuppressWarnings("deprecation")
-    public static long getPlayerLastPlayTime(@NotNull OfflinePlayer p) { return IS_PAPER ? p.getLastLogin() : p.getLastPlayed(); }
+    public static long getPlayerLastPlayTime(@NotNull OfflinePlayer p) {
+        if (IS_PAPER) try {
+            return p.getLastLogin();
+        } catch (Throwable ignored) { }
+        return p.getLastPlayed();
+    }
 
     @Nullable
     public static List<String> complete(final @NotNull Object[] args) {
@@ -123,7 +138,7 @@ public final class Utils {
                 }
             }
             FutureTask<List<String>> future = new FutureTask<>(() -> {
-                List<String> offers = Bukkit.getCommandMap().tabComplete(Bukkit.getConsoleSender(), buffer);
+                List<String> offers = commandMap.tabComplete(Bukkit.getConsoleSender(), buffer);
                 TabCompleteEvent tabEvent = new TabCompleteEvent(Bukkit.getConsoleSender(), buffer, (offers == null)
                         ? Collections.emptyList() : offers);
                 Bukkit.getPluginManager().callEvent(tabEvent);
@@ -157,34 +172,32 @@ public final class Utils {
     }
 
     public static int checkUpdate() {
+        if (IS_CAT_SERVER) return -1;
         try {
-        if (IS_PAPER) {
-            Class<?> clazz = Bukkit.getUnsafe().getVersionFetcher().getClass();
-            if (clazz == Class.forName("com.destroystokyo.paper.PaperVersionFetcher")) {
-                try {
-                    Class.forName("com.tuinity.tuinity.config.TuinityConfig");
-                    return fetchDistanceFromGitHub("Tuinity/Tuinity", "master", Bukkit.getVersion()
-                            .substring("git-Tuinity-".length()).split("[-\\s]")[0].replace("\"", ""));
-                } catch (Throwable ignored) { }
-                String versionInfo = Bukkit.getVersion().substring("git-Paper-".length())
-                        .split("[-\\s]")[0].replace("\"", "");
-                try {
-                    return fetchDistanceFromSiteApi(Integer.parseInt(versionInfo), Bukkit.getMinecraftVersion());
-                } catch (Throwable ignored) {
-                    return fetchDistanceFromGitHub("PaperMC/Paper", "master", versionInfo);
+            if (IS_PAPER) {
+                Class<?> clazz = Bukkit.getUnsafe().getVersionFetcher().getClass();
+                if (clazz == Class.forName("com.destroystokyo.paper.PaperVersionFetcher")) {
+                    try {
+                        Class.forName("com.tuinity.tuinity.config.TuinityConfig");
+                        return fetchDistanceFromGitHub("Tuinity/Tuinity", versionBranch, commitId);
+                    } catch (Throwable ignored) { }
+                    try {
+                        return fetchDistanceFromSiteApi(Integer.parseInt(versionInfo), Bukkit.getMinecraftVersion());
+                    } catch (Throwable ignored) {
+                        return fetchDistanceFromGitHub("PaperMC/Paper", versionBranch, commitId);
+                    }
                 }
+            } else {
+                String version = Bukkit.getVersion();
+                String[] parts = version.substring(0, version.indexOf(' ')).split("-");
+                if (parts.length != 4 && parts.length != 3) return -1;
+                Method getDistance = VersionCommand.class.getDeclaredMethod("getDistance", String.class, String.class);
+                getDistance.setAccessible(true);
+                return parts.length == 4 ?
+                        (int) getDistance.invoke(null, "spigot", parts[2]) +
+                                (int) getDistance.invoke(null, "craftbukkit", parts[3])
+                        : (int) getDistance.invoke(null, "craftbukkit", parts[2]);
             }
-        } else {
-            String version = Bukkit.getVersion();
-            String[] parts = version.substring(0, version.indexOf(' ')).split("-");
-            if (parts.length != 4 && parts.length != 3) return -1;
-            Method getDistance = VersionCommand.class.getDeclaredMethod("getDistance", String.class, String.class);
-            getDistance.setAccessible(true);
-            return parts.length == 4 ?
-                    (int) getDistance.invoke(null, "spigot", parts[2]) +
-                            (int) getDistance.invoke(null, "craftbukkit", parts[3])
-                    : (int) getDistance.invoke(null, "craftbukkit", parts[2]);
-        }
         } catch (Throwable ignored) { }
         return -1;
     }

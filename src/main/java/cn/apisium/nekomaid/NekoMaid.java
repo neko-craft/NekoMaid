@@ -56,7 +56,9 @@ import java.util.function.*;
 @SoftDependency("PlaceholderAPI")
 public final class NekoMaid extends JavaPlugin implements Listener {
     private final static String URL_MESSAGE = ChatColor.translateAlternateColorCodes('&',
-            "&e[NekoMaid] &fOpen this url to manage your server: &7");
+            "&e[NekoMaid] &fOpen this url to manage your server: &7"),
+            RELOADED_SUCCESSFULLY = ChatColor.translateAlternateColorCodes('&',
+                    "&e[NekoMaid] &aReloaded successfully.");
     public static NekoMaid INSTANCE;
     { INSTANCE = this; }
 
@@ -169,12 +171,25 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        String url = getConfig().getString("hostname", "");
-        if (!url.contains(":")) url += ":" + getServer().getPort();
-        url = url + "/?" + getConfig().getString("token");
-        try { url = URLEncoder.encode(url, "UTF-8"); } catch (Throwable ignored) { }
-        sender.sendMessage(URL_MESSAGE + "http://maid.neko-craft.com/?" + url);
-        return true;
+        if (args.length == 0) {
+            String url = getConfig().getString("hostname", "");
+            if (!url.contains(":")) url += ":" + getServer().getPort();
+            url = url + "/?" + getConfig().getString("token");
+            try { url = URLEncoder.encode(url, "UTF-8"); } catch (Throwable ignored) { }
+            sender.sendMessage(URL_MESSAGE + "http://maid.neko-craft.com/?" + url);
+            return true;
+        } else if ("reload".equalsIgnoreCase(args[0])) {
+            reloadConfig();
+            sender.sendMessage(RELOADED_SUCCESSFULLY);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command command,
+                                      @NotNull String alias, @NotNull String[] args) {
+        return args.length == 1 ? Collections.singletonList("reload") : Collections.emptyList();
     }
 
     @Override

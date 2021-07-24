@@ -11,6 +11,20 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class PlayerList {
+    private static Statistic PLAY_ON_TICK;
+    private static boolean canAssessOfflinePlayer;
+    static {
+        try {
+            PLAY_ON_TICK = Statistic.PLAY_ONE_MINUTE;
+        } catch (Throwable ignored) {
+            try { PLAY_ON_TICK = Statistic.valueOf("PLAY_ONE_TICK"); } catch (Throwable ignored2) { }
+        }
+        try {
+            OfflinePlayer.class.getMethod("getStatistic", Statistic.class);
+            OfflinePlayer.class.getMethod("getStatistic", Statistic.class, Material.class);
+            canAssessOfflinePlayer = true;
+        } catch (Throwable ignored) { }
+    }
     private PlayerList() { }
     private static final class PlayerData2 {
         public String id, ban;
@@ -35,7 +49,7 @@ final class PlayerList {
             players = c;
         }
     }
-    @SuppressWarnings({"deprecation"})
+    @SuppressWarnings({"deprecation", "ConstantConditions"})
     public static void initPlayerList(NekoMaid main) {
         main.onConnected(main, client -> client.onWithAck("playerList:fetchPage", args -> {
             Stream<OfflinePlayer> list = Arrays.stream(main.getServer().getOfflinePlayers());
@@ -56,7 +70,7 @@ final class PlayerList {
                 pd.name = p.getName();
                 pd.ban = ban;
                 pd.whitelisted = p.isWhitelisted();
-                pd.playTime = p.getStatistic(Statistic.PLAY_ONE_MINUTE);
+                pd.playTime = getPlayerTime(p);
                 pd.lastOnline = Utils.getPlayerLastPlayTime(p);
                 return pd;
             }).toArray());
@@ -82,17 +96,32 @@ final class PlayerList {
             d.id = p.getUniqueId().toString();
             if (ban != null) d.ban = ban.getReason();
             d.whitelisted = p.isWhitelisted();
-            d.playTime = p.getStatistic(Statistic.PLAY_ONE_MINUTE);
             d.lastOnline = Utils.getPlayerLastPlayTime(p);
             d.hasPlayedBefore = p.hasPlayedBefore();
             d.firstPlay = p.getFirstPlayed();
             d.isOP = p.isOp();
-            d.death = p.getStatistic(Statistic.DEATHS);
-            d.quit = p.getStatistic(Statistic.LEAVE_GAME);
-            d.playerKill = p.getStatistic(Statistic.PLAYER_KILLS);
-            d.entityKill =  p.getStatistic(Statistic.MOB_KILLS);
-            d.tnt = p.getStatistic(Statistic.USE_ITEM, Material.TNT);
+            d.playTime = getPlayerTime(p);
+            if (canAssessOfflinePlayer) {
+                d.death = p.getStatistic(Statistic.DEATHS);
+                d.quit = p.getStatistic(Statistic.LEAVE_GAME);
+                d.playerKill = p.getStatistic(Statistic.PLAYER_KILLS);
+                d.entityKill =  p.getStatistic(Statistic.MOB_KILLS);
+                d.tnt = p.getStatistic(Statistic.USE_ITEM, Material.TNT);
+            } else if (p.isOnline()) {
+                Player p1 = p.getPlayer();
+                d.death = p1.getStatistic(Statistic.DEATHS);
+                d.quit = p1.getStatistic(Statistic.LEAVE_GAME);
+                d.playerKill = p1.getStatistic(Statistic.PLAYER_KILLS);
+                d.entityKill =  p1.getStatistic(Statistic.MOB_KILLS);
+                d.tnt = p1.getStatistic(Statistic.USE_ITEM, Material.TNT);
+            }
             return d;
         }));
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    private static int getPlayerTime(OfflinePlayer p) {
+        return p.isOnline() ? p.getPlayer().getStatistic(PLAY_ON_TICK) : canAssessOfflinePlayer
+                ? p.getStatistic(PLAY_ON_TICK) : 0;
     }
 }

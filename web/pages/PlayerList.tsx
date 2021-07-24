@@ -147,12 +147,11 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
 
 const PlayerActions: React.FC = () => {
   const theme = useTheme()
-  const viewerRef = useRef<FXAASkinViewer | undefined>()
   const ref = useRef<HTMLCanvasElement | null>(null)
   const { name } = useParams<{ name: string }>()
   useEffect(() => {
     if (!ref.current || !name) return
-    const viewer = viewerRef.current = new FXAASkinViewer({
+    const viewer = new FXAASkinViewer({
       canvas: ref.current!,
       height: 350,
       width: ref.current.clientWidth,
@@ -168,31 +167,27 @@ const PlayerActions: React.FC = () => {
     viewer.animations.add(WalkingAnimation)
     viewer.animations.add(RotatingAnimation)
     return () => {
-      viewerRef.current = undefined
       window.removeEventListener('resize', resize)
       viewer.dispose()
     }
-  }, [ref.current])
-  useEffect(() => {
-    if (!viewerRef.current) return
-    if (name) viewerRef.current.loadSkin('https://mc-heads.net/skin/' + name)
-  }, [name])
+  }, [ref.current, name])
   const color = theme.palette.mode === 'dark' ? 255 : 0
 
   return <Card>
     <CardHeader title={name ? name + ' 的详细信息' : '请选择一名玩家'} />
     <Divider />
     <Box sx={{ position: 'relative', '& canvas': { width: '100%!important' } }}>
-      <canvas
-        ref={ref}
-        height='400'
-        style={{
-          cursor: 'grab',
-          filter: `drop-shadow(rgba(${color}, ${color}, ${color}, 0.2) 2px 4px 4px)`,
-          display: name ? undefined : 'none'
-        }}
-      />
-      {!name && <CardContent><Empty title={null} /></CardContent>}
+      {name
+        ? <canvas
+          ref={ref}
+          height='400'
+          style={{
+            cursor: 'grab',
+            filter: `drop-shadow(rgba(${color}, ${color}, ${color}, 0.2) 2px 4px 4px)`,
+            display: name ? undefined : 'none'
+          }}
+        />
+        : <CardContent><Empty title={null} /></CardContent>}
     </Box>
     <PlayerInfo name={name} />
   </Card>

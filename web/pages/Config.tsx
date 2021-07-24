@@ -25,7 +25,7 @@ configs.push({
             update(cur + 1)
           }}><Delete /></IconButton>}
         >
-          <ListItemAvatar><Avatar src={it.icon} variant='square'><HelpOutline /></Avatar></ListItemAvatar>
+          <ListItemAvatar><Avatar src={it.icon} variant='rounded'><HelpOutline /></Avatar></ListItemAvatar>
           <ListItemText primary={<Tooltip title={it.address.slice(i + 1)}>
             <span>{it.address.slice(0, i)}</span></Tooltip>} secondary={dayjs(it.time).fromNow()} />
         </ListItem>

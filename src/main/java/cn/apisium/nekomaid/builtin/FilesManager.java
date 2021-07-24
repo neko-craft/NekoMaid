@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 final class FilesManager {
-    private static final ArchiveStreamFactory archiveFactory = new ArchiveStreamFactory("UTF-8");
+    private static final ArchiveStreamFactory archiveFactory = new ArchiveStreamFactory();
     private static final DefaultHttpDataFactory factory = new DefaultHttpDataFactory();
     private final static int UPLOAD_STARTS = "/NekoMaidUpload/".length();
     private final static int DOWNLOAD_STARTS = "/NekoMaidDownload/".length();

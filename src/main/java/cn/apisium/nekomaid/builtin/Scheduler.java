@@ -73,7 +73,7 @@ class Scheduler {
 
     private void refresh() {
         if (scheduler != null) scheduler.stop();
-        scheduler = new ConfigurationScheduler("NekoMaidScheduler");
+        scheduler = new ConfigurationScheduler();
         scheduler.incrementScheduledItems();
         scheduler.incrementScheduledItems();
         scheduler.incrementScheduledItems();

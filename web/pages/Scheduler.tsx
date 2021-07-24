@@ -134,7 +134,7 @@ const Scheduler: React.FC = () => {
                   '& .MuiOutlinedInput-input': { color: 'inherit!important' },
                   '& .MuiTypography-h6': { color: theme => theme.palette.primary.main + '!important' }
                 }}>
-                  <Cron cron={cron} setCron={setCron} setCronError={setCronError} isAdmin />
+                  <Cron cron={cron} setCron={setCron} setCronError={setCronError} locale='zh_CN' isAdmin />
                 </Box>
               </CardContent>
             </>}
