@@ -79,6 +79,6 @@ shadowJar {
         relocate('org.json', 'cn.apisium.nekomaid.libs.org.json')
     }
 
-    archiveClassifier.set('relocated')
+    archiveClassifier.set('')
 }
 build.dependsOn(shadowJar)
