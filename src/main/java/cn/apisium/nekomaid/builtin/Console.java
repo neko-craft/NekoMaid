@@ -5,9 +5,11 @@ import cn.apisium.nekomaid.Utils;
 import com.google.common.collect.EvictingQueue;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.*;
 import org.apache.logging.log4j.core.appender.DefaultErrorHandler;
+import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 import org.apache.logging.log4j.core.layout.AbstractStringLayout;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.message.Message;
@@ -33,6 +35,7 @@ import java.util.concurrent.FutureTask;
 @SuppressWarnings("UnstableApiUsage")
 final class Console implements Appender {
     private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getRootLogger();
+    private final LevelRangeFilter filter;
     private ErrorHandler handler = new DefaultErrorHandler(this);
     private final NekoMaid main;
     private final EvictingQueue<Log> queue = EvictingQueue.create(100);
@@ -41,6 +44,11 @@ final class Console implements Appender {
 
     public Console(NekoMaid main) {
         this.main = main;
+        filter = LevelRangeFilter.createFilter(
+                Level.getLevel(main.getConfig().getString("logger.minLevel", "OFF")),
+                Level.getLevel(main.getConfig().getString("logger.maxLevel", "INFO")),
+                null, null
+        );
         ProxiedConsoleCommandSender sender = new ProxiedConsoleCommandSender(main.getServer().getConsoleSender());
         main.onSwitchPage(main, "console", client -> client.emit("console:logs", queue))
                 .onConnected(main, client -> client.onWithAck("console:complete", Utils::complete)
@@ -68,6 +76,7 @@ final class Console implements Appender {
 
     @Override
     public void append(LogEvent e) {
+        if (filter.filter(e) == filter.getOnMismatch()) return;
         Log obj = new Log();
         obj.time = e.getTimeMillis();
         if (e.getMessage() instanceof ComponentMessage) {

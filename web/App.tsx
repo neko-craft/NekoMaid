@@ -41,7 +41,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   const [globalData, setGlobalData] = useState({ })
   update = useState(0)[1]
   const create = useMemo(() => {
-    const io = socketIO(origin!, { path: '/' + (pathname!.slice(1) || 'NekoMaid'), auth: { token: encrypt(token!) } })
+    const io = socketIO(origin!, { path: pathname!, auth: { token: encrypt(token!) } })
     const map: Record<string, Plugin> = { }
     const fn = (name: string) => map[name] || (map[name] = new Plugin(io, name))
     const nekoMaid = fn('NekoMaid')

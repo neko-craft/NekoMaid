@@ -1,3 +1,7 @@
 token: ~
 
 hostname: 127.0.0.1
+
+logger:
+  maxLevel: INFO
+  minLevel: OFF

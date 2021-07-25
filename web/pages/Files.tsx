@@ -415,7 +415,7 @@ const Files: React.FC = () => {
         setAnchorEl(null)
         toast('下载中...')
         plugin.emit('files:download', (res: ArrayBuffer | null) => {
-          if (res) window.open(address! + 'NekoMaidDownload/' + res, '_blank')
+          if (res) window.open(address! + 'Download/' + res, '_blank')
           else failed()
         }, curPath)
       }}><ListItemIcon><Download /></ListItemIcon>下载文件</MenuItem>
@@ -448,7 +448,7 @@ const Files: React.FC = () => {
         formdata.append('file', file)
         const xhr = new XMLHttpRequest()
         setProgress(0)
-        xhr.open('post', address! + 'NekoMaidUpload/' + res)
+        xhr.open('post', address! + 'Upload/' + res)
         xhr.onreadystatechange = () => {
           setProgress(-1)
           action(xhr.readyState === 4 && xhr.status === 200)

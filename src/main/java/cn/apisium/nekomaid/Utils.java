@@ -33,21 +33,35 @@ import java.util.stream.StreamSupport;
 
 @SuppressWarnings("deprecation")
 public final class Utils {
+    private static Class<?> paperVersionFetcherClass;
     private static String commitId, versionBranch = "master";
     private static final String versionInfo;
     private static CommandMap commandMap;
-    private static boolean IS_PAPER, IS_CAT_SERVER;
+    private static boolean isTuinity, hasAsyncTabComplete, canGetLastLogin, canGetAverageTickTime, canGetTPS;
     private static Object server;
     private static Field recentTps, mspt;
     static {
         try {
-            Class.forName("com.destroystokyo.paper.event.server.AsyncTabCompleteEvent");
-            IS_PAPER = true;
+            Class.forName("com.tuinity.tuinity.config.TuinityConfig");
+            isTuinity = true;
         } catch (Throwable ignored) { }
         try {
-            Class.forName("catserver.server.CatServer");
-            IS_CAT_SERVER = true;
+            Class.forName("com.destroystokyo.paper.event.server.AsyncTabCompleteEvent");
+            hasAsyncTabComplete = true;
         } catch (Throwable ignored) { }
+        try {
+            OfflinePlayer.class.getMethod("getLastLogin");
+            canGetLastLogin = true;
+        } catch (Throwable ignored) { }
+        try {
+            Bukkit.class.getMethod("getAverageTickTime");
+            canGetAverageTickTime = true;
+        } catch (Throwable ignored) { }
+        try {
+            Bukkit.class.getMethod("getTPS");
+            canGetTPS = true;
+        } catch (Throwable ignored) { }
+        try {paperVersionFetcherClass = Class.forName("com.destroystokyo.paper.PaperVersionFetcher");} catch (Throwable ignored) {}
         try {
             Server obcServer = Bukkit.getServer();
             Class<?> obc = Bukkit.getServer().getClass();
@@ -84,7 +98,7 @@ public final class Utils {
 
     public static double getTPS() {
         try {
-            if (IS_PAPER) return Bukkit.getTPS()[0];
+            if (canGetTPS) return Bukkit.getTPS()[0];
             return ((double[]) recentTps.get(server))[0];
         } catch (Throwable ignored) { }
         return -1;
@@ -92,7 +106,7 @@ public final class Utils {
 
     public static double getMSPT() {
         try {
-            if (IS_PAPER) return Bukkit.getAverageTickTime();
+            if (canGetAverageTickTime) return Bukkit.getAverageTickTime();
             long[] arr = (long[]) mspt.get(server);
             if (arr.length == 100) {
                 long i = 0L;
@@ -105,9 +119,7 @@ public final class Utils {
 
     @SuppressWarnings("deprecation")
     public static long getPlayerLastPlayTime(@NotNull OfflinePlayer p) {
-        if (IS_PAPER) try {
-            return p.getLastLogin();
-        } catch (Throwable ignored) { }
+        if (canGetLastLogin) return p.getLastLogin();
         return p.getLastPlayed();
     }
 
@@ -115,8 +127,9 @@ public final class Utils {
     public static List<String> complete(final @NotNull Object[] args) {
         String buffer = (String) args[0];
         try {
-            if (IS_PAPER) {
-                AsyncTabCompleteEvent event = new AsyncTabCompleteEvent(Bukkit.getConsoleSender(), buffer, true, null);
+            if (hasAsyncTabComplete) {
+                AsyncTabCompleteEvent event = new AsyncTabCompleteEvent(Bukkit.getConsoleSender(),
+                        Collections.emptyList(), buffer, true, null);
                 event.callEvent();
                 List<String> completions = event.isCancelled() ? new ArrayList<>() : event.getCompletions();
                 if (event.isCancelled() || event.isHandled()) {
@@ -172,20 +185,18 @@ public final class Utils {
     }
 
     public static int checkUpdate() {
-        if (IS_CAT_SERVER) return -1;
         try {
-            if (IS_PAPER) {
+            if (paperVersionFetcherClass != null) {
                 Class<?> clazz = Bukkit.getUnsafe().getVersionFetcher().getClass();
-                if (clazz == Class.forName("com.destroystokyo.paper.PaperVersionFetcher")) {
+                if (clazz == paperVersionFetcherClass) {
                     try {
-                        Class.forName("com.tuinity.tuinity.config.TuinityConfig");
-                        return fetchDistanceFromGitHub("Tuinity/Tuinity", versionBranch, commitId);
+                        if (isTuinity) return fetchDistanceFromGitHub("Tuinity/Tuinity", versionBranch, commitId);
+                        else try {
+                            return fetchDistanceFromSiteApi(Integer.parseInt(versionInfo), Bukkit.getMinecraftVersion());
+                        } catch (Throwable ignored) {
+                            return fetchDistanceFromGitHub("PaperMC/Paper", versionBranch, commitId);
+                        }
                     } catch (Throwable ignored) { }
-                    try {
-                        return fetchDistanceFromSiteApi(Integer.parseInt(versionInfo), Bukkit.getMinecraftVersion());
-                    } catch (Throwable ignored) {
-                        return fetchDistanceFromGitHub("PaperMC/Paper", versionBranch, commitId);
-                    }
                 }
             } else {
                 String version = Bukkit.getVersion();

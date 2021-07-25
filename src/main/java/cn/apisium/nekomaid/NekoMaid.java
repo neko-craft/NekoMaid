@@ -174,7 +174,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         if (args.length == 0) {
             String url = getConfig().getString("hostname", "");
             if (!url.contains(":")) url += ":" + getServer().getPort();
-            url = url + "/?" + getConfig().getString("token");
+            url = url + "/NekoMaid?" + getConfig().getString("token");
             try { url = URLEncoder.encode(url, "UTF-8"); } catch (Throwable ignored) { }
             sender.sendMessage(URL_MESSAGE + "http://maid.neko-craft.com/?" + url);
             return true;
