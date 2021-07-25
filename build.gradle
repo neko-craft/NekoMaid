@@ -72,3 +72,15 @@ dependencies {
         }
     }
 }
+
+shadowJar {
+    dependencies {
+        relocate('com.alibaba', 'cn.apisium.nekomaid.libs.com.alibaba')
+        relocate('org.json', 'cn.apisium.nekomaid.libs.org.json')
+        relocate('javax.servlet', 'cn.apisium.nekomaid.libs.javax.servlet')
+    }
+
+    archiveClassifier.set('')
+    minimize()
+}
+build.dependsOn(shadowJar)
