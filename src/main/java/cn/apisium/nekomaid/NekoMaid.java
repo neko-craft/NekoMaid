@@ -172,11 +172,21 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     public boolean onCommand(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
         if (args.length == 0) {
-            String url = getConfig().getString("hostname", "");
-            if (!url.contains(":")) url += ":" + getServer().getPort();
-            url = url + "/NekoMaid?" + getConfig().getString("token");
-            try { url = URLEncoder.encode(url, "UTF-8"); } catch (Throwable ignored) { }
-            sender.sendMessage(URL_MESSAGE + "http://maid.neko-craft.com/?" + url);
+            String token = getConfig().getString("token", "");
+            String custom = getConfig().getString("customAddress", "");
+            String url;
+            if (custom.isEmpty()) {
+                Optional<Route> it = Uniporter.findRoutesByHandler("NekoMaid").stream().findFirst();
+                if (!it.isPresent()) return true;
+                Route route = it.get();
+                url = getConfig().getString("hostname", "");
+                if (!url.contains(":")) url += ":" + Uniporter.findPortsByHandler("NekoMaid").stream()
+                        .findFirst().orElseGet(getServer()::getPort);
+                url = url + route.getPath() + "?" + token;
+                try { url = URLEncoder.encode(url, "UTF-8"); } catch (Throwable ignored) { }
+                url = "http://maid.neko-craft.com/?" + url;
+            } else url = custom.replace("{token}", token);
+            sender.sendMessage(URL_MESSAGE + url);
             return true;
         } else if ("reload".equalsIgnoreCase(args[0])) {
             reloadConfig();
