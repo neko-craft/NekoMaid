@@ -38,7 +38,7 @@ export const Snackbars: React.FC = () => {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-end'
-  }}><Toolbar />{Object.values(toasts).map(it => React.createElement(Snackbar, it))}</Box>
+  }}><Toolbar sx={{ padding: '0!important' }} />{Object.values(toasts).map(it => React.createElement(Snackbar, it))}</Box>
 }
 
 export const success = (msg = '操作成功!') => toast(msg, 'success')

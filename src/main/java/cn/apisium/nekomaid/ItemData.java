@@ -1,17 +1,16 @@
 package cn.apisium.nekomaid;
 
+import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 
-import java.util.List;
-
 public class ItemData {
     public String type, name, icon;
     public int amount;
-    public List<String> lore;
-    public boolean hasEnchants, isBlock;
+    public boolean hasEnchants;
+    public String nbt;
 
     @SuppressWarnings("deprecation")
     public ItemData(ItemStack is) {
@@ -20,9 +19,8 @@ public class ItemData {
         ItemMeta im = is.getItemMeta();
         if (im.hasDisplayName()) name = im.getDisplayName();
         amount = is.getAmount();
-        if (im.hasLore()) lore = im.getLore();
         hasEnchants = hasEnhance(is);
-        isBlock = is.getType().isBlock();
+        if (Utils.HAS_NBT_API) nbt = new NBTItem(is).toString();
     }
 
     private static String getIcon(Material type) {

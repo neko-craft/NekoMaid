@@ -8,13 +8,13 @@ import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, 
   Typography, Drawer, Toolbar, IconButton, useMediaQuery } from '@material-ui/core'
 import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
 
-import { Build, Menu, Brightness4, Brightness7 } from '@material-ui/icons'
+import { Build, Menu, Brightness4, Brightness7, Translate, Backpack } from '@material-ui/icons'
 import { address, origin, token, pathname } from './url'
 import { Snackbars } from './toast'
 import { typography } from './theme'
 import { pluginCtx, globalCtx } from './Context'
 import dialog, { DialogWrapper } from './dialog'
-import Plugin, { Page } from './Plugin'
+import Plugin, { GlobalInfo, Page } from './Plugin'
 import initPages, { onGlobalDataReceived } from './pages/index'
 
 import type { ServerRecord } from './types'
@@ -38,7 +38,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   const loc = useLocation()
   const his = useHistory()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [globalData, setGlobalData] = useState({ })
+  const [globalData, setGlobalData] = useState<GlobalInfo>({ } as any)
   update = useState(0)[1]
   const create = useMemo(() => {
     const io = socketIO(origin!, { path: pathname!, auth: { token: encrypt(token!) } })
@@ -69,6 +69,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     return fn
   }, [])
   useEffect(() => { if (!loc.pathname || loc.pathname === '/') his.replace('/NekoMaid/dashboard') }, [loc.pathname])
+  useEffect(() => () => { update = undefined as any }, [])
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen)
 
@@ -138,11 +139,9 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
           <Menu />
         </IconButton>
         <Typography variant='h3' noWrap component='div' sx={{ flexGrow: 1 }}>NekoMaid</Typography>
-        <IconButton
-          color='inherit'
-          edge='end'
-          onClick={() => setDarkMode(!darkMode)}
-        >
+        {globalData.hasNBTAPI && <IconButton color='inherit'><Backpack /></IconButton>}
+        <IconButton color='inherit'><Translate /></IconButton>
+        <IconButton color='inherit' edge='end' onClick={() => setDarkMode(!darkMode)}>
           {darkMode ? <Brightness7 /> : <Brightness4 />}
         </IconButton>
       </Toolbar>

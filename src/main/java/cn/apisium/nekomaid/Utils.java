@@ -41,7 +41,12 @@ public final class Utils {
     private static Object server;
     private static Field recentTps, mspt;
     private static final String JSON_OBJECT = "\ud83c\udf7a";
+    protected static boolean HAS_NBT_API;
     static {
+        try {
+            Class.forName("com.tuinity.tuinity.config.TuinityConfig");
+            isTuinity = true;
+        } catch (Throwable ignored) { }
         try {
             Class.forName("com.tuinity.tuinity.config.TuinityConfig");
             isTuinity = true;

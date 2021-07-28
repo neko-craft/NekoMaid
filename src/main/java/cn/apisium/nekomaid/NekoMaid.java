@@ -81,6 +81,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     @SuppressWarnings({"ConstantConditions", "unchecked"})
     @Override
     public void onEnable() {
+        if (getServer().getPluginManager().getPlugin("NBTAPI") != null) Utils.HAS_NBT_API = true;
         saveDefaultConfig();
         GLOBAL_DATA
                 .put("plugins", pluginScripts)

@@ -25,6 +25,7 @@ export interface GlobalInfo {
   hasVaultGroups?: boolean
   hasVaultChat?: boolean
   hasOpenInv?: boolean
+  hasNBTAPI?: boolean
   vaultEconomy?: {
     singular: string
     plural: string
@@ -53,7 +54,7 @@ export default class Plugin {
   public addPages (...args: Page[]) {
     if (!args.length) return this
     ;(pages[this.namespace] || (pages[this.namespace] = [])).push(...args)
-    update(++flag)
+    if (update) update(++flag)
     return this
   }
 

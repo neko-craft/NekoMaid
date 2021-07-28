@@ -6,15 +6,14 @@
   "scripts": {
     "test": "eslint",
     "start": "parcel web/index.html",
-    "generate": "npm run generateMaterialIcons && npm run downloadMinecraftLanguage && npm run generateMinecraftAssets && npm run generateMinecraftIcons && npm run copyIconsTmp && npm run generateMinecraftIconsList",
+    "generate": "npm run generateMaterialIcons && npm run downloadMinecraftLanguage && npm run generateMinecraftAssets && npm run generateMinecraftIcons && npm run generateMinecraftIconsList",
     "generateMaterialIcons": "ts-node scripts/generateMaterialIcons.ts",
-    "generateMinecraftIcons": "minecraft-render client.jar minecraftIcons",
+    "generateMinecraftIcons": "minecraft-render client.jar icons/minecraft -w 40 -t 40 -d 13",
     "generateMinecraftIconsList": "ts-node scripts/generateMinecraftIconsList.ts",
     "generateMinecraftAssets": "ts-node scripts/generateMinecraftAssets.ts",
     "downloadMinecraftLanguage": "ts-node scripts/downloadMinecraftLanguage.ts",
     "build": "parcel build web/index.html --public-url . --no-source-maps",
-    "copyIcons": "ncp icons dist/icons && ncp vscode-material-icon-theme/icons dist/icons/material",
-    "copyIconsTmp": "ncp minecraftIcons icons/minecraft"
+    "copyIcons": "ncp icons dist/icons && ncp vscode-material-icon-theme/icons dist/icons/material"
   },
   "targets": {
     "main": false
@@ -52,6 +51,7 @@
     "echarts-for-react": "^3.0.1",
     "lodash": "^4.17.21",
     "material-ui-cron": "^0.1.0-beta.4",
+    "nbt-ts": "^1.3.3",
     "react": "^17.0.2",
     "react-codemirror2": "^7.2.1",
     "react-copy-to-clipboard": "^5.0.3",
@@ -80,7 +80,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
     "eslint-plugin-react": "^7.24.0",
-    "minecraft-render": "^1.0.2",
+    "minecraft-render": "^1.0.3",
     "ncp": "^2.0.0",
     "nugget": "^2.0.1",
     "parcel": "^2.0.0-nightly.776",
