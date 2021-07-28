@@ -15,6 +15,7 @@ import io.socket.socketio.server.SocketIoAdapter;
 import io.socket.socketio.server.SocketIoNamespace;
 import io.socket.socketio.server.SocketIoServer;
 import io.socket.socketio.server.SocketIoSocket;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventPriority;
@@ -50,9 +51,10 @@ import java.util.function.*;
 @Commands(@Command(name = "nekomaid", permission = "neko.maid.use", desc = "Can use NekoMaid.", aliases = "nm"))
 @Permissions(@Permission(name = "neko.maid.use"))
 @Dependency("Uniporter")
-@SoftDependency("PlugMan")
 @SoftDependency("Vault")
+@SoftDependency("NBTAPI")
 @SoftDependency("OpenInv")
+@SoftDependency("PlugMan")
 @SoftDependency("PlaceholderAPI")
 public final class NekoMaid extends JavaPlugin implements Listener {
     private final static String URL_MESSAGE = ChatColor.translateAlternateColorCodes('&',
@@ -164,6 +166,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             pluginScripts.remove(name);
         }, this);
         getCommand("nekomaid").setExecutor(this);
+        new Metrics(this, 12238);
     }
 
     public int getClientsCount() { return clients.size(); }
@@ -171,6 +174,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
+        if (!command.testPermission(sender)) return true;
         if (args.length == 0) {
             String token = getConfig().getString("token", "");
             String custom = getConfig().getString("customAddress", "");

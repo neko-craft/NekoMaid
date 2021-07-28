@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-class Scheduler {
+final class Scheduler {
     private ConfigurationScheduler scheduler;
     private boolean HAS_PLACEHOLDER_API;
     private ArrayList<Task> tasks;

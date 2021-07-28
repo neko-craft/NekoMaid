@@ -6,12 +6,15 @@
   "scripts": {
     "test": "eslint",
     "start": "parcel web/index.html",
-    "generateIcons": "npm run generateMaterialIcons && npm run generateMinecraftIcons",
+    "generate": "npm run generateMaterialIcons && npm run downloadMinecraftLanguage && npm run generateMinecraftAssets && npm run generateMinecraftIcons && npm run copyIconsTmp && npm run generateMinecraftIconsList",
     "generateMaterialIcons": "ts-node scripts/generateMaterialIcons.ts",
-    "generateMinecraftIcons": "ts-node scripts/generateMinecraftIcons.ts",
+    "generateMinecraftIcons": "minecraft-render client.jar minecraftIcons",
+    "generateMinecraftIconsList": "ts-node scripts/generateMinecraftIconsList.ts",
+    "generateMinecraftAssets": "ts-node scripts/generateMinecraftAssets.ts",
     "downloadMinecraftLanguage": "ts-node scripts/downloadMinecraftLanguage.ts",
     "build": "parcel build web/index.html --public-url . --no-source-maps",
-    "copyIcons": "ncp icons dist/icons && ncp vscode-material-icon-theme/icons dist/icons/material"
+    "copyIcons": "ncp icons dist/icons && ncp vscode-material-icon-theme/icons dist/icons/material",
+    "copyIconsTmp": "ncp minecraftIcons icons/minecraft"
   },
   "targets": {
     "main": false
@@ -68,8 +71,8 @@
     "@types/react-dom": "^17.0.9",
     "@types/react-router-dom": "^5.1.8",
     "@types/request": "^2.48.6",
-    "@typescript-eslint/eslint-plugin": "^4.28.4",
-    "@typescript-eslint/parser": "^4.28.4",
+    "@typescript-eslint/eslint-plugin": "^4.28.5",
+    "@typescript-eslint/parser": "^4.28.5",
     "babel-plugin-transform-imports": "^2.0.0",
     "eslint": "^7.31.0",
     "eslint-config-standard": "^16.0.3",
@@ -77,6 +80,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
     "eslint-plugin-react": "^7.24.0",
+    "minecraft-render": "^1.0.2",
     "ncp": "^2.0.0",
     "nugget": "^2.0.1",
     "parcel": "^2.0.0-nightly.776",

@@ -59,11 +59,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Download languages
-        run: npm run downloadMinecraftLanguage
-
-      - name: Generate icons
-        run: npm run generateIcons
+      - name: Generate assets
+        run: npm run generate
 
       - name: Build app
         run: npm run build

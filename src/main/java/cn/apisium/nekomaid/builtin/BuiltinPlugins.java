@@ -18,6 +18,7 @@ public final class BuiltinPlugins {
             PluginManager pm = main.getServer().getPluginManager();
             if (pm.getPlugin("Vault") != null) new Vault(main);
             if (pm.getPlugin("OpenInv") != null) new OpenInv(main);
+            if (pm.getPlugin("NBTAPI") != null) ItemEditor.initItemEditor(main);
         });
     }
     public void disable() {

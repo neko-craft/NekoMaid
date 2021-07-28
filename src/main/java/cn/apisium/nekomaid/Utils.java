@@ -40,6 +40,7 @@ public final class Utils {
     private static boolean isTuinity, hasAsyncTabComplete, canGetLastLogin, canGetAverageTickTime, canGetTPS;
     private static Object server;
     private static Field recentTps, mspt;
+    private static final String JSON_OBJECT = "\ud83c\udf7a";
     static {
         try {
             Class.forName("com.tuinity.tuinity.config.TuinityConfig");
@@ -172,17 +173,23 @@ public final class Utils {
     }
 
     public static void serialize(Object[] args) {
-        for (int i = 0; i < args.length; i++) {
-            Object object = args[i];
-            if (canSerialise(object)) continue;
-            args[i] = object instanceof String ? "\ud83d\udc2e" + object : "\ud83c\udf7a" + JSON.toJSONString(object);
-        }
+        for (int i = 0; i < args.length; i++) args[i] = serialize(args[i]);
     }
 
     public static Object serialize(Object object) {
-        return canSerialise(object) ? object : object instanceof String ? "\ud83d\udc2e" + object
-                : "\ud83c\udf7a" + JSON.toJSONString(object);
+        try {
+
+            if (canSerialise(object)) return object;
+            if (object instanceof String) {
+                return ((String) object).startsWith(JSON_OBJECT) ? object : "\ud83d\udc2e" + object;
+            } else return serializeToString(object);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
+
+    public static String serializeToString(Object object) { return JSON_OBJECT + JSON.toJSONString(object); }
 
     public static int checkUpdate() {
         try {

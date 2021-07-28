@@ -6,9 +6,9 @@ import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, Paper, IconBu
 import { usePlugin } from '../Context'
 import { ActionComponent } from './PlayerList'
 import { useHistory, useParams } from 'react-router-dom'
-import { minecraft } from '../../languages/zh_CN'
 import * as icons from '../../minecraftIcons.json'
 import Empty from '../components/Empty'
+import ItemEditor, { getName } from '../components/ItemEditor'
 
 export const playerAction: ActionComponent = ({ onClose, player }) => {
   const his = useHistory()
@@ -38,10 +38,12 @@ const Scheduler: React.FC = () => {
   useEffect(() => {
     if (player) plugin.emit('openInv:fetchInv', setInv, player).emit('openInv:fetchEnderChest', setEnder, player)
   }, [player])
+  console.log(inv)
 
   const mapToInv = (inv: Array<Item | null>) => player
     ? inv.map((it, i) => {
-      const type = it ? it.icon || it.type.toLowerCase() : ''
+      const lowerCase = it ? it.type.toLowerCase() : ''
+      const type = it ? it.icon || lowerCase : ''
       const hasEnchants = it?.hasEnchants && type in icons
       const elm = <Paper sx={{
         width: '40px',
@@ -93,7 +95,7 @@ const Scheduler: React.FC = () => {
       return <React.Fragment key={i}>
         {it
           ? <Tooltip title={<>
-            <h4 style={{ margin: 0 }}>{it.name || (minecraft as any)[`${it.isBlock ? 'block' : 'item'}.minecraft.${it.type.toLowerCase()}`]}</h4>
+            <h4 style={{ margin: 0 }}>{it.name || getName(lowerCase)}</h4>
             {it.lore?.map((l, i) => <p key={i}>{l}</p>)}
           </>}>{elm}</Tooltip>
           : elm}
@@ -146,6 +148,7 @@ const Scheduler: React.FC = () => {
         </Grid>
       </Grid>
     </Container>
+    <ItemEditor open={false} onClose={() => {}} />
   </Box>
 }
 

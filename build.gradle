@@ -32,6 +32,10 @@ repositories {
         name = 'placeholderapi'
         url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
     }
+    maven {
+        name = 'CodeMC'
+        url = 'https://repo.codemc.org/repository/maven-public/'
+    }
 }
 
 dependencies {
@@ -43,6 +47,7 @@ dependencies {
     compileOnly 'com.github.Apisium:Uniporter:1.2.5-SNAPSHOT'
     compileOnly 'com.github.jikoo.OpenInv:openinvapi:2f36a4d4dc'
     compileOnly 'me.clip:placeholderapi:2.10.10'
+    compileOnly 'de.tr7zw:item-nbt-api-plugin:2.8.0'
     compileOnly ('com.github.MilkBowl:VaultAPI:1.7') {
         exclude group: 'org.bukkit'
     }
@@ -51,6 +56,7 @@ dependencies {
     }
 
     implementation 'com.alibaba:fastjson:1.2.76'
+    implementation 'org.bstats:bstats-bukkit:2.2.1'
     implementation 'com.github.Apisium:netty-engine.io:706eadca6a'
     implementation 'org.apache.commons:commons-compress:1.21'
     implementation ('io.socket:engine.io-server:5.0.0') {
@@ -78,6 +84,7 @@ shadowJar {
         relocate('com.alibaba', 'cn.apisium.nekomaid.libs.com.alibaba')
         relocate('org.json', 'cn.apisium.nekomaid.libs.org.json')
         relocate('javax.servlet', 'cn.apisium.nekomaid.libs.javax.servlet')
+        relocate('org.bstats', 'cn.apisium.nekomaid.libs.org.bstats')
     }
 
     archiveClassifier.set('')
