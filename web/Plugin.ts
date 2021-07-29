@@ -19,6 +19,7 @@ export interface GlobalInfo {
   version: string
   hasWhitelist: boolean
   canLoadPlugin: boolean
+  pluginVersion?: string
   icon?: string
   hasVault?: boolean
   hasVaultPermission?: boolean

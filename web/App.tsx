@@ -10,8 +10,9 @@ import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
 
 import { Build, Menu, Brightness4, Brightness7, Translate, Backpack } from '@material-ui/icons'
 import { address, origin, token, pathname } from './url'
-import { Snackbars } from './toast'
+import toast, { Snackbars } from './toast'
 import { typography } from './theme'
+import { version } from '../package.json'
 import { GlobalItems } from './components/ItemEditor'
 import { pluginCtx, globalCtx } from './Context'
 import dialog, { DialogWrapper } from './dialog'
@@ -64,6 +65,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       initPages(nekoMaid)
       onGlobalDataReceived(nekoMaid, data)
       update(Math.random())
+      if (data.pluginVersion !== version) toast('发现插件更新! 推荐立即更新!', 'warning')
     }).on('!', () => {
       io.close()
       dialog('密钥错误!').then(() => (location.href = '//maid.neko-craft.com'))

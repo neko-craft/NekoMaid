@@ -29,7 +29,7 @@ const cardActionStyles: any = {
   alignItems: 'center'
 }
 
-const Scheduler: React.FC = () => {
+const OpenInv: React.FC = () => {
   const plugin = usePlugin()
   const [inv, setInv] = useState<Array<Item | null>>([])
   const [ender, setEnder] = useState<Array<Item | null>>([])
@@ -103,4 +103,4 @@ const Scheduler: React.FC = () => {
   </Box>
 }
 
-export default Scheduler
+export default OpenInv

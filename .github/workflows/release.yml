@@ -9,7 +9,8 @@ jobs:
   build-plugin:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/cache@v2
+      - name: Cache
+        uses: actions/cache@v2
         with:
           path: |
             ~/.gradle/caches
@@ -17,16 +18,25 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - uses: actions/checkout@v2
+
+      - name: Check out git repository
+        uses: actions/checkout@v2
+
       - name: Set up JDK 16
         uses: actions/setup-java@v2
         with:
           distribution: adopt
           java-version: 16
+
+      - name: Set plugin version
+        run: version='${{ github.ref }}' && sed -i "s/0\.0\.0/${version:10}/" src/main/java/cn/apisium/nekomaid/NekoMaid.java
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
       - name: Build with Gradle
         run: ./gradlew build
+
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
@@ -61,6 +71,9 @@ jobs:
 
       - name: Generate assets
         run: npm run generate
+
+      - name: Set website version
+        run: version='${{ github.ref }}' && sed -i "s/[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/${version:10}/" package.json
 
       - name: Build app
         run: npm run build

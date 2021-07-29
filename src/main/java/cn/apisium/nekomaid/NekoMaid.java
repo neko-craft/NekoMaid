@@ -87,7 +87,8 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                 .put("plugins", pluginScripts)
                 .put("version", getServer().getVersion())
                 .put("onlineMode", getServer().getOnlineMode())
-                .put("hasWhitelist", getServer().hasWhitelist());
+                .put("hasWhitelist", getServer().hasWhitelist())
+                .put("pluginVersion", getDescription().getVersion());
         try {
             CachedServerIcon icon = getServer().getServerIcon();
             if (icon != null && !icon.isEmpty()) GLOBAL_DATA.put("icon", icon.getData());

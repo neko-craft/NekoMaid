@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { HelpOutline } from '@material-ui/icons'
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Paper, Tooltip, Drawer,
-  Box } from '@material-ui/core'
+  Box, useMediaQuery } from '@material-ui/core'
 import { useGlobalData, usePlugin } from '../Context'
 import { minecraft } from '../../languages/zh_CN'
 import { parseComponent } from '../utils'
@@ -34,7 +34,10 @@ export interface Tag {
   display?: Display
   AttributeModifiers?: AttributeModifier[]
   Unbreakable?: MojangSON.Byte
-  SkullOwner?: string
+  SkullOwner?: {
+    Id?: number[],
+    Properties?: { textures: Array<{ Value: string }> }
+  }
 }
 
 export interface NBT {
@@ -127,7 +130,12 @@ export const ItemViewer: React.FC<{
         backgroundImage: item && type in icons ? `url(/icons/minecraft/${type}.png)` : undefined
       }}
     >
-      {item && !(type in icons) && <HelpOutline sx={{ position: 'absolute', left: 8, top: 8 }} />}
+      {item && (item.type === 'PLAYER_HEAD' && nbt?.tag?.SkullOwner?.Id
+        ? <img
+          crossOrigin='anonymous'
+          src={`https://mc-heads.net/head/${nbt.tag.SkullOwner.Id.reduce((s, it) => s + (it >>> 0).toString(16), '')}/30`}
+        />
+        : !(type in icons) && <HelpOutline sx={{ position: 'absolute', left: 8, top: 8 }} />)}
       {hasEnchants && <div style={{
         position: 'absolute',
         top: 0,
@@ -165,6 +173,7 @@ export const ItemViewer: React.FC<{
 }
 
 export const GlobalItems: React.FC<{ open: boolean, onClose: () => void }> = ({ open, onClose }) => {
+  const matches = useMediaQuery((theme: any) => theme.breakpoints.down('md'))
   const [flag, update] = useState(0)
   const [copyItemLeft, setCopyItemLeft] = useState<Item | undefined>()
   const [copyItemRight, setCopyItemRight] = useState<Item | undefined>()
@@ -201,7 +210,7 @@ export const GlobalItems: React.FC<{ open: boolean, onClose: () => void }> = ({ 
         onDrag={() => {
           items[i] = undefined
           save()
-          process.nextTick(onClose)
+          if (matches) process.nextTick(onClose)
         }}
         onDrop={it => {
           items[i] = it
