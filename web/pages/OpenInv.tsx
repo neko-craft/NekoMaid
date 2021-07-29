@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react'
-import { success } from '../toast'
+import { failed, success } from '../toast'
 import { Backpack, Refresh } from '@material-ui/icons'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, IconButton,
   ListItemIcon, MenuItem, CardContent } from '@material-ui/core'
-import { usePlugin } from '../Context'
+import { useGlobalData, usePlugin } from '../Context'
 import { ActionComponent } from './PlayerList'
 import { useHistory, useParams } from 'react-router-dom'
 import Empty from '../components/Empty'
-import ItemEditor, { ItemViewer, Item } from '../components/ItemEditor'
+import ItemEditor, { ItemViewer, Item, InvType } from '../components/ItemEditor'
 
 export const playerAction: ActionComponent = ({ onClose, player }) => {
   const his = useHistory()
-  return <MenuItem onClick={() => {
+  const globalData = useGlobalData()
+  return <MenuItem disabled={!player || (!globalData.hasOpenInv && !player.online)} onClick={() => {
     onClose()
-    his.push('/NekoMaid/openInv/' + player)
+    if (player) his.push('/NekoMaid/openInv/' + player.name)
   }}>
     <ListItemIcon><Backpack /></ListItemIcon>背包/末影箱
   </MenuItem>
@@ -36,11 +37,23 @@ const Scheduler: React.FC = () => {
   useEffect(() => {
     if (player) plugin.emit('openInv:fetchInv', setInv, player).emit('openInv:fetchEnderChest', setEnder, player)
   }, [player])
-  console.log(inv)
 
-  const mapToInv = (inv: Array<Item | null>) => player
-    ? inv.map((it, i) => <React.Fragment key={i}><ItemViewer item={it} />{!((i + 1) % 9) && <br />}</React.Fragment>)
-    : <Empty title='请先选择一名玩家!' />
+  const mapToInv = (inv: Array<Item | null>, type: InvType) => {
+    const update = (res: boolean) => {
+      if (!res) failed()
+      if (type === InvType.PLAYER) plugin.emit('openInv:fetchInv', setInv, player)
+      else plugin.emit('openInv:fetchEnderChest', setEnder, player)
+    }
+    return player
+      ? inv.map((it, i) => <React.Fragment key={i}><ItemViewer
+        item={it}
+        data={{ type, solt: i }}
+        onDrag={() => plugin.emit('openInv:remove', update, type, player, i)}
+        onDrop={(item, obj) => plugin.emit('openInv:set', update, type,
+          player, i, JSON.stringify(item), obj?.type === type && obj?.player === player ? obj.solt : -1)}
+      />{!((i + 1) % 9) && <br />}</React.Fragment>)
+      : <Empty title='请先选择一名玩家!' />
+  }
 
   return <Box sx={{ minHeight: '100%', py: 3 }}>
     <Toolbar />
@@ -62,7 +75,7 @@ const Scheduler: React.FC = () => {
               ><Refresh /></IconButton>}
             />
             <Divider />
-            <CardContent sx={{ whiteSpace: 'nowrap', overflowX: 'auto' }}>{mapToInv(inv)}</CardContent>
+            <CardContent sx={{ whiteSpace: 'nowrap', overflowX: 'auto' }}>{mapToInv(inv, InvType.PLAYER)}</CardContent>
           </Card>
         </Grid>
         <Grid item lg={6} md={12} xl={6} xs={12}>
@@ -81,7 +94,7 @@ const Scheduler: React.FC = () => {
               ><Refresh /></IconButton>}
             />
             <Divider />
-            <CardContent sx={{ whiteSpace: 'nowrap', overflowX: 'auto' }}>{mapToInv(ender)}</CardContent>
+            <CardContent sx={{ whiteSpace: 'nowrap', overflowX: 'auto' }}>{mapToInv(ender, InvType.ENDER_CHEST)}</CardContent>
           </Card>
         </Grid>
       </Grid>

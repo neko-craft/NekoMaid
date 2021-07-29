@@ -6,11 +6,12 @@
   "scripts": {
     "test": "eslint",
     "start": "parcel web/index.html",
-    "generate": "npm run generateMaterialIcons && npm run downloadMinecraftLanguage && npm run generateMinecraftAssets && npm run generateMinecraftIcons && npm run generateMinecraftIconsList",
+    "generate": "npm run generateMaterialIcons && npm run downloadMinecraftLanguage && npm run generateMinecraftAssets && npm run generateMinecraftIcons && npm run generateMinecraftItemIcons && npm run generateMinecraftIconsList",
     "generateMaterialIcons": "ts-node scripts/generateMaterialIcons.ts",
     "generateMinecraftIcons": "minecraft-render client.jar icons/minecraft -w 40 -t 40 -d 13",
     "generateMinecraftIconsList": "ts-node scripts/generateMinecraftIconsList.ts",
     "generateMinecraftAssets": "ts-node scripts/generateMinecraftAssets.ts",
+    "generateMinecraftItemIcons": "ts-node scripts/generateMinecraftAssets.ts itemOnly",
     "downloadMinecraftLanguage": "ts-node scripts/downloadMinecraftLanguage.ts",
     "build": "parcel build web/index.html --public-url . --no-source-maps",
     "copyIcons": "ncp icons dist/icons && ncp vscode-material-icon-theme/icons dist/icons/material"

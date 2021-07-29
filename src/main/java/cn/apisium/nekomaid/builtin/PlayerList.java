@@ -34,7 +34,7 @@ final class PlayerList {
     }
     private static final class PlayerData {
         public String name, ban;
-        public boolean whitelisted;
+        public boolean whitelisted, online;
         public int playTime;
         public long lastOnline;
     }
@@ -67,6 +67,7 @@ final class PlayerList {
                 BanEntry be = banList.getBanEntry(Objects.requireNonNull(p.getName()));
                 if (be != null) ban = be.getReason();
                 PlayerData pd = new PlayerData();
+                pd.online = p.isOnline();
                 pd.name = p.getName();
                 pd.ban = ban;
                 pd.whitelisted = p.isWhitelisted();

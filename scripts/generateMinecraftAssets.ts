@@ -8,6 +8,8 @@ if (!existsSync('icons/minecraft')) mkdirSync('icons/minecraft')
 
 const regexp = /_(top|on|side\d*|open|front|bottom|back|lit|inner|off|stage_?\d+|\d+)\.png$/
 
+const itemOnly = process.argv.includes('itemOnly')
+
 fetchVersion().then(body => {
   console.log('Url:', body.downloads.client.url)
   require('nugget')(body.downloads.client.url, { target: 'client.jar' }, err => {
@@ -20,7 +22,7 @@ fetchVersion().then(body => {
         if (err) exit(err)
         const map: Record<string, 0> = { }
         file.on('entry', entry => {
-          if (entry.fileName === 'assets/minecraft/lang/en_us.json') {
+          if (!itemOnly && entry.fileName === 'assets/minecraft/lang/en_us.json') {
             file.openReadStream(entry, (err, readStream) => {
               if (err) exit(err)
               readStream.on('end', () => {
@@ -33,8 +35,7 @@ fetchVersion().then(body => {
           }
           if (entry.fileName !== 'assets/minecraft/textures/misc/enchanted_item_glint.png' &&
             (entry.fileName.endsWith('/') || entry.fileName.endsWith('.mcmeta') ||
-              (!entry.fileName.startsWith('assets/minecraft/textures/item/') &&
-              !entry.fileName.startsWith('assets/minecraft/textures/block/')))) {
+              !entry.fileName.startsWith(`assets/minecraft/textures/${itemOnly ? 'item' : 'block'}/`))) {
             file.readEntry()
             return
           }

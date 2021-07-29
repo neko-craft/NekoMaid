@@ -21,13 +21,10 @@ export default (p: Plugin) => p.addPages(
   { component: Files, path: 'files', icon: <Description />, title: '文件' },
   { component: Plugins, path: 'plugins', icon: <Extension />, title: '插件' },
   { component: Scheduler, path: 'scheduler', icon: <Schedule />, title: '任务' },
+  { component: OpenInv, path: ['openInv', 'openInv/:name'], icon: <Backpack />, title: '背包', exact: true },
   { component: Config, path: 'config', icon: <Settings />, title: '设置' }
-)
+).addPlayerAction(playerAction)
 
 export const onGlobalDataReceived = (p: Plugin, data: GlobalInfo) => {
   if (data.hasVault) p.addPages({ component: Vault, path: 'vault', icon: <AccountBalance />, title: '经济 权限 聊天' })
-  if (data.hasOpenInv) {
-    p.addPages({ component: OpenInv, path: ['openInv', 'openInv/:name'], icon: <Backpack />, title: '玩家背包', exact: true })
-      .addPlayerAction(playerAction)
-  }
 }

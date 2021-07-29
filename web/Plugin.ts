@@ -33,6 +33,8 @@ export interface GlobalInfo {
   }
 }
 
+export interface PlayerData { name: string, ban: String | null, whitelisted: boolean, playTime: number, lastOnline: number, online: boolean }
+
 const mapArgs = (args: any[]) => args.map(it => typeof it === 'string'
   ? it.startsWith('\ud83d\udc2e')
     ? it.slice(2)

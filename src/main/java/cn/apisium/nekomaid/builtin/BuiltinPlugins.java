@@ -17,7 +17,7 @@ public final class BuiltinPlugins {
             scheduler = new Scheduler(main);
             PluginManager pm = main.getServer().getPluginManager();
             if (pm.getPlugin("Vault") != null) new Vault(main);
-            if (pm.getPlugin("OpenInv") != null) new OpenInv(main);
+            new OpenInv(main);
             if (pm.getPlugin("NBTAPI") != null) ItemEditor.initItemEditor(main);
         });
     }

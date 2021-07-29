@@ -1,9 +1,9 @@
 import React, { useMemo, useEffect, useState, useRef } from 'react'
+import Plugin, { PlayerData } from '../Plugin'
 import dayjs from 'dayjs'
 import Empty from '../components/Empty'
 import Avatar from '../components/Avatar'
 import dialog from '../dialog'
-import Plugin from '../Plugin'
 import { success } from '../toast'
 import { usePlugin, useGlobalData } from '../Context'
 import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Today, Event,
@@ -31,7 +31,7 @@ interface IPlayerInfo {
   tnt: number
 }
 
-export type ActionComponent = React.ComponentType<{ onClose: () => void, player: string | null }>
+export type ActionComponent = React.ComponentType<{ onClose: () => void, player: PlayerData | null }>
 export const actions: ActionComponent[] = []
 
 const banPlayer = (name: string, plugin: Plugin, refresh: () => void) => void dialog(<>确认要封禁 <span className='bold'>{name}</span> 吗?</>, '封禁原因')
@@ -193,14 +193,12 @@ const PlayerActions: React.FC = () => {
   </Card>
 }
 
-interface PlayerData { name: string, ban: String | null, whitelisted: boolean, playTime: number, lastOnline: number }
-
 const Players: React.FC = () => {
   const his = useHistory()
   const plugin = usePlugin()
   const [page, setPage] = useState(0)
   const [state, setState] = useState<number | null>(null)
-  const [activedPlayer, setActivedPlayer] = useState<string | null>(null)
+  const [activedPlayer, setActivedPlayer] = useState<PlayerData | null>(null)
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
   const [data, setData] = useState<{ count: number, players: PlayerData[] }>(() => ({ count: 0, players: [] }))
   const { hasWhitelist } = useGlobalData()
@@ -280,7 +278,7 @@ const Players: React.FC = () => {
               </Tooltip>
               {actions.length
                 ? <IconButton onClick={e => {
-                  setActivedPlayer(anchorEl ? null : it.name)
+                  setActivedPlayer(anchorEl ? null : it)
                   setAnchorEl(anchorEl ? null : e.currentTarget)
                 }}><MoreHoriz /></IconButton>
                 : null}
