@@ -12,6 +12,7 @@ import { Build, Menu, Brightness4, Brightness7, Translate, Backpack } from '@mat
 import { address, origin, token, pathname } from './url'
 import { Snackbars } from './toast'
 import { typography } from './theme'
+import { GlobalItems } from './components/ItemEditor'
 import { pluginCtx, globalCtx } from './Context'
 import dialog, { DialogWrapper } from './dialog'
 import Plugin, { GlobalInfo, Page } from './Plugin'
@@ -38,6 +39,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   const loc = useLocation()
   const his = useHistory()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [globalItemsOpen, setGlobalItemsOpen] = useState(false)
   const [globalData, setGlobalData] = useState<GlobalInfo>({ } as any)
   update = useState(0)[1]
   const create = useMemo(() => {
@@ -139,7 +141,11 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
           <Menu />
         </IconButton>
         <Typography variant='h3' noWrap component='div' sx={{ flexGrow: 1 }}>NekoMaid</Typography>
-        {globalData.hasNBTAPI && <IconButton color='inherit'><Backpack /></IconButton>}
+        {globalData.hasNBTAPI && <IconButton
+          color='inherit'
+          onClick={() => setGlobalItemsOpen(!globalItemsOpen)}
+          onDragOver={() => setGlobalItemsOpen(true)}
+        ><Backpack /></IconButton>}
         <IconButton color='inherit'><Translate /></IconButton>
         <IconButton color='inherit' edge='end' onClick={() => setDarkMode(!darkMode)}>
           {darkMode ? <Brightness7 /> : <Brightness4 />}
@@ -181,6 +187,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     <Box component='main' sx={{ flexGrow: 1, width: '100vw' }}>
       <globalCtx.Provider value={globalData}>
         {routes}
+        <GlobalItems open={globalItemsOpen} onClose={() => setGlobalItemsOpen(false)} />
       </globalCtx.Provider>
     </Box>
   </Box>

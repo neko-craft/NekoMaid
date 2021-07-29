@@ -39,7 +39,7 @@ final class OpenInv {
             if (player == null) return false;
             Inventory inv = "PLAYER".equals(args[0]) ? player.getInventory() : player.getEnderChest();
             inv.setItem((int) args[2], null);
-            if (player.isOnline()) player.updateInventory();
+            if (player.isOnline()) main.getServer().getScheduler().runTask(main, player::updateInventory);
             else player.saveData();
             unloadPlayer(player);
             return true;
@@ -52,7 +52,7 @@ final class OpenInv {
                 inv.setItem((int) args[2], ItemData.fromString((String) args[3]).getItemStack());
                 int it = (int) args[4];
                 if (it != -1 && is != null) inv.setItem((int) args[2], is);
-                if (player.isOnline()) player.updateInventory();
+                if (player.isOnline()) main.getServer().getScheduler().runTask(main, player::updateInventory);
                 else player.saveData();
             } catch (Exception e) {
                 e.printStackTrace();

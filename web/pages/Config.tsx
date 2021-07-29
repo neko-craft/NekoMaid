@@ -5,7 +5,7 @@ import { success } from '../toast'
 import { configs } from '../Plugin'
 import { Delete, HelpOutline, Check, Brightness4, Brightness7, SettingsBrightness } from '@material-ui/icons'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItem, IconButton, ToggleButton,
-  ListItemAvatar, Avatar, ListItemText, Tooltip, CardContent, ToggleButtonGroup, Paper } from '@material-ui/core'
+  ListItemAvatar, Avatar, ListItemText, Tooltip, CardContent, ToggleButtonGroup, Paper, ListItemButton } from '@material-ui/core'
 
 import type { ServerRecord } from '../types'
 
@@ -18,6 +18,7 @@ configs.push({
       {list.sort((a, b) => b.time - a.time).map(it => {
         const i = it.address.indexOf('?')
         return <ListItem
+          disablePadding
           key={it.address}
           secondaryAction={<IconButton edge='end' size='small' onClick={() => {
             localStorage.setItem('NekoMaid:servers', JSON.stringify(list.filter(s => s.address !== it.address)))
@@ -25,9 +26,14 @@ configs.push({
             update(cur + 1)
           }}><Delete /></IconButton>}
         >
-          <ListItemAvatar><Avatar src={it.icon} variant='rounded'><HelpOutline /></Avatar></ListItemAvatar>
-          <ListItemText primary={<Tooltip title={it.address.slice(i + 1)}>
-            <span>{it.address.slice(0, i)}</span></Tooltip>} secondary={dayjs(it.time).fromNow()} />
+          <ListItemButton onClick={() => {
+            location.hash = ''
+            location.search = '?' + it.address
+          }} dense>
+            <ListItemAvatar><Avatar src={it.icon} variant='rounded'><HelpOutline /></Avatar></ListItemAvatar>
+            <ListItemText primary={<Tooltip title={it.address.slice(i + 1)}>
+              <span>{it.address.slice(0, i)}</span></Tooltip>} secondary={dayjs(it.time).fromNow()} />
+          </ListItemButton>
         </ListItem>
       })}
     </List>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { HelpOutline } from '@material-ui/icons'
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Paper, Tooltip } from '@material-ui/core'
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Paper, Tooltip, Drawer,
+  Box } from '@material-ui/core'
 import { useGlobalData, usePlugin } from '../Context'
 import { minecraft } from '../../languages/zh_CN'
 import { parseComponent } from '../utils'
@@ -54,7 +55,9 @@ export enum InvType {
   // eslint-disable-next-line no-unused-vars
   PLAYER = 'PLAYER',
   // eslint-disable-next-line no-unused-vars
-  ENDER_CHEST = 'ENDER_CHEST'
+  ENDER_CHEST = 'ENDER_CHEST',
+  // eslint-disable-next-line no-unused-vars
+  GLOBAL_ITEMS = 'GLOBAL_ITEMS'
 }
 
 export const ItemViewer: React.FC<{
@@ -86,7 +89,7 @@ export const ItemViewer: React.FC<{
       width: '40px',
       height: '40px',
       display: 'inline-block',
-      marginRight: 1,
+      margin: 0.5,
       position: 'relative',
       overflow: 'hidden',
       backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)',
@@ -124,6 +127,7 @@ export const ItemViewer: React.FC<{
         backgroundImage: item && type in icons ? `url(/icons/minecraft/${type}.png)` : undefined
       }}
     >
+      {item && !(type in icons) && <HelpOutline sx={{ position: 'absolute', left: 8, top: 8 }} />}
       {hasEnchants && <div style={{
         position: 'absolute',
         top: 0,
@@ -140,7 +144,6 @@ export const ItemViewer: React.FC<{
         backgroundImage: 'url(/icons/minecraft/enchanted_item_glint.png)'
       }} />}
     </div>}
-    {item && !(type in icons) && <HelpOutline sx={{ position: 'absolute', left: 8, top: 8 }} />}
     {item && item.amount > 1 ? <span>{item.amount}</span> : null}
   </Paper>
   const nbtTexts = nbt
@@ -159,6 +162,54 @@ export const ItemViewer: React.FC<{
       {nbtTexts}
     </>}>{elm}</Tooltip>
     : elm
+}
+
+export const GlobalItems: React.FC<{ open: boolean, onClose: () => void }> = ({ open, onClose }) => {
+  const [flag, update] = useState(0)
+  const [copyItemLeft, setCopyItemLeft] = useState<Item | undefined>()
+  const [copyItemRight, setCopyItemRight] = useState<Item | undefined>()
+  const items: Array<Item | undefined> = JSON.parse(localStorage.getItem('NekoMaid:items') || '[]')
+  const save = () => {
+    localStorage.setItem('NekoMaid:items', JSON.stringify(items))
+    process.nextTick(update, flag + 1)
+  }
+  return <Drawer anchor='bottom' variant='persistent' elevation={16} open={open} PaperProps={{ elevation: 16 }}>
+    <Box sx={{ padding: 2, display: 'flex', justifyContent: 'center', paddingBottom: 0, alignItems: 'center' }}>
+      <ItemViewer
+        item={copyItemLeft}
+        data={{ type: InvType.GLOBAL_ITEMS }}
+        onDrag={() => process.nextTick(setCopyItemLeft)}
+        onDrop={it => {
+          setCopyItemLeft(it)
+          setCopyItemRight(it)
+        }}
+      />&nbsp;{'< 克隆 >'}&nbsp;<ItemViewer
+        item={copyItemRight}
+        data={{ type: InvType.GLOBAL_ITEMS }}
+        onDrag={() => process.nextTick(setCopyItemRight)}
+        onDrop={it => {
+          setCopyItemLeft(it)
+          setCopyItemRight(it)
+        }}
+      />
+    </Box>
+    <Box sx={{ padding: 2, display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
+      {Array.from({ length: 14 }, (_, i) => <ItemViewer
+        key={i}
+        item={items[i]}
+        data={{ type: InvType.GLOBAL_ITEMS }}
+        onDrag={() => {
+          items[i] = undefined
+          save()
+          process.nextTick(onClose)
+        }}
+        onDrop={it => {
+          items[i] = it
+          save()
+        }}
+      />)}
+    </Box>
+  </Drawer>
 }
 
 const ItemEditor: React.FC<{ onClose: () => void, open: boolean }> = ({ onClose, open }) => {
