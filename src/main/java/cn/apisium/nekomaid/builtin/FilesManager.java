@@ -1,11 +1,12 @@
 package cn.apisium.nekomaid.builtin;
 
-import cn.apisium.nekomaid.LRUCache;
 import cn.apisium.nekomaid.NekoMaid;
 import cn.apisium.uniporter.Constants;
 import cn.apisium.uniporter.Uniporter;
 import cn.apisium.uniporter.router.api.Route;
 import cn.apisium.uniporter.router.api.UniporterHttpHandler;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
@@ -32,6 +33,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 final class FilesManager {
     private static final ArchiveStreamFactory archiveFactory = new ArchiveStreamFactory();
@@ -40,8 +42,8 @@ final class FilesManager {
     private final static int DOWNLOAD_STARTS = "/NekoMaidDownload/".length();
     private final static long MAX_SIZE = 4 * 1024 * 1024; // 4MB
     private final static Path root = Paths.get(".");
-    private final LRUCache<String, Path> uploadMap = new LRUCache<>(5);
-    private final LRUCache<String, Path> downloadMap = new LRUCache<>(5);
+    private final Cache<String, Path> uploadMap = createCache();
+    private final Cache<String, Path> downloadMap = createCache();
 
     public FilesManager(NekoMaid main) {
         Uniporter.registerHandler("NekoMaidUpload", new UploadHandler(), true);
@@ -222,7 +224,7 @@ final class FilesManager {
         public void hijack(ChannelHandlerContext context, HttpRequest request) {
             context.pipeline().remove(Constants.PRE_ROUTE_ID);
             if (HttpMethod.PUT == request.method() && request.uri().length() > UPLOAD_STARTS) {
-                Path p = uploadMap.remove(request.uri().substring(UPLOAD_STARTS));
+                Path p = uploadMap.getIfPresent(request.uri().substring(UPLOAD_STARTS));
                 if (p != null) context.pipeline().replace(Constants.AGGREGATOR_HANDLER_ID, "UploadDataHandler",
                         new UploadDataHandler(request, p.toFile()));
             }
@@ -244,7 +246,7 @@ final class FilesManager {
         @Override
         public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
             if (request.method() == HttpMethod.GET && path.length() > DOWNLOAD_STARTS) {
-                Path file = downloadMap.get(path.substring(DOWNLOAD_STARTS));
+                Path file = downloadMap.getIfPresent(path.substring(DOWNLOAD_STARTS));
                 if (file != null) {
                     try {
                         if (context.pipeline().get(HttpContentCompressor.class) != null)
@@ -305,5 +307,9 @@ final class FilesManager {
         os.putArchiveEntry(archiveEntry);
         try (InputStream is = Files.newInputStream(file)) { IOUtils.copy(is, os); }
         os.closeArchiveEntry();
+    }
+
+    private static Cache<String, Path> createCache() {
+        return CacheBuilder.newBuilder().maximumSize(5).expireAfterWrite(15, TimeUnit.MINUTES).build();
     }
 }

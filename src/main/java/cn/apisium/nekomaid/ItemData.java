@@ -47,6 +47,7 @@ public class ItemData {
             Objects.requireNonNull(t);
             itemStack = Utils.HAS_NBT_API && nbt != null ? NBTItem.convertNBTtoItem(new NBTContainer(nbt))
                     : new ItemStack(t, amount);
+            if (itemStack.getAmount() != amount) itemStack.setAmount(amount);
         }
         return itemStack;
     }

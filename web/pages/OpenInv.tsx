@@ -6,8 +6,8 @@ import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, IconButton,
 import { useGlobalData, usePlugin } from '../Context'
 import { ActionComponent } from './PlayerList'
 import { useHistory, useParams } from 'react-router-dom'
+import ItemViewer, { Item, InvType } from '../components/ItemViewer'
 import Empty from '../components/Empty'
-import ItemEditor, { ItemViewer, Item, InvType } from '../components/ItemEditor'
 
 export const playerAction: ActionComponent = ({ onClose, player }) => {
   const his = useHistory()
@@ -51,6 +51,7 @@ const OpenInv: React.FC = () => {
         onDrag={() => plugin.emit('openInv:remove', update, type, player, i)}
         onDrop={(item, obj) => plugin.emit('openInv:set', update, type,
           player, i, JSON.stringify(item), obj?.type === type && obj?.player === player ? obj.solt : -1)}
+        onEdit={console.log}
       />{!((i + 1) % 9) && <br />}</React.Fragment>)
       : <Empty title='请先选择一名玩家!' />
   }
@@ -99,7 +100,6 @@ const OpenInv: React.FC = () => {
         </Grid>
       </Grid>
     </Container>
-    <ItemEditor open={false} onClose={() => {}} />
   </Box>
 }
 

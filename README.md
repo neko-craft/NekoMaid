@@ -20,6 +20,7 @@ A bukkit plugin that can manage your server through web pages.
 token: ~ # Password
 
 hostname: 127.0.0.1 # Connecting address of your Minecraft server
+customAddress: 'https://example.com/{token}' # Your custom address
 
 logger: # Logger configures
   maxLevel: INFO

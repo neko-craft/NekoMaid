@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useRef } from 'react'
 import * as colors from '@material-ui/core/colors'
 import socketIO from 'socket.io-client'
 import darkScrollbar from '@material-ui/core/darkScrollbar'
@@ -13,7 +13,7 @@ import { address, origin, token, pathname } from './url'
 import toast, { Snackbars } from './toast'
 import { typography } from './theme'
 import { version } from '../package.json'
-import { GlobalItems } from './components/ItemEditor'
+import { GlobalItems } from './components/ItemViewer'
 import { pluginCtx, globalCtx } from './Context'
 import dialog, { DialogWrapper } from './dialog'
 import Plugin, { GlobalInfo, Page } from './Plugin'
@@ -27,27 +27,20 @@ export let update: React.Dispatch<number>
 
 const drawerWidth = 240
 
-const encrypt = (str: string) => {
-  const ua = navigator.userAgent
-  let len = ua.length
-  let data = ''
-  for (let i = 0; i < str.length; i++) data += String.fromCharCode(str.charCodeAt(i) ^ (--len >= 0 ? ua.charCodeAt(len) : i + 66))
-  return btoa(data)
-}
-
 let sent = false
 const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = ({ darkMode, setDarkMode }) => {
   const loc = useLocation()
   const his = useHistory()
+  const pluginRef = useRef<Plugin | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [globalItemsOpen, setGlobalItemsOpen] = useState(false)
   const [globalData, setGlobalData] = useState<GlobalInfo>({ } as any)
-  update = useState(0)[1]
+  const updateF = useState(0)[1]
   const create = useMemo(() => {
-    const io = socketIO(origin!, { path: pathname!, auth: { token: encrypt(token!) } })
+    const io = socketIO(origin!, { path: pathname!, auth: { token } })
     const map: Record<string, Plugin> = { }
     const fn = (name: string) => map[name] || (map[name] = new Plugin(io, name))
-    const nekoMaid = fn('NekoMaid')
+    const nekoMaid = pluginRef.current = fn('NekoMaid')
     io.on('globalData', data => {
       const his: ServerRecord[] = JSON.parse(localStorage.getItem('NekoMaid:servers') || '[]')
       const curAddress = address!.replace('http://', '') + '?' + token
@@ -68,12 +61,15 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       if (data.pluginVersion !== version) toast('发现插件更新! 推荐立即更新!', 'warning')
     }).on('!', () => {
       io.close()
-      dialog('密钥错误!').then(() => (location.href = '//maid.neko-craft.com'))
+      dialog('密钥错误或插件版本过旧, 最新版本为: ' + version).then(() => (location.href = '//maid.neko-craft.com'))
     })
     return fn
   }, [])
   useEffect(() => { if (!loc.pathname || loc.pathname === '/') his.replace('/NekoMaid/dashboard') }, [loc.pathname])
-  useEffect(() => () => { update = undefined as any }, [])
+  useEffect(() => {
+    update = updateF
+    return () => { update = undefined as any }
+  }, [])
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen)
 
@@ -189,7 +185,9 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     <Box component='main' sx={{ flexGrow: 1, width: '100vw' }}>
       <globalCtx.Provider value={globalData}>
         {routes}
-        <GlobalItems open={globalItemsOpen} onClose={() => setGlobalItemsOpen(false)} />
+        <pluginCtx.Provider value={pluginRef.current}>
+          <GlobalItems open={globalItemsOpen} onClose={() => setGlobalItemsOpen(false)} />
+        </pluginCtx.Provider>
       </globalCtx.Provider>
     </Box>
   </Box>

@@ -258,16 +258,4 @@ public final class Utils {
             return latest - jenkinsBuild;
         }
     }
-
-    public static String decrypt(String text, String secret) {
-        try {
-            byte[] data = Base64.getDecoder().decode(text);
-            char[] secretArr = secret.toCharArray(), out = new char[data.length];
-            int len = secretArr.length;
-            for (int i = 0; i < data.length; i++) out[i] = (char) (data[i] ^ (--len >= 0 ? secretArr[len] : i + 66));
-            return new String(out);
-        } catch (Throwable e) {
-            return null;
-        }
-    }
 }

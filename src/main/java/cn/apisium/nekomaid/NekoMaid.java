@@ -5,6 +5,8 @@ import cn.apisium.netty.engineio.EngineIoHandler;
 import cn.apisium.uniporter.Uniporter;
 import cn.apisium.uniporter.router.api.Route;
 import cn.apisium.uniporter.router.api.UniporterHttpHandler;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ArrayListMultimap;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -40,6 +42,8 @@ import java.lang.reflect.Field;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.*;
 
 @SuppressWarnings({"UnusedReturnValue", "unused"})
@@ -59,8 +63,8 @@ import java.util.function.*;
 public final class NekoMaid extends JavaPlugin implements Listener {
     private final static String URL_MESSAGE = ChatColor.translateAlternateColorCodes('&',
             "&e[NekoMaid] &fOpen this url to manage your server: &7"),
-            RELOADED_SUCCESSFULLY = ChatColor.translateAlternateColorCodes('&',
-                    "&e[NekoMaid] &aReloaded successfully.");
+            SUCCESS = ChatColor.translateAlternateColorCodes('&',
+                    "&e[NekoMaid] &aSuccess!");
     public static NekoMaid INSTANCE;
     { INSTANCE = this; }
 
@@ -72,6 +76,8 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     private EngineIoServer engineIoServer;
     private final ConcurrentHashMap<SocketIoSocket, String[]> pages = new ConcurrentHashMap<>();
     private final HashMap<SocketIoSocket, HashMap<String, Client>> clients = new HashMap<>();
+    private final Cache<String, Boolean> tempTokens = CacheBuilder.newBuilder().maximumSize(10)
+            .expireAfterWrite(60, TimeUnit.MINUTES).build();
     private final JSONObject pluginScripts = new JSONObject();
     public SocketIoNamespace io;
     protected Map<String, Set<SocketIoSocket>> mRoomSockets;
@@ -118,9 +124,9 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                 client.disconnect(false);
                 return;
             }
-            String token = ((JSONObject) obj).getString("token"), ua = client.getInitialHeaders().get("User-Agent").get(0);
-            if (token == null || token.isEmpty() || token.length() > 100 || ua == null || ua.isEmpty() ||
-                    !getConfig().getString("token", "").equals(Utils.decrypt(token, ua))) {
+            String token = ((JSONObject) obj).getString("token");
+            if (token == null || token.isEmpty() || token.length() > 100 ||
+                    !(getConfig().getString("token", "").equals(token) || tempTokens.getIfPresent(token) != null)) {
                 client.send("!");
                 client.disconnect(false);
                 return;
@@ -178,34 +184,56 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                              @NotNull String label, @NotNull String[] args) {
         if (!command.testPermission(sender)) return true;
         if (args.length == 0) {
-            String token = getConfig().getString("token", "");
-            String custom = getConfig().getString("customAddress", "");
-            String url;
-            if (custom.isEmpty()) {
-                Optional<Route> it = Uniporter.findRoutesByHandler("NekoMaid").stream().findFirst();
-                if (!it.isPresent()) return true;
-                Route route = it.get();
-                url = getConfig().getString("hostname", "");
-                if (!url.contains(":")) url += ":" + Uniporter.findPortsByHandler("NekoMaid").stream()
-                        .findFirst().orElseGet(getServer()::getPort);
-                url = url + route.getPath() + "?" + token;
-                try { url = URLEncoder.encode(url, "UTF-8"); } catch (Throwable ignored) { }
-                url = "http://maid.neko-craft.com/?" + url;
-            } else url = custom.replace("{token}", token);
-            sender.sendMessage(URL_MESSAGE + url);
-            return true;
-        } else if ("reload".equalsIgnoreCase(args[0])) {
-            reloadConfig();
-            sender.sendMessage(RELOADED_SUCCESSFULLY);
-            return true;
+            String url = getConnectUrl(getConfig().getString("token", ""));
+            if (url != null) {
+                sender.sendMessage(URL_MESSAGE + url);
+                return true;
+            }
+        } else switch (args[0]) {
+            case "reload":
+                reloadConfig();
+                sender.sendMessage(SUCCESS);
+                return true;
+            case "temp":
+                try {
+                    String token = UUID.randomUUID().toString();
+                    tempTokens.get(token, () -> false);
+                    String url = getConnectUrl(token);
+                    if (url != null) {
+                        sender.sendMessage(URL_MESSAGE + url);
+                        return true;
+                    }
+                } catch (ExecutionException ignored) { }
+                break;
+            case "invalidate":
+                tempTokens.cleanUp();
+                sender.sendMessage(SUCCESS);
+                return true;
         }
         return false;
+    }
+
+    private String getConnectUrl(String token) {
+        String custom = getConfig().getString("customAddress", "");
+        String url;
+        if (custom.isEmpty()) {
+            Optional<Route> it = Uniporter.findRoutesByHandler("NekoMaid").stream().findFirst();
+            if (!it.isPresent()) return null;
+            Route route = it.get();
+            url = getConfig().getString("hostname", "");
+            if (!url.contains(":")) url += ":" + Uniporter.findPortsByHandler("NekoMaid").stream()
+                    .findFirst().orElseGet(getServer()::getPort);
+            url = url + route.getPath() + "?" + token;
+            try { url = URLEncoder.encode(url, "UTF-8"); } catch (Throwable ignored) { }
+            url = "http://maid.neko-craft.com/?" + url;
+        } else url = custom.replace("{token}", token);
+        return url;
     }
 
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command command,
                                       @NotNull String alias, @NotNull String[] args) {
-        return args.length == 1 ? Collections.singletonList("reload") : Collections.emptyList();
+        return args.length == 1 ? Arrays.asList("reload", "temp", "invalidate") : Collections.emptyList();
     }
 
     @Override

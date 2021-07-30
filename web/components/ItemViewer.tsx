@@ -8,6 +8,8 @@ import { parseComponent } from '../utils'
 import MojangSON, { parse } from 'nbt-ts'
 import * as icons from '../../minecraftIcons.json'
 
+import type { PaperProps } from '@material-ui/core/Paper'
+
 export const isBlock = (name: string) => ('item.minecraft.' + name) in minecraft
 export const getName = (name: string) => (minecraft as any)['item.minecraft.' + name] || (minecraft as any)['block.minecraft.' + name]
 
@@ -63,18 +65,22 @@ export enum InvType {
   GLOBAL_ITEMS = 'GLOBAL_ITEMS'
 }
 
-export const ItemViewer: React.FC<{
+export type ItemViewerProps = Omit<PaperProps, 'onDrop' | 'onDrag'> & {
   item?: Item | null
   data?: any
   onDrag?: (data: any) => void
   onDrop?: (item: Item, data: any) => void
-}> = ({ item, data, onDrag, onDrop }) => {
+  onEdit?: (item?: Item | null) => void
+}
+
+const ItemViewer: React.FC<ItemViewerProps> = ({ item, data, onDrag, onDrop, onEdit, ...props }) => {
   const globalData = useGlobalData()
   const lowerCase = item ? item.type.toLowerCase() : ''
   const type = item ? item.icon || lowerCase : ''
   const hasEnchants = item?.hasEnchants && type in icons
   const nbt: NBT | null = item?.nbt ? parse(item.nbt) as any as NBT : null
   const elm = <Paper
+    {...props}
     onDragOver={globalData.hasNBTAPI && onDrop
       ? e => {
         e.preventDefault()
@@ -88,6 +94,9 @@ export const ItemViewer: React.FC<{
         if (obj.item) onDrop(obj.item, obj.id)
       }
       : undefined}
+    onClick={globalData.hasNBTAPI && onEdit
+      ? () => openItemEditor(item).then(onEdit)
+      : undefined}
     sx={{
       width: '40px',
       height: '40px',
@@ -95,6 +104,7 @@ export const ItemViewer: React.FC<{
       margin: 0.5,
       position: 'relative',
       overflow: 'hidden',
+      cursor: globalData.hasNBTAPI && (onEdit || onDrag) ? 'pointer' : undefined,
       backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)',
       '& span': {
         position: 'absolute',
@@ -172,6 +182,52 @@ export const ItemViewer: React.FC<{
     : elm
 }
 
+export default ItemViewer
+
+let _setItem: any
+let _resolve: any
+export const openItemEditor = (it?: Item | null): Promise<Item | null | undefined> => _setItem
+  ? new Promise(resolve => {
+    _resolve = resolve
+    _setItem(it)
+  })
+  : Promise.resolve(it)
+const ItemEditor: React.FC = () => {
+  const plugin = usePlugin()
+  const [item, setItem] = useState<Item | undefined>()
+  const [types, setTypes] = useState<string[]>([])
+  useEffect(() => {
+    if (item && !types.length) plugin.emit('item:fetch', setTypes)
+  }, [item])
+  useEffect(() => {
+    _setItem = setItem
+    return () => { _setItem = null }
+  }, [])
+  const cancel = () => {
+    setItem(undefined)
+    if (_resolve) {
+      _resolve(null)
+      _resolve = null
+    }
+  }
+  return <Dialog open={!!item} onClose={cancel}>
+    <DialogTitle>物品编辑器</DialogTitle>
+    <DialogContent>
+
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={cancel}>取消</Button>
+      <Button onClick={() => {
+        setItem(undefined)
+        if (_resolve) {
+          _resolve(item)
+          _resolve = null
+        }
+      }}>确认</Button>
+    </DialogActions>
+  </Dialog>
+}
+
 export const GlobalItems: React.FC<{ open: boolean, onClose: () => void }> = ({ open, onClose }) => {
   const matches = useMediaQuery((theme: any) => theme.breakpoints.down('md'))
   const [flag, update] = useState(0)
@@ -218,24 +274,6 @@ export const GlobalItems: React.FC<{ open: boolean, onClose: () => void }> = ({ 
         }}
       />)}
     </Box>
+    <ItemEditor />
   </Drawer>
 }
-
-const ItemEditor: React.FC<{ onClose: () => void, open: boolean }> = ({ onClose, open }) => {
-  const plugin = usePlugin()
-  useState<Item | undefined>()
-  useEffect(() => {
-    plugin.emit('item:create', console.log, 'NETHERITE_AXE')
-  }, [])
-  return <Dialog open={open} onClose={onClose}>
-    <DialogTitle>物品编辑器</DialogTitle>
-    <DialogContent>
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={onClose}>关闭</Button>
-      <Button onClick={onClose} autoFocus>确认</Button>
-    </DialogActions>
-  </Dialog>
-}
-
-export default ItemEditor
