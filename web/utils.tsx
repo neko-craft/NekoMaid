@@ -8,6 +8,7 @@ export interface TextComponent {
   italic?: boolean
   strikethrough?: boolean
   underlined?: boolean
+  obfuscated?: boolean
   text?: string
   color?: { color?: { r: number, g: number, b: number, alpha: number }, name?: string }
   extra?: TextComponent[]
@@ -23,7 +24,7 @@ export interface TextComponent {
   }
 }
 
-const colorsMap: any = {
+const colorsMap: Record<string, number> = {
   black: 0,
   dark_blue: 1,
   dark_green: 2,
@@ -41,6 +42,7 @@ const colorsMap: any = {
   yellow: 14,
   white: 15
 }
+
 const colors = ['#212121', '#3f51b5', '#4caf50', '#00bcd4', '#b71c1c', '#9c27b0', '#ff5722', '#9e9e9e', '#616161', '#2196f3', '#8bc34a',
   '#03a9f4', '#f44336', '#ffc107', '#ff9800', '#eeeeee']
 
@@ -106,7 +108,7 @@ export const ParsedComponent: React.FC<{ component: TextComponent, runCommand?: 
     return it.clickEvent?.action === 'COPY_TO_CLIPBOARD' ? <CopyToClipboard text={it.clickEvent!.value}>{elm}</CopyToClipboard> : elm
   }
 
-export const parseComponent = (arr: string[] | TextComponent[] | string | TextComponent, runCommand?: (it: string) => void, suggest?: (it: string) => void) =>
+export const parseComponent = (arr: Array<string | TextComponent> | string | TextComponent, runCommand?: (it: string) => void, suggest?: (it: string) => void) =>
   (Array.isArray(arr) ? arr : [arr]).map((it, i) => typeof it === 'string' ? it : <ParsedComponent key={i} component={it} runCommand={runCommand} suggest={suggest} />)
 /* eslint-disable no-labels */
 export const parseComponents = (arr: (TextComponent | string)[], runCommand?: (it: string) => void, suggest?: (it: string) => void) =>
@@ -181,3 +183,28 @@ export const parseMessage = (msg: string) => {
   }
   return res
 }
+
+const padColor = (it: number) => {
+  const s = it.toString(16).padStart(2, '0')
+  return `§${s[0]}§${s[1]}`
+}
+export const stringifyTextComponent = (arr: string | TextComponent | Array<string | TextComponent>) => (Array.isArray(arr) ? arr : [arr])
+  .reduce((p, it) => {
+    let str: string
+    if (typeof it !== 'string') {
+      str = ''
+      if (it.color?.name && it.color.name in colorsMap) {
+        str += '§' + colorsMap[it.color.name].toString(16)
+      } else if (it.color?.color) {
+        str += '§x' + padColor(it.color.color.r) + padColor(it.color.color.g) + padColor(it.color.color.b)
+      }
+      if (it.bold) str += '§l'
+      if (it.italic) str += '§o'
+      if (it.strikethrough) str += '§n'
+      if (it.underlined) str += '§m'
+      if (it.obfuscated) str += '§k'
+      str += it.text
+      if (it.extra?.length) str += stringifyTextComponent(it.extra)
+    } else str = it
+    return p + str
+  }, '')

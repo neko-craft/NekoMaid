@@ -185,9 +185,9 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     <Box component='main' sx={{ flexGrow: 1, width: '100vw' }}>
       <globalCtx.Provider value={globalData}>
         {routes}
-        <pluginCtx.Provider value={pluginRef.current}>
+        {globalData.hasNBTAPI && <pluginCtx.Provider value={pluginRef.current}>
           <GlobalItems open={globalItemsOpen} onClose={() => setGlobalItemsOpen(false)} />
-        </pluginCtx.Provider>
+        </pluginCtx.Provider>}
       </globalCtx.Provider>
     </Box>
   </Box>

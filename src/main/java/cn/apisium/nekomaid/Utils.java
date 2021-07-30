@@ -198,6 +198,8 @@ public final class Utils {
 
     public static int checkUpdate() {
         try {
+            int catServer = checkCatServerUpdate();
+            if (catServer != -2) return catServer;
             if (paperVersionFetcherClass != null) {
                 Class<?> clazz = Bukkit.getUnsafe().getVersionFetcher().getClass();
                 if (clazz == paperVersionFetcherClass) {
@@ -256,6 +258,28 @@ public final class Utils {
             int latest = StreamSupport.stream(builds.spliterator(), false)
                     .mapToInt(JsonElement::getAsInt).max().getAsInt();
             return latest - jenkinsBuild;
+        }
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    private static int checkCatServerUpdate() {
+        try {
+            Package pkg = Class.forName("catserver.server.CatServer").getPackage();
+            String implementationVersion = pkg.getImplementationVersion();
+            if ("Luohuayu".equals(pkg.getImplementationVendor()) && implementationVersion != null) {
+                String[] split = implementationVersion.split("-");
+                if (split.length == 4) {
+                    try (BufferedReader reader = Resources.asCharSource(
+                            new URL("https://catserver.moe/api/version/?v=universal"), StandardCharsets.UTF_8)
+                            .openBufferedStream()) {
+                        JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+                        return json.get("version").getAsString().equals(split[3]) ? 0 : 1;
+                    }
+                }
+            }
+            return -1;
+        } catch (Throwable ignored) {
+            return -2;
         }
     }
 }

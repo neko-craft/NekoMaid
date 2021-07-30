@@ -34,24 +34,16 @@ final class OpenInv {
             Object items = getInventoryItems(player.getEnderChest());
             unloadPlayer(player);
             return items;
-        }).onWithAck("openInv:remove", args -> {
-            Player player = getPlayer((String) args[1]);
-            if (player == null) return false;
-            Inventory inv = "PLAYER".equals(args[0]) ? player.getInventory() : player.getEnderChest();
-            inv.setItem((int) args[2], null);
-            if (player.isOnline()) main.getServer().getScheduler().runTask(main, player::updateInventory);
-            else player.saveData();
-            unloadPlayer(player);
-            return true;
         }).onWithAck("openInv:set", args -> {
             Player player = getPlayer((String) args[1]);
             if (player == null) return false;
             Inventory inv = "PLAYER".equals(args[0]) ? player.getInventory() : player.getEnderChest();
             try {
-                ItemStack is = inv.getItem((int) args[2]);
-                inv.setItem((int) args[2], ItemData.fromString((String) args[3]).getItemStack());
-                int it = (int) args[4];
-                if (it != -1 && is != null) inv.setItem((int) args[2], is);
+                int to = (int) args[2], from = (int) args[4];
+                ItemStack is = inv.getItem(to);
+                String data = (String) args[3];
+                inv.setItem(to, data == null ? null : ItemData.fromString(data).getItemStack());
+                if (from != -1 && is != null) inv.setItem(from, is);
                 if (player.isOnline()) main.getServer().getScheduler().runTask(main, player::updateInventory);
                 else player.saveData();
             } catch (Exception e) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { failed, success } from '../toast'
+import { action, failed, success } from '../toast'
 import { Backpack, Refresh } from '@material-ui/icons'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, IconButton,
   ListItemIcon, MenuItem, CardContent } from '@material-ui/core'
@@ -44,14 +44,19 @@ const OpenInv: React.FC = () => {
       if (type === InvType.PLAYER) plugin.emit('openInv:fetchInv', setInv, player)
       else plugin.emit('openInv:fetchEnderChest', setEnder, player)
     }
+    const updateWithAction = (res: boolean) => {
+      action(res)
+      if (type === InvType.PLAYER) plugin.emit('openInv:fetchInv', setInv, player)
+      else plugin.emit('openInv:fetchEnderChest', setEnder, player)
+    }
     return player
       ? inv.map((it, i) => <React.Fragment key={i}><ItemViewer
         item={it}
-        data={{ type, solt: i }}
-        onDrag={() => plugin.emit('openInv:remove', update, type, player, i)}
+        data={{ type, solt: i, player }}
+        onDrag={() => plugin.emit('openInv:set', update, type, player, i, null, -1)}
         onDrop={(item, obj) => plugin.emit('openInv:set', update, type,
           player, i, JSON.stringify(item), obj?.type === type && obj?.player === player ? obj.solt : -1)}
-        onEdit={console.log}
+        onEdit={item => item !== false && plugin.emit('openInv:set', updateWithAction, type, player, i, item && JSON.stringify(item), -1)}
       />{!((i + 1) % 9) && <br />}</React.Fragment>)
       : <Empty title='请先选择一名玩家!' />
   }

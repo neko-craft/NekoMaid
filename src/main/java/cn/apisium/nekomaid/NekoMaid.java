@@ -221,11 +221,11 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             if (!it.isPresent()) return null;
             Route route = it.get();
             url = getConfig().getString("hostname", "");
-            if (!url.contains(":")) url += ":" + Uniporter.findPortsByHandler("NekoMaid").stream()
-                    .findFirst().orElseGet(getServer()::getPort);
+            int port = Uniporter.findPortsByHandler("NekoMaid").stream().findFirst().orElseGet(getServer()::getPort);
+            if (!url.contains(":")) url += ":" + port;
             url = url + route.getPath() + "?" + token;
             try { url = URLEncoder.encode(url, "UTF-8"); } catch (Throwable ignored) { }
-            url = "http://maid.neko-craft.com/?" + url;
+            url = (Uniporter.isSSLPort(port) ? "https" : "http") + "://maid.neko-craft.com/?" + url;
         } else url = custom.replace("{token}", token);
         return url;
     }
@@ -342,8 +342,8 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                     "ws://maid.neko-craft.com", 1024 * 1024 * 5) {
                 @Override
                 public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                    super.exceptionCaught(ctx, cause);
                     cause.printStackTrace();
+                    super.exceptionCaught(ctx, cause);
                 }
             });
         }
