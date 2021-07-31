@@ -66,6 +66,9 @@ jobs:
         with:
           node-version: 16
 
+      - name: Install xvfb
+        run: sudo apt-get install xvfb
+
       - name: Install dependencies
         run: npm install
 
