@@ -66,10 +66,10 @@ jobs:
         with:
           node-version: 16
 
-      - name: Install xvfb
-        run: sudo apt-get install xvfb
-
       - name: Install dependencies
+        run: sudo apt-get install -y build-essential libxi-dev libglu1-mesa-dev libglew-dev pkg-config xvfb
+
+      - name: Install npm dependencies
         run: npm install
 
       - name: Generate assets
