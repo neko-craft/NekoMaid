@@ -59,6 +59,7 @@ dependencies {
     implementation 'org.bstats:bstats-bukkit:2.2.1'
     implementation 'com.github.Apisium:netty-engine.io:03931aef8c'
     implementation 'org.apache.commons:commons-compress:1.21'
+    implementation 'commons-io:commons-io:2.11.0'
     implementation ('io.socket:engine.io-server:5.0.0') {
         exclude group: 'com.google.code.gson'
     }
@@ -85,6 +86,9 @@ shadowJar {
         relocate('org.json', 'cn.apisium.nekomaid.libs.org.json')
         relocate('javax.servlet', 'cn.apisium.nekomaid.libs.javax.servlet')
         relocate('org.bstats', 'cn.apisium.nekomaid.libs.org.bstats')
+        relocate('org.apache.commons.io', 'cn.apisium.nekomaid.libs.org.apache.commons.io')
+        relocate('org.apache.commons.compress', 'cn.apisium.nekomaid.libs.org.apache.commons.compress')
+        relocate('io.socket', 'cn.apisium.nekomaid.libs.io.socket')
     }
 
     archiveClassifier.set('')

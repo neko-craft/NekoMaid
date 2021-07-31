@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.*;
 
 @SuppressWarnings({"UnusedReturnValue", "unused"})
-@Plugin(name = "NekoMaid", version = "0.0.0")
+@Plugin(name = "NekoMaid", version = "0.0.4")
 @Description("A plugin can use Web to manage your server.")
 @Author("Shirasawa")
 @Website("https://neko-craft.com")
@@ -124,16 +124,14 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         io.on("connection", arr -> {
             SocketIoSocket client = (SocketIoSocket) arr[0];
             Object obj = client.getConnectData();
-            if (!(obj instanceof JSONObject) || client.getInitialHeaders() == null ||
-                    !client.getInitialHeaders().containsKey("User-Agent") ||
-                    client.getInitialHeaders().get("User-Agent").isEmpty()) {
+            if (!(obj instanceof JSONObject)) {
                 client.send("!");
                 client.disconnect(false);
                 return;
             }
             String token = ((JSONObject) obj).getString("token");
             if (token == null || token.isEmpty() || token.length() > 100 ||
-                    !(getConfig().getString("token", "").equals(token) || tempTokens.getIfPresent(token) != null)) {
+                    (!getConfig().getString("token", "").equals(token) && tempTokens.getIfPresent(token) == null)) {
                 client.send("!");
                 client.disconnect(false);
                 return;
