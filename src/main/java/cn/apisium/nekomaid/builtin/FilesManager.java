@@ -159,7 +159,7 @@ final class FilesManager {
                             });
                         } else addEntry(ext, os, parent, p);
                         return true;
-                    }
+                    } catch (Throwable e) { e.printStackTrace(); }
                 } else if (Files.isRegularFile(p)) {
                     try (ArchiveInputStream is = archiveFactory.createArchiveInputStream(
                             new BufferedInputStream(Files.newInputStream(p)))) {
@@ -172,7 +172,7 @@ final class FilesManager {
                             }
                         }
                         return true;
-                    }
+                    } catch (Throwable e) { e.printStackTrace(); }
                 }
             } catch (Throwable ignored) { }
             return false;

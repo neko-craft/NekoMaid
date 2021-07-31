@@ -6,9 +6,10 @@ import { useHistory } from 'react-router-dom'
 import { useTheme } from '@material-ui/core/styles'
 import { usePlugin, useGlobalData } from '../Context'
 import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeader, Divider, Skeleton, Link,
-  LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar, Pagination } from '@material-ui/core'
+  LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar, Pagination, Tooltip } from '@material-ui/core'
 import { LoadingList } from '../components/Loading'
 import toast, { action } from '../toast'
+import prettyBytes from 'pretty-bytes'
 import ReactECharts from 'echarts-for-react'
 import Empty from '../components/Empty'
 import Uptime from '../components/Uptime'
@@ -16,7 +17,7 @@ import Avatar from '../components/Avatar'
 import dialog from '../dialog'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }
-interface CurrentStatus { players: string[], mspt: number, tps: number, time: number, memory: number, behinds: number }
+interface CurrentStatus { players: string[], mspt: number, tps: number, time: number, memory: number, totalMemory: number, behinds: number }
 
 const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.ReactNode, color: string }> = ({ title, content, icon, children, color }) =>
   <Card sx={{ height: '100%' }}>
@@ -225,7 +226,13 @@ const Dashboard: React.FC = () => {
           <TopCard title='运行时间' content={current ? <Uptime time={current.time} /> : <Skeleton animation='wave' width={150} />} icon={<AccessTime />} color={blue[600]}>
             <Box sx={{ pt: 2.7, display: 'flex', alignItems: 'center' }}>
               <Typography color='textSecondary' variant='caption' sx={{ marginRight: 1 }}>内存占用</Typography>
-              <LinearProgress variant='determinate' value={current?.memory || 0} sx={{ flex: '1' }} />
+              <Tooltip title={current?.totalMemory ? prettyBytes(current.memory) + ' / ' + prettyBytes(current.totalMemory) : ''}>
+                <LinearProgress
+                  variant='determinate'
+                  value={current?.totalMemory ? current.memory / current.totalMemory * 100 : 0}
+                  sx={{ flex: '1' }}
+                />
+              </Tooltip>
             </Box>
           </TopCard>
         </Grid>

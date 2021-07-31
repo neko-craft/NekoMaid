@@ -61,6 +61,7 @@ import java.util.function.*;
 @SoftDependency("PlugMan")
 @SoftDependency("PlaceholderAPI")
 public final class NekoMaid extends JavaPlugin implements Listener {
+    private final static String UNIPORTER_VERSION = "1.2.6-SNAPSHOT";
     private final static String URL_MESSAGE = ChatColor.translateAlternateColorCodes('&',
             "&e[NekoMaid] &fOpen this url to manage your server: &7"),
             SUCCESS = ChatColor.translateAlternateColorCodes('&',
@@ -103,6 +104,12 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             getConfig().set("token", UUID.randomUUID().toString());
             saveConfig();
         }
+
+        String version = getServer().getPluginManager().getPlugin("Uniporter").getDescription().getVersion();
+        if (!UNIPORTER_VERSION.equals(version)) {
+            getLogger().warning("Unsupported Uniporter version: " + version + ", it should be: " + UNIPORTER_VERSION);
+        }
+
         engineIoServer = new EngineIoServer();
         io = new SocketIoServer(engineIoServer).namespace("/");
         try {

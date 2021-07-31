@@ -39,8 +39,8 @@ final class Dashboard {
     private final static class CurrentStatus {
         public String[] players;
         public double tps, mspt;
-        public long time;
-        public int memory, behinds;
+        public long time, memory, totalMemory;
+        public int behinds;
     }
 
     @SuppressWarnings("deprecation")
@@ -112,7 +112,8 @@ final class Dashboard {
         current.tps = Utils.getTPS();
         current.mspt = Utils.getMSPT();
         current.time = startTime;
-        current.memory = (int) (((runtime.totalMemory() - runtime.freeMemory()) / (double) runtime.maxMemory()) * 100);
+        current.memory = runtime.totalMemory() - runtime.freeMemory();
+        current.totalMemory = runtime.maxMemory();
         current.behinds = behindVersions;
     }
 

@@ -3,6 +3,7 @@ import { CopyToClipboard } from 'react-copy-to-clipboard'
 import { Tooltip } from '@material-ui/core'
 import { minecraft } from '../languages/zh_CN'
 
+export interface ObjectColor { color?: { r: number, g: number, b: number, alpha: number }, name?: string }
 export interface TextComponent {
   bold?: boolean
   italic?: boolean
@@ -10,7 +11,7 @@ export interface TextComponent {
   underlined?: boolean
   obfuscated?: boolean
   text?: string
-  color?: { color?: { r: number, g: number, b: number, alpha: number }, name?: string }
+  color?: ObjectColor | string
   extra?: TextComponent[]
   translate?: string
   with?: Array<TextComponent | string>
@@ -46,10 +47,15 @@ const colorsMap: Record<string, number> = {
 const colors = ['#212121', '#3f51b5', '#4caf50', '#00bcd4', '#b71c1c', '#9c27b0', '#ff5722', '#9e9e9e', '#616161', '#2196f3', '#8bc34a',
   '#03a9f4', '#f44336', '#ffc107', '#ff9800', '#eeeeee']
 
+export const parseStringColor = (it: string): ObjectColor => it[0] === '#'
+  ? { color: { r: parseInt(it.slice(1, 3), 16), g: parseInt(it.slice(3, 5), 16), b: parseInt(it.slice(5, 7), 16), alpha: 1 } }
+  : { name: it }
+
 export const parseStringOrComponent = (it: string | TextComponent, runCommand?: (it: string) => void, suggest?: (it: string) => void) =>
   typeof it === 'string'
     ? it
     : <ParsedComponent component={it} runCommand={runCommand} suggest={suggest} />
+
 export const ParsedComponent: React.FC<{ component: TextComponent, runCommand?: (it: string) => void, suggest?: (it: string) => void }> =
   ({ component: it, runCommand, suggest }) => {
     let className: string | undefined
@@ -58,11 +64,13 @@ export const ParsedComponent: React.FC<{ component: TextComponent, runCommand?: 
     if (it.italic) style.fontStyle = 'italic'
     if (it.underlined) style.textDecoration = 'underline'
     if (it.strikethrough) style.textDecoration = (style.textDecoration ? style.textDecoration + ' ' : '') + 'line-through'
-    if (it.color?.name && it.color.name in colorsMap) {
-      style.color = colors[colorsMap[it.color.name]]
-      if (it.color.name === 'white' || it.color.name === 'black') className = it.color.name
-    } else if (it.color?.color) style.color = `rgba(${it.color.color.r},${it.color.color.g},${it.color.color.b},${it.color.color.alpha})`
-    if (style.color && !(it.color?.name === 'white' || it.color?.name === 'black')) style.textShadow = 'none'
+    let color = it.color
+    if (typeof color === 'string') color = parseStringColor(color)
+    if (color?.name && color.name in colorsMap) {
+      style.color = colors[colorsMap[color.name]]
+      if (color.name === 'white' || color.name === 'black') className = color.name
+    } else if (color?.color) style.color = `rgba(${color.color.r},${color.color.g},${color.color.b},${color.color.alpha})`
+    if (style.color && !(color?.name === 'white' || color?.name === 'black')) style.textShadow = 'none'
     if (it.clickEvent) style.cursor = 'pointer'
     let content: any
     if (it.translate) {
@@ -193,10 +201,12 @@ export const stringifyTextComponent = (arr: string | TextComponent | Array<strin
     let str: string
     if (typeof it !== 'string') {
       str = ''
-      if (it.color?.name && it.color.name in colorsMap) {
-        str += '§' + colorsMap[it.color.name].toString(16)
-      } else if (it.color?.color) {
-        str += '§x' + padColor(it.color.color.r) + padColor(it.color.color.g) + padColor(it.color.color.b)
+      let color = it.color
+      if (typeof color === 'string') color = parseStringColor(color)
+      if (color?.name && color.name in colorsMap) {
+        str += '§' + colorsMap[color.name].toString(16)
+      } else if (color?.color) {
+        str += '§x' + padColor(color.color.r) + padColor(color.color.g) + padColor(color.color.b)
       }
       if (it.bold) str += '§l'
       if (it.italic) str += '§o'

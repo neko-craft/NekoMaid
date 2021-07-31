@@ -2,13 +2,14 @@ package cn.apisium.nekomaid;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
-import de.tr7zw.nbtapi.NBTContainer;
+import de.tr7zw.nbtapi.NBTCompound;
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 
+import java.lang.reflect.Constructor;
 import java.util.Objects;
 
 @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "unused"})
@@ -19,6 +20,7 @@ public class ItemData {
     public String nbt;
     @JSONField(serialize=false)
     private ItemStack itemStack;
+    private static Constructor<?> nbtContainer;
 
     @SuppressWarnings("deprecation")
     public ItemData(ItemStack is) {
@@ -45,8 +47,12 @@ public class ItemData {
         if (itemStack == null) {
             Material t = Material.getMaterial(type);
             Objects.requireNonNull(t);
-            itemStack = Utils.HAS_NBT_API && nbt != null ? NBTItem.convertNBTtoItem(new NBTContainer(nbt))
-                    : new ItemStack(t, amount);
+            if (Utils.HAS_NBT_API && nbt != null) try {
+                if (nbtContainer == null) nbtContainer = Class.forName("de.tr7zw.nbtapi.NBTContainer")
+                        .getConstructor(String.class);
+                itemStack = NBTItem.convertNBTtoItem((NBTCompound) nbtContainer.newInstance(nbt));
+            } catch (Throwable e) { throw new RuntimeException(e); }
+            else itemStack = new ItemStack(t, amount);
             if (itemStack.getAmount() != amount) itemStack.setAmount(amount);
         }
         return itemStack;
