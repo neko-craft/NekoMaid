@@ -38,8 +38,6 @@ import java.util.concurrent.TimeUnit;
 final class FilesManager {
     private static final ArchiveStreamFactory archiveFactory = new ArchiveStreamFactory();
     private static final DefaultHttpDataFactory factory = new DefaultHttpDataFactory();
-    private final static int UPLOAD_STARTS = "/NekoMaidUpload/".length();
-    private final static int DOWNLOAD_STARTS = "/NekoMaidDownload/".length();
     private final static long MAX_SIZE = 4 * 1024 * 1024; // 4MB
     private final static Path root = Paths.get(".");
     private final Cache<String, Path> uploadMap = createCache();
@@ -222,18 +220,18 @@ final class FilesManager {
     private final class UploadHandler implements UniporterHttpHandler {
         @Override
         public void hijack(ChannelHandlerContext context, HttpRequest request) {
-            context.pipeline().remove(Constants.PRE_ROUTE_ID);
-            if (HttpMethod.PUT == request.method() && request.uri().length() > UPLOAD_STARTS) {
-                Path p = uploadMap.getIfPresent(request.uri().substring(UPLOAD_STARTS));
-                if (p != null) context.pipeline().replace(Constants.AGGREGATOR_HANDLER_ID, "UploadDataHandler",
-                        new UploadDataHandler(request, p.toFile()));
-            }
+            if (HttpMethod.PUT != request.method()) return;
+            String[] arr = request.uri().split("/");
+            if (arr.length == 0) return;
+            Path p = uploadMap.getIfPresent(arr[arr.length - 1]);
+            if (p != null) context.pipeline().replace(Constants.AGGREGATOR_HANDLER_ID, "UploadDataHandler",
+                    new UploadDataHandler(request, p.toFile()));
         }
 
         @Override
         public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
             HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                    request.method() == HttpMethod.OPTIONS ? HttpResponseStatus.OK : HttpResponseStatus.FORBIDDEN);
+                    request.method() == HttpMethod.OPTIONS ? HttpResponseStatus.OK : HttpResponseStatus.METHOD_NOT_ALLOWED);
             addHeaders(request, response);
             context.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
         }
@@ -245,26 +243,29 @@ final class FilesManager {
     private final class DownloadHandler implements UniporterHttpHandler {
         @Override
         public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
-            if (request.method() == HttpMethod.GET && path.length() > DOWNLOAD_STARTS) {
-                Path file = downloadMap.getIfPresent(path.substring(DOWNLOAD_STARTS));
-                if (file != null) {
-                    try {
-                        if (context.pipeline().get(HttpContentCompressor.class) != null)
-                            context.pipeline().remove(HttpContentCompressor.class);
-                        RandomAccessFile raf = new RandomAccessFile(file.toFile().getAbsolutePath(), "r");
-                        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-                        long length = raf.length();
-                        HttpUtil.setContentLength(response, length);
-                        response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM)
-                                .set(HttpHeaderNames.CONTENT_DISPOSITION, "attachment; filename=" + file.getFileName().toString());
-                        context.write(response);
-                        context.write(context.pipeline().get(SslHandler.class) == null
-                                ? new DefaultFileRegion(raf.getChannel(), 0, length)
-                                : new ChunkedFile(raf), context.newProgressivePromise());
-                        context.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(ChannelFutureListener.CLOSE);
-                        return;
-                    } catch (Throwable e) {
-                        e.printStackTrace();
+            if (request.method() == HttpMethod.GET) {
+                String[] arr = request.uri().split("/");
+                if (arr.length != 0) {
+                    Path file = downloadMap.getIfPresent(arr[arr.length - 1]);
+                    if (file != null) {
+                        try {
+                            if (context.pipeline().get(HttpContentCompressor.class) != null)
+                                context.pipeline().remove(HttpContentCompressor.class);
+                            RandomAccessFile raf = new RandomAccessFile(file.toFile().getAbsolutePath(), "r");
+                            HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+                            long length = raf.length();
+                            HttpUtil.setContentLength(response, length);
+                            response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM)
+                                    .set(HttpHeaderNames.CONTENT_DISPOSITION, "attachment; filename=" + file.getFileName().toString());
+                            context.write(response);
+                            context.write(context.pipeline().get(SslHandler.class) == null
+                                    ? new DefaultFileRegion(raf.getChannel(), 0, length)
+                                    : new ChunkedFile(raf), context.newProgressivePromise());
+                            context.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(ChannelFutureListener.CLOSE);
+                            return;
+                        } catch (Throwable e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }

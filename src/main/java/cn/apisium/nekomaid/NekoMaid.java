@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.*;
 
 @SuppressWarnings({"UnusedReturnValue", "unused"})
-@Plugin(name = "NekoMaid", version = "0.0.4")
+@Plugin(name = "NekoMaid", version = "0.0.0")
 @Description("A plugin can use Web to manage your server.")
 @Author("Shirasawa")
 @Website("https://neko-craft.com")

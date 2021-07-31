@@ -1,12 +1,13 @@
-import React, { useMemo, useEffect, useState, useRef } from 'react'
+import React, { useMemo, useEffect, useState, useRef, createRef } from 'react'
 import { usePlugin } from '../Context'
 import { Send } from '@material-ui/icons'
 import { TextField, Toolbar, IconButton, Paper, Tooltip, Box, Autocomplete } from '@material-ui/core'
 import { parseComponents, parseMessage, TextComponent } from '../utils'
 import { address } from '../url'
 import throttle from 'lodash/throttle'
-import toast from '../toast'
+import toast, { success } from '../toast'
 import More from '../components/More'
+import dialog from '../dialog'
 
 type Log = { level: string, msg: string, time: number, logger: string, components?: TextComponent[] }
 
@@ -25,20 +26,36 @@ const pad = (it: number) => it.toString().padStart(2, '0')
 
 const parseLog = (data: Log, runCommand: (it: string) => void, suggest: (it: string) => void) => {
   const t = new Date(data.time)
+  const ref = createRef<HTMLParagraphElement>()
+  const onShare = () => {
+    if (!ref.current) return
+    const text = ref.current.textContent || ref.current.innerText
+    dialog(<><span className='bold'>确认要分享这段日志吗:</span><br />{text.slice(5, 150)}...</>).then(res => {
+      if (!res) return
+      toast('分享中...')
+      const body = new FormData()
+      body.set('content', text)
+      fetch('https://api.mclo.gs/1/log', { method: 'POST', body }).then(it => it.json()).then(it => {
+        if (!it.success) throw new Error('Failed!')
+        success()
+        window.open(it.url, '_blank')
+      })
+    })
+  }
   const time = pad(t.getHours()) + ':' + pad(t.getMinutes()) + ':' + pad(t.getSeconds())
   let moreLines = false
   if (data.components) {
-    return <p key={i}>
-      <Tooltip title={time} placement='right'><span className='level'>[信息] </span></Tooltip>
+    return <p ref={ref} key={i}>
+      <Tooltip title={time} placement='right'><span className='level' onClick={onShare}>[信息] </span></Tooltip>
       <span className='msg'>{parseComponents(data.components, runCommand, suggest)}</span>
     </p>
   } else {
     const msg = parseMessage(data.msg)
     const isError = data.level === 'FATAL' || data.level === 'ERROR'
     moreLines = (isError || data.level === 'WARN') && data.msg.includes('\n')
-    const elm = <p key={i} className={isError ? 'error' : data.level === 'WARN' ? 'warn' : undefined}>
+    const elm = <p ref={ref} key={i} className={isError ? 'error' : data.level === 'WARN' ? 'warn' : undefined}>
       <Tooltip title={time} placement='right'>
-        <span className='level'>[{levelNames[data.level] || '信息'}] </span>
+        <span className='level' onClick={onShare}>[{levelNames[data.level] || '信息'}] </span>
       </Tooltip>
       <span className='msg'>
         {moreLines && <span className='more' data-collapse='[收起]'>[展开]</span>}
@@ -146,6 +163,7 @@ const Console: React.FC = () => {
         userSelect: 'none',
         height: 'fit-content',
         fontWeight: 'bolder',
+        cursor: 'pointer',
         color: theme => theme.palette.primary.main
       },
       '& .white': {

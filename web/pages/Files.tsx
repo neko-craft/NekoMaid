@@ -448,10 +448,11 @@ const Files: React.FC = () => {
         formdata.append('file', file)
         const xhr = new XMLHttpRequest()
         setProgress(0)
-        xhr.open('post', address! + 'Upload/' + res)
+        xhr.open('put', address! + 'Upload/' + res)
         xhr.onreadystatechange = () => {
+          if (xhr.readyState !== 4) return
           setProgress(-1)
-          action(xhr.readyState === 4 && xhr.status === 200)
+          action(xhr.status === 200)
           refresh()
         }
         xhr.upload.onprogress = e => e.lengthComputable && setProgress(e.loaded / e.total * 100)
