@@ -8,8 +8,6 @@ import { action } from '../toast'
 import ReactECharts from 'echarts-for-react'
 import dialog from '../dialog'
 
-// import { SigmaContainer, useSigma } from 'react-sigma-v2'
-
 interface Plugin {
   name: string
   file: string

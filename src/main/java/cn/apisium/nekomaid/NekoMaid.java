@@ -347,8 +347,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                     "ws://maid.neko-craft.com", 1024 * 1024 * 5) {
                 @Override
                 public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                    cause.printStackTrace();
-                    super.exceptionCaught(ctx, cause);
+                    if (getConfig().getBoolean("debug", false)) cause.printStackTrace();
                 }
             });
         }

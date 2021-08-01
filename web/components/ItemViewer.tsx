@@ -14,15 +14,6 @@ import * as icons from '../../minecraftIcons.json'
 
 import type { PaperProps } from '@material-ui/core/Paper'
 
-export const escapeJSON = (text: string) => text.replace(/"/g, '\\u0022').replace(/'/g, '\\u0027')
-
-export const isBlock = (name: string) => ('item.minecraft.' + name) in minecraft
-export const getName = (name: string) => (minecraft as any)['item.minecraft.' + name] || (minecraft as any)['block.minecraft.' + name]
-export const getEnchantmentName = (it: string | Enchantment) => {
-  const name = (minecraft as any)['enchantment.' + (typeof it === 'string' ? it : it.id).replace(/:/g, '.')] || '未知附魔'
-  return typeof it === 'string' ? name : name + ' ' + it.lvl.value
-}
-
 export interface Enchantment extends MojangSON.TagObject {
   id: string
   lvl: MojangSON.Short
@@ -65,6 +56,13 @@ export interface Item {
   hasEnchants: boolean
   amount: number
   nbt?: string
+}
+
+export const isBlock = (name: string) => ('item.minecraft.' + name) in minecraft
+export const getName = (name: string) => (minecraft as any)['item.minecraft.' + name] || (minecraft as any)['block.minecraft.' + name]
+export const getEnchantmentName = (it: string | Enchantment) => {
+  const name = (minecraft as any)['enchantment.' + (typeof it === 'string' ? it : it.id).replace(/:/g, '.')] || '未知附魔'
+  return typeof it === 'string' ? name : name + ' ' + it.lvl.value
 }
 
 export enum InvType {
@@ -304,7 +302,7 @@ const ItemEditor: React.FC = () => {
             disabled={isAir}
             value={name ? stringifyTextComponent(JSON.parse(name)) : ''}
             onChange={e => {
-              set(nbt, 'tag.display.Name', JSON.stringify(escapeJSON(item!.name = e.target.value)))
+              set(nbt, 'tag.display.Name', JSON.stringify(item!.name = e.target.value))
               update()
             }}
           />
@@ -330,7 +328,7 @@ const ItemEditor: React.FC = () => {
           disabled={isAir}
           value={nbt.tag?.display?.Lore?.map(l => stringifyTextComponent(JSON.parse(l)))?.join('\n') || ''}
           onChange={e => {
-            set(nbt, 'tag.display.Lore', e.target.value.split('\n').map(text => JSON.stringify(escapeJSON(text))))
+            set(nbt, 'tag.display.Lore', e.target.value.split('\n').map(text => JSON.stringify(text)))
             update()
           }}
         /></Grid>

@@ -6,3 +6,5 @@ customAddress: ''
 logger:
   maxLevel: INFO
   minLevel: OFF
+
+debug: false

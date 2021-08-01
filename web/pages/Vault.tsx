@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useGlobalData, usePlugin } from '../Context'
 import Plugin from '../Plugin'
-import Avatar from '../components/Avatar'
 import throttle from 'lodash/throttle'
 import { Close, List as ListIcon, Groups as GroupsIcon, Check, Search } from '@material-ui/icons'
 import { Box, Toolbar, Container, Card, CardHeader, Grid, DialogContent, DialogContentText, Button, Autocomplete,
   CircularProgress, Dialog, ListItemText, IconButton, ListItem, Tooltip, DialogActions, DialogTitle, TextField,
-  List, ListItemIcon, Checkbox, Divider } from '@material-ui/core'
+  List, ListItemIcon, Checkbox, Divider, Avatar } from '@material-ui/core'
 import { DataGrid, GridCellParams } from '@material-ui/data-grid'
 import { useHistory } from 'react-router-dom'
 import { action, success } from '../toast'

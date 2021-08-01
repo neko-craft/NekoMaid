@@ -4,8 +4,9 @@ import * as colors from '@material-ui/core/colors'
 import { success } from '../toast'
 import { configs } from '../Plugin'
 import { Delete, HelpOutline, Check, Brightness4, Brightness7, SettingsBrightness } from '@material-ui/icons'
-import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItem, IconButton, ToggleButton,
-  ListItemAvatar, Avatar, ListItemText, Tooltip, CardContent, ToggleButtonGroup, Paper, ListItemButton } from '@material-ui/core'
+import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItem, IconButton,
+  ToggleButton, ListItemAvatar, Avatar, ListItemText, Tooltip, CardContent, ToggleButtonGroup,
+  Paper, ListItemButton } from '@material-ui/core'
 
 import type { ServerRecord } from '../types'
 

@@ -2,15 +2,15 @@ import React, { useMemo, useEffect, useState, useRef } from 'react'
 import Plugin, { PlayerData } from '../Plugin'
 import dayjs from 'dayjs'
 import Empty from '../components/Empty'
-import Avatar from '../components/Avatar'
 import dialog from '../dialog'
 import { success } from '../toast'
 import { usePlugin, useGlobalData } from '../Context'
 import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Today, Event,
   Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline, Search, MoreHoriz } from '@material-ui/icons'
-import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContainer, Table, TableBody, CardContent,
-  TablePagination, TableHead, TableRow, TableCell, IconButton, Tooltip, ToggleButtonGroup, ToggleButton, List,
-  ListSubheader, ListItem, ListItemText, ListItemIcon, Collapse, ListItemButton, CardActions, Link, Menu } from '@material-ui/core'
+import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContainer, Table, TableBody,
+  CardContent, TablePagination, TableHead, TableRow, TableCell, IconButton, Tooltip, ToggleButtonGroup,
+  ToggleButton, List, ListSubheader, ListItem, ListItemText, ListItemIcon, Collapse, ListItemButton,
+  CardActions, Link, Menu, Avatar } from '@material-ui/core'
 import { FXAASkinViewer, createOrbitControls, WalkingAnimation, RotatingAnimation } from 'skinview3d'
 import { useTheme } from '@material-ui/core/styles'
 import { useParams, useHistory } from 'react-router-dom'

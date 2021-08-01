@@ -5,15 +5,15 @@ import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, Sentime
 import { useHistory } from 'react-router-dom'
 import { useTheme } from '@material-ui/core/styles'
 import { usePlugin, useGlobalData } from '../Context'
-import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeader, Divider, Skeleton, Link,
-  LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar, Pagination, Tooltip } from '@material-ui/core'
+import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeader, Divider,
+  Skeleton, Link, LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar,
+  Pagination, Tooltip, Avatar } from '@material-ui/core'
 import { LoadingList } from '../components/Loading'
 import toast, { action } from '../toast'
 import prettyBytes from 'pretty-bytes'
 import ReactECharts from 'echarts-for-react'
 import Empty from '../components/Empty'
 import Uptime from '../components/Uptime'
-import Avatar from '../components/Avatar'
 import dialog from '../dialog'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }

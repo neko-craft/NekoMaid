@@ -20,6 +20,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -27,6 +28,8 @@ import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.FutureTask;
 import java.util.stream.StreamSupport;
@@ -280,6 +283,68 @@ public final class Utils {
             return -1;
         } catch (Throwable ignored) {
             return -2;
+        }
+    }
+
+    public static boolean deletePath(Path p) {
+        if (!Files.exists(p)) return true;
+        try {
+            Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
+                    if (e != null) throw e;
+                    Files.delete(dir);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+            return true;
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean copyPath(Path src, Path dst) {
+        try {
+            Path dest0 = dst.resolve(src.getFileName());
+            if (Files.exists(dest0)) {
+                String[] names = src.getFileName().toString().split("\\.");
+                if (names.length == 1) dest0 = dst.resolve(src.getFileName().toString() + ".copy");
+                else {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < names.length - 1; i++) sb.append(names[i]).append('.');
+                    sb.append("copy.").append(names[names.length - 1]);
+                    dest0 = dst.resolve(sb.toString());
+                }
+            }
+            if (src.equals(dest0)) return false;
+            Path dest = dest0;
+            Files.walkFileTree(src, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    Path targetDir = dest.resolve(src.relativize(dir));
+                    try {
+                        Files.copy(dir, targetDir);
+                    } catch (FileAlreadyExistsException e) {
+                        if (!Files.isDirectory(targetDir)) throw e;
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.copy(file, dest.resolve(src.relativize(file)));
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+            return true;
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

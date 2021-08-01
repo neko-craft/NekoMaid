@@ -1,6 +1,7 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
+import cn.apisium.nekomaid.Utils;
 import cn.apisium.uniporter.Constants;
 import cn.apisium.uniporter.Uniporter;
 import cn.apisium.uniporter.router.api.Route;
@@ -40,10 +41,12 @@ final class FilesManager {
     private static final DefaultHttpDataFactory factory = new DefaultHttpDataFactory();
     private final static long MAX_SIZE = 4 * 1024 * 1024; // 4MB
     private final static Path root = Paths.get(".");
+    private final NekoMaid main;
     private final Cache<String, Path> uploadMap = createCache();
     private final Cache<String, Path> downloadMap = createCache();
 
     public FilesManager(NekoMaid main) {
+        this.main = main;
         Uniporter.registerHandler("NekoMaidUpload", new UploadHandler(), true);
         Uniporter.registerHandler("NekoMaidDownload", new DownloadHandler(), true);
         main.onConnected(main, client -> client.onWithAck("files:fetch", args -> {
@@ -74,22 +77,8 @@ final class FilesManager {
                 if (args.length != 2 && args.length != 3) return null;
                 Path p = Paths.get(".", (String) args[0]);
                 if (!p.startsWith(root)) return false;
-                if (args.length == 2) {
-                    if (!Files.exists(p)) return true;
-                    Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
-                        @Override
-                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                            Files.delete(file);
-                            return FileVisitResult.CONTINUE;
-                        }
-                        @Override
-                        public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
-                            if (e != null) throw e;
-                            Files.delete(dir);
-                            return FileVisitResult.CONTINUE;
-                        }
-                    });
-                } else if (args[1] != null && !Files.isDirectory(p)) {
+                if (args.length == 2) return Utils.deletePath(p);
+                else if (args[1] != null && !Files.isDirectory(p)) {
                     Files.write(p, ((String) args[1]).getBytes(StandardCharsets.UTF_8));
                 } else return false;
                 return true;
@@ -174,6 +163,13 @@ final class FilesManager {
                 }
             } catch (Throwable ignored) { }
             return false;
+        }).onWithAck("files:copy", (args) -> {
+            try {
+                Path p1 = Paths.get(".", (String) args[0]), p2 = Paths.get(".", (String) args[1]);
+                if (p1.startsWith(root) && Files.exists(p1) && p1.startsWith(root) && Files.isDirectory(p2))
+                    return Utils.copyPath(p1, p2);
+            } catch (Throwable ignored) { }
+            return false;
         }));
     }
 
@@ -182,16 +178,18 @@ final class FilesManager {
         Uniporter.removeHandler("NekoMaidDownload");
     }
 
-    private final static class UploadDataHandler extends SimpleChannelInboundHandler<HttpContent> {
+    private final class UploadDataHandler extends SimpleChannelInboundHandler<HttpContent> {
         private final HttpRequest request;
         private final HttpPostRequestDecoder httpDecoder;
         private final File file;
+
         public UploadDataHandler(HttpRequest request, File file) {
             this.request = request;
             httpDecoder = new HttpPostRequestDecoder(factory, request);
             httpDecoder.setDiscardThreshold(0);
             this.file = file;
         }
+
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, HttpContent msg) throws Exception {
             httpDecoder.offer(msg);
@@ -214,6 +212,11 @@ final class FilesManager {
                     }
                 }
             }
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+            if (main.getConfig().getBoolean("debug", false)) cause.printStackTrace();
         }
     }
 

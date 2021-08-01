@@ -18,7 +18,7 @@ import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, Icon, CardCon
   Menu, MenuItem, ListItemIcon, CircularProgress, InputAdornment, Input, Dialog, DialogTitle, DialogContent,
   DialogContentText, DialogActions, Button, Select, TextField } from '@material-ui/core'
 import { ArrowDropDown, ArrowRight, Save, Undo, Redo, DeleteForever, CreateNewFolder, Refresh, MoreHoriz,
-  Description, Upload, Download, Outbox, Inbox, DriveFileRenameOutline } from '@material-ui/icons'
+  Description, Upload, Download, Outbox, Inbox, DriveFileRenameOutline, FileCopy, ContentPaste } from '@material-ui/icons'
 import { useHistory, useLocation } from 'react-router-dom'
 import { UnControlled } from 'react-codemirror2'
 import { usePlugin } from '../Context'
@@ -256,6 +256,7 @@ const Files: React.FC = () => {
   const [id, setId] = useState(0)
   const [curPath, setCurPath] = useState('')
   const [progress, setProgress] = useState(-1)
+  const [copyPath, setCopyPath] = useState('')
   const [expanded, setExpanded] = useState<string[]>([])
   const [compressFile, setCompressFile] = useState<string | null>(null)
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
@@ -408,6 +409,22 @@ const Files: React.FC = () => {
           if (res) refresh()
         }, curPath, dirPath + '/' + it))
       }}><ListItemIcon><DriveFileRenameOutline /></ListItemIcon>重命名</MenuItem>
+      <MenuItem disabled={!curPath} onClick={() => {
+        setAnchorEl(null)
+        setCopyPath(curPath)
+      }}>
+        <ListItemIcon><FileCopy /></ListItemIcon>复制
+      </MenuItem>
+      <MenuItem disabled={!copyPath} onClick={() => {
+        setAnchorEl(null)
+        toast('粘贴中...')
+        plugin.emit('files:copy', (res: boolean) => {
+          action(res)
+          refresh()
+        }, copyPath, dirPath)
+      }}>
+        <ListItemIcon><ContentPaste /></ListItemIcon>粘贴
+      </MenuItem>
       <MenuItem disabled={progress !== -1} component='label' htmlFor='NekoMaid-files-upload-input' onClick={() => setAnchorEl(null)}>
         <ListItemIcon><Upload /></ListItemIcon>{progress === -1 ? '上传文件' : `上传中... (${progress.toFixed(2)}%)`}
       </MenuItem>
