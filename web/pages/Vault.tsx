@@ -6,7 +6,7 @@ import { Close, List as ListIcon, Groups as GroupsIcon, Check, Search } from '@m
 import { Box, Toolbar, Container, Card, CardHeader, Grid, DialogContent, DialogContentText, Button, Autocomplete,
   CircularProgress, Dialog, ListItemText, IconButton, ListItem, Tooltip, DialogActions, DialogTitle, TextField,
   List, ListItemIcon, Checkbox, Divider, Avatar } from '@material-ui/core'
-import { DataGrid, GridCellParams } from '@material-ui/data-grid'
+import { DataGrid, GridCellParams, GridSortItem } from '@material-ui/data-grid'
 import { useHistory } from 'react-router-dom'
 import { action, success } from '../toast'
 import dialog from '../dialog'
@@ -105,7 +105,7 @@ const Vault: React.FC = () => {
   const [players, setPlayers] = useState<PlayerInfo[]>([])
   const [count, setCount] = useState(-1)
   const [page, setPage] = useState(0)
-  const [sortModel, setSortModel] = useState<Array<{ field: string, sort: 'asc' | 'desc' | undefined }>>([])
+  const [sortModel, setSortModel] = useState<GridSortItem[]>([])
   const [groups, setGroups] = useState<GroupInfo[]>([])
   const [selectedId, setSelectedId] = useState<string | undefined>()
   const [selectedPlayer, setSelectedPlayer] = useState<string | undefined>()
@@ -233,12 +233,12 @@ const Vault: React.FC = () => {
         pageSize={10}
         rowCount={count === -1 ? 0 : count}
         loading={count === -1}
-        onPageChange={it => setPage(it.page)}
+        onPageChange={setPage}
         paginationMode='server'
         sortingMode='server'
         sortModel={sortModel}
-        onSortModelChange={it => it.sortModel !== sortModel && setSortModel(it.sortModel as any)}
-        onEditCellChangeCommitted={({ field, id, props: { value } }) => {
+        onSortModelChange={setSortModel}
+        onCellEditCommit={({ field, id, value }) => {
           let flag = false
           switch (field) {
             case 'balance':
@@ -271,7 +271,7 @@ const Vault: React.FC = () => {
                 disableColumnMenu
                 rows={groups}
                 columns={columns2}
-                onEditCellChangeCommitted={({ field, id, props: { value } }) => {
+                onCellEditCommit={({ field, id, value }) => {
                   let flag = false
                   switch (field) {
                     case 'prefix': flag = true

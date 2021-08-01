@@ -126,7 +126,7 @@ const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () 
             </Icon>{it}</>}
           />
         }))
-      : [<StyledTreeItem key={0} nodeId={path + '/.'} label='' />]
+      : <StyledTreeItem key={0} nodeId={path + '/.'} label='' />
     const paths = path.split('/')
     const name = paths[paths.length - 1]
     return path

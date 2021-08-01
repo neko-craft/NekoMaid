@@ -1,7 +1,9 @@
 import React from 'react'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
 import { Tooltip } from '@material-ui/core'
-import { minecraft } from '../languages/zh_CN'
+import zhCN from '../languages/zh_CN'
+
+const { minecraft } = zhCN
 
 export interface ObjectColor { color?: { r: number, g: number, b: number, alpha: number }, name?: string }
 export interface TextComponent {

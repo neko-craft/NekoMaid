@@ -4,9 +4,10 @@ import socketIO from 'socket.io-client'
 import darkScrollbar from '@material-ui/core/darkScrollbar'
 import { zhCN } from '@material-ui/core/locale/index'
 import { useLocation, Route, NavLink, useHistory } from 'react-router-dom'
-import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar,
-  Typography, Drawer, Toolbar, IconButton, useMediaQuery } from '@material-ui/core'
+import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar, MenuItem,
+  Typography, Drawer, Toolbar, IconButton, useMediaQuery, Menu as MenuComponent } from '@material-ui/core'
 import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
+import languages from '../languages/index'
 
 import { Build, Menu, Brightness4, Brightness7, Translate, Backpack } from '@material-ui/icons'
 import { address, origin, token, pathname } from './url'
@@ -24,6 +25,16 @@ import type { ServerRecord } from './types'
 export let pages: Record<string, Page[]> = { }
 
 export let update: React.Dispatch<number>
+
+const LanguageSwitch: React.FC = () => {
+  const [anchorEl, setAnchorEl] = React.useState<HTMLElement | undefined>()
+  return <>
+    <IconButton onClick={e => setAnchorEl(e.currentTarget)} color='inherit'><Translate /></IconButton>
+    <MenuComponent anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(undefined)}>
+      {Object.entries(languages).map(([key, value]) => <MenuItem key={key} onClick={() => setAnchorEl(undefined)}>{value.name}</MenuItem>)}
+    </MenuComponent>
+  </>
+}
 
 const drawerWidth = 240
 
@@ -62,6 +73,9 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     }).on('!', () => {
       io.close()
       dialog('密钥错误或插件版本过旧, 最新版本为: ' + version).then(() => (location.href = '//maid.neko-craft.com'))
+    }).on('reconnect', () => {
+      toast('正在尝试重新连接...')
+      setTimeout(() => location.reload(), 5000)
     })
     return fn
   }, [])
@@ -144,7 +158,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
           onClick={() => setGlobalItemsOpen(!globalItemsOpen)}
           onDragOver={() => setGlobalItemsOpen(true)}
         ><Backpack /></IconButton>}
-        <IconButton color='inherit'><Translate /></IconButton>
+        <LanguageSwitch />
         <IconButton color='inherit' edge='end' onClick={() => setDarkMode(!darkMode)}>
           {darkMode ? <Brightness7 /> : <Brightness4 />}
         </IconButton>

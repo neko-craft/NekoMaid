@@ -6,13 +6,15 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Paper, Toolt
   Tab, Tabs, Chip, Box, useMediaQuery, Autocomplete, TextField, Grid, Checkbox, Select,
   FormControlLabel, MenuItem, FormControl, InputLabel } from '@material-ui/core'
 import { useGlobalData, usePlugin } from '../Context'
-import { minecraft } from '../../languages/zh_CN'
+import zhCN from '../../languages/zh_CN'
 import { parseComponent, stringifyTextComponent } from '../utils'
 import MojangSON, { parse, stringify, Byte, Short } from 'nbt-ts'
 import set from 'lodash/set'
 import * as icons from '../../minecraftIcons.json'
 
 import type { PaperProps } from '@material-ui/core/Paper'
+
+const { minecraft } = zhCN
 
 export interface Enchantment extends MojangSON.TagObject {
   id: string

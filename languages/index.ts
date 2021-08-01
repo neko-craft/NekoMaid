@@ -1,3 +1,8 @@
-import * as zhCN from './zh_CN'
+import zhCN from './zh_CN'
 
-export { zhCN }
+export interface Language {
+  minecraft: Record<string, string>
+  name: string
+}
+
+export default { zhCN } as Record<string, Language>

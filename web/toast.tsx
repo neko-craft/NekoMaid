@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { SnackbarProps, Snackbar, Box, Alert, AlertColor, Toolbar, Paper } from '@material-ui/core'
 
 let update: (it: number) => void
@@ -28,7 +28,11 @@ const toast = (props: (SnackbarProps & { autoHideDuration?: number }) | string =
 export default toast
 
 export const Snackbars: React.FC = () => {
-  [, update] = React.useState<number>(0)
+  const [, updateF] = useState<number>(0)
+  useEffect(() => {
+    update = updateF
+    return () => { update = undefined as any }
+  })
 
   return <Box sx={{
     position: 'fixed',
@@ -37,7 +41,8 @@ export const Snackbars: React.FC = () => {
     zIndex: theme => theme.zIndex.modal + 1,
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'flex-end'
+    alignItems: 'flex-end',
+    pointerEvents: 'none'
   }}><Toolbar sx={{ padding: '0!important' }} />{Object.values(toasts).map(it => React.createElement(Snackbar, it))}</Box>
 }
 
