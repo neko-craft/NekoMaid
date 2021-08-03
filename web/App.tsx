@@ -20,7 +20,7 @@ import dialog, { DialogWrapper } from './dialog'
 import Plugin, { GlobalInfo, Page } from './Plugin'
 import initPages, { onGlobalDataReceived } from './pages/index'
 
-import type { ServerRecord } from './types'
+export interface ServerRecord { address: string, time: number, icon?: string }
 
 export let pages: Record<string, Page[]> = { }
 

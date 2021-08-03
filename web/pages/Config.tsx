@@ -8,7 +8,7 @@ import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListIte
   ToggleButton, ListItemAvatar, Avatar, ListItemText, Tooltip, CardContent, ToggleButtonGroup,
   Paper, ListItemButton } from '@material-ui/core'
 
-import type { ServerRecord } from '../types'
+import type { ServerRecord } from '../App'
 
 configs.push({
   title: '连接记录',

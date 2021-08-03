@@ -12,7 +12,9 @@
     "isolatedModules": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
-    "noEmit": true,
+    "declaration": true,
+    "outDir": "npm/types",
+    "emitDeclarationOnly": true,
     "jsx": "react"
   },
   "include": [

@@ -20,11 +20,12 @@ import { HashRouter } from 'react-router-dom'
 
 import url from './url'
 import App from './App'
+import './pluginAPI'
 
 dayjs.locale('zh-cn')
 dayjs.extend(duration)
 dayjs.extend(relativeTime)
 
 ReactDom.render(<CacheProvider value={createCache({ key: 'nm', stylisPlugins: [] })}>
-  {url ? <HashRouter><App /></HashRouter> : <ServerSwitch />}
+  {url ? <HashRouter><App /></HashRouter> : <ServerSwitch open />}
 </CacheProvider>, document.getElementById('app'))

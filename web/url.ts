@@ -1,7 +1,7 @@
 let url = decodeURIComponent(location.search.slice(1))
 let parsed: URL | null = null
 
-if (!url.startsWith('http://')) url = 'http://' + url
+if (!url.startsWith('http://') || !url.startsWith('https://')) url = location.protocol + '//' + url
 
 // eslint-disable-next-line no-new
 try { parsed = new URL(url) } catch { url = '' }

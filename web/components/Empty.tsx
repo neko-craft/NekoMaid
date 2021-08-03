@@ -2,15 +2,20 @@ import React from 'react'
 import { Box, Typography } from '@material-ui/core'
 import { useTheme } from '@material-ui/core/styles'
 
-export const EmptyIcon: React.FC = () => {
+import type { BoxProps } from '@material-ui/core/Box'
+
+export const EmptyIcon: React.FC<React.SVGProps<SVGSVGElement>> = props => {
   return <svg
     width='121'
     height='100'
     viewBox='0 0 184 152'
     xmlns='http://www.w3.org/2000/svg'
-    style={{ filter: useTheme().palette.mode === 'dark'
-      ? 'brightness(0.7) drop-shadow(rgba(255, 255, 255, 0.2) 1px 3px 6px)'
-      : 'drop-shadow(rgba(0, 0, 0, 0.1) 2px 4px 4px)'
+    {...props}
+    style={{
+      ...(props.style || {}),
+      filter: useTheme().palette.mode === 'dark'
+        ? 'brightness(0.7) drop-shadow(rgba(255, 255, 255, 0.2) 1px 3px 6px)'
+        : 'drop-shadow(rgba(0, 0, 0, 0.1) 2px 4px 4px)'
     }}
   >
     <g fill='none' fillRule='evenodd'>
@@ -28,7 +33,7 @@ export const EmptyIcon: React.FC = () => {
   </svg>
 }
 
-export const Empty: React.FC<{ title?: string | null }> = ({ title = '暂无数据' }) => <Box sx={{ textAlign: 'center' }}>
+const Empty: React.FC<Omit<BoxProps, 'title'> & { title?: string | null }> = ({ title = '暂无数据', ...props }) => <Box {...props} sx={{ textAlign: 'center', ...props.sx }}>
   <EmptyIcon />
   {title && <Typography color='textSecondary' variant='h6'>{title}</Typography>}
 </Box>

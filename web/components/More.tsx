@@ -1,12 +1,15 @@
 import React from 'react'
 import { Collapse } from '@material-ui/core'
 
+import type { CollapseProps } from '@material-ui/core/Collapse'
+
 const C: any = Collapse
 
-const More: React.FC = ({ children }) => {
+const More: React.FC<CollapseProps> = props => {
   const [open, setOpen] = React.useState(false)
   const ref = React.useRef('')
   return <C
+    {...props}
     in={open}
     className={open ? 'opened' : undefined}
     collapsedSize={parseFloat(getComputedStyle(document.body).lineHeight)}
@@ -19,7 +22,7 @@ const More: React.FC = ({ children }) => {
       }
       setOpen(!open)
     }}
-  >{children}</C>
+  />
 }
 
 export default More

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { ButtonProps } from '@material-ui/core/Button'
-import ValidInput, { Props } from './components/ValidInput'
+import ValidInput, { ValidInputProps } from './components/ValidInput'
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@material-ui/core'
 
 export interface DialogOptionsWithoutInput {
@@ -9,7 +9,7 @@ export interface DialogOptionsWithoutInput {
   okButton?: ButtonProps
 }
 
-export type DialogOptionsWithInput = DialogOptionsWithoutInput & { input: string | Props }
+export type DialogOptionsWithInput = DialogOptionsWithoutInput & { input: string | ValidInputProps }
 
 export type DialogOptions = DialogOptionsWithoutInput | DialogOptionsWithInput
 
@@ -72,14 +72,12 @@ export const DialogWrapper: React.FC = () => {
   </Dialog>
 }
 
-export interface FN {
-  (content: React.ReactNode | DialogOptionsWithoutInput): Promise<boolean>
-  (content: React.ReactNode | DialogOptions, input: string | Props): Promise<string | null>
-  (options: DialogOptionsWithInput): Promise<string | null>
-}
-
 export default ((content: any, input: any) => {
   return (openFn
     ? new Promise(resolve => openFn(content.content ? { input, ...content, resolve } : { input, content, resolve }))
     : Promise.reject(new Error('Uninitialization completed!'))) as any
-}) as FN
+}) as {
+  (content: React.ReactNode | DialogOptionsWithoutInput): Promise<boolean>
+  (content: React.ReactNode | DialogOptions, input: string | ValidInputProps): Promise<string | null>
+  (options: DialogOptionsWithInput): Promise<string | null>
+}

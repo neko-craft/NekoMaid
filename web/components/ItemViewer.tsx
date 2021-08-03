@@ -6,15 +6,15 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Paper, Toolt
   Tab, Tabs, Chip, Box, useMediaQuery, Autocomplete, TextField, Grid, Checkbox, Select,
   FormControlLabel, MenuItem, FormControl, InputLabel } from '@material-ui/core'
 import { useGlobalData, usePlugin } from '../Context'
-import zhCN from '../../languages/zh_CN'
 import { parseComponent, stringifyTextComponent } from '../utils'
 import MojangSON, { parse, stringify, Byte, Short } from 'nbt-ts'
 import set from 'lodash/set'
+import language from '../../languages/zh_CN'
 import * as icons from '../../minecraftIcons.json'
 
 import type { PaperProps } from '@material-ui/core/Paper'
 
-const { minecraft } = zhCN
+const { minecraft } = language
 
 export interface Enchantment extends MojangSON.TagObject {
   id: string
@@ -61,9 +61,9 @@ export interface Item {
 }
 
 export const isBlock = (name: string) => ('item.minecraft.' + name) in minecraft
-export const getName = (name: string) => (minecraft as any)['item.minecraft.' + name] || (minecraft as any)['block.minecraft.' + name]
+export const getName = (name: string) => minecraft['item.minecraft.' + name] || minecraft['block.minecraft.' + name]
 export const getEnchantmentName = (it: string | Enchantment) => {
-  const name = (minecraft as any)['enchantment.' + (typeof it === 'string' ? it : it.id).replace(/:/g, '.')] || '未知附魔'
+  const name = minecraft['enchantment.' + (typeof it === 'string' ? it : it.id).replace(/:/g, '.')] || '未知附魔'
   return typeof it === 'string' ? name : name + ' ' + it.lvl.value
 }
 

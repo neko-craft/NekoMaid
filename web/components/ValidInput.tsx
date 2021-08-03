@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import TextField, { TextFieldProps } from '@material-ui/core/TextField'
 
-export type Props = TextFieldProps & {
+export type ValidInputProps = TextFieldProps & {
   onStatusChange: (it: boolean) => void
   validator?: (text: string) => React.ReactNode | null | undefined | boolean
 }
 
-const ValidInput: React.FC<Props> = ({ validator, error: defaultError, onChange, helperText, onStatusChange, ...props }) => {
+const ValidInput: React.FC<ValidInputProps> = ({ validator, error: defaultError, onChange, helperText, onStatusChange, ...props }) => {
   const [error, setError] = useState<React.ReactNode | undefined>(defaultError ? helperText : undefined)
   if (onStatusChange) useEffect(() => onStatusChange(defaultError || false), [])
   return <TextField

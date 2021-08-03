@@ -1,10 +1,13 @@
 import React, { useRef, useEffect } from 'react'
 
+import { Box } from '@material-ui/core'
+import type { BoxProps } from '@material-ui/core/Box'
+
 const SRC = 1000
 const MIN = 60 * 1000
 const HOUR = 60 * 60 * 1000
 const DAY = 24 * HOUR
-const Uptime: React.FC<{ time: number }> = ({ time }) => {
+const Uptime: React.FC<BoxProps & { time: number }> = ({ time, ...props }) => {
   const ref = useRef<HTMLSpanElement | null>(null)
   useEffect(() => {
     if (!ref.current) return
@@ -24,7 +27,7 @@ const Uptime: React.FC<{ time: number }> = ({ time }) => {
     const timer = setInterval(update, 1000)
     return () => clearInterval(timer)
   }, [ref.current])
-  return <span ref={ref} />
+  return <Box ref={ref} component='span' {...props} />
 }
 
 export default Uptime

@@ -5,4 +5,6 @@ export interface Language {
   name: string
 }
 
-export default { zhCN } as Record<string, Language>
+export const languages: Record<string, Language> = { zhCN }
+
+export default zhCN as Language

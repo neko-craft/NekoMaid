@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { Dialog, DialogTitle, DialogContent, DialogContentText, TextField, DialogActions, Button, Autocomplete } from '@material-ui/core'
 
-const ServerSwitch: React.FC = () => {
+import type { DialogProps } from '@material-ui/core/Dialog'
+
+const ServerSwitch: React.FC<DialogProps> = props => {
   const [value, setValue] = useState<string>('')
   let error = false
   // eslint-disable-next-line no-new
   try { if (value) new URL(value.startsWith('http://') ? value : 'http://' + value) } catch { error = true }
-  return <Dialog open fullWidth maxWidth='xs'>
+  return <Dialog fullWidth maxWidth='xs' {...props}>
     <DialogTitle>连接到服务器</DialogTitle>
     <DialogContent sx={{ overflow: 'hidden' }}>
       <Autocomplete

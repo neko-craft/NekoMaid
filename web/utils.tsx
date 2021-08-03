@@ -1,9 +1,9 @@
 import React from 'react'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
 import { Tooltip } from '@material-ui/core'
-import zhCN from '../languages/zh_CN'
+import language from '../languages/index'
 
-const { minecraft } = zhCN
+const { minecraft } = language
 
 export interface ObjectColor { color?: { r: number, g: number, b: number, alpha: number }, name?: string }
 export interface TextComponent {
@@ -79,7 +79,7 @@ export const ParsedComponent: React.FC<{ component: TextComponent, runCommand?: 
       if (it.translate in minecraft) {
         let i = 0
         const arr = it.with || []
-        content = ((minecraft as any)[it.translate] as string).split('%').map((str, j) => {
+        content = minecraft[it.translate].split('%').map((str, j) => {
           let comp: any
           if (j) {
             if (str[0] === 's') {
