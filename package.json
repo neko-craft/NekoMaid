@@ -19,6 +19,7 @@
     "npm:clean": "del-cli npm/types",
     "npm:copy": "ncp README.md npm/README.md && ncp LICENSE npm/LICENSE",
     "npm": "npm run npm:clean && npm run npm:types && npm run npm:package && npm run npm:copy",
+    "publish": "npm run npm && cd npm && npm publish",
     "build": "parcel build web/index.html --public-url . --no-source-maps",
     "copyIcons": "ncp icons dist/icons && ncp vscode-material-icon-theme/icons dist/icons/material"
   },
