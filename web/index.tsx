@@ -20,7 +20,6 @@ import { HashRouter } from 'react-router-dom'
 
 import url from './url'
 import App from './App'
-import './pluginAPI'
 
 dayjs.locale('zh-cn')
 dayjs.extend(duration)

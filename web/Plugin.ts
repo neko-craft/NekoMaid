@@ -27,6 +27,7 @@ export interface GlobalInfo {
   hasVaultChat?: boolean
   hasOpenInv?: boolean
   hasNBTAPI?: boolean
+  plugins: Record<string, string[]>
   vaultEconomy?: {
     singular: string
     plural: string

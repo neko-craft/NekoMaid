@@ -6,16 +6,17 @@ import { zhCN } from '@material-ui/core/locale/index'
 import { useLocation, Route, NavLink, useHistory } from 'react-router-dom'
 import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar, MenuItem,
   Typography, Drawer, Toolbar, IconButton, useMediaQuery, Menu as MenuComponent } from '@material-ui/core'
-import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
-import languages from '../languages/index'
-
 import { Build, Menu, Brightness4, Brightness7, Translate, Backpack } from '@material-ui/icons'
+import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
+
+import languages from '../languages/index'
+import loadPlugin from './pluginAPI'
 import { address, origin, token, pathname } from './url'
-import toast, { Snackbars } from './toast'
 import { typography } from './theme'
 import { version } from '../package.json'
 import { GlobalItems } from './components/ItemViewer'
 import { pluginCtx, globalCtx } from './Context'
+import toast, { Snackbars } from './toast'
 import dialog, { DialogWrapper } from './dialog'
 import Plugin, { GlobalInfo, Page } from './Plugin'
 import initPages, { onGlobalDataReceived } from './pages/index'
@@ -50,9 +51,9 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   const create = useMemo(() => {
     const io = socketIO(origin!, { path: pathname!, auth: { token } })
     const map: Record<string, Plugin> = { }
-    const fn = (name: string) => map[name] || (map[name] = new Plugin(io, name))
+    const fn = (window as any).__NekoMaidAPICreate = (name: string) => map[name] || (map[name] = new Plugin(io, name))
     const nekoMaid = pluginRef.current = fn('NekoMaid')
-    io.on('globalData', data => {
+    io.on('globalData', (data: GlobalInfo) => {
       const his: ServerRecord[] = JSON.parse(localStorage.getItem('NekoMaid:servers') || '[]')
       const curAddress = address!.replace('http://', '') + '?' + token
       let cur = his.find(it => it.address === curAddress)
@@ -63,7 +64,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       if (!sent && arr.length > 2) io.emit('switchPage', arr[1], arr[2])
       sent = true
       localStorage.setItem('NekoMaid:servers', JSON.stringify(his))
-      Object.entries(data.plugins as Record<string, string>).forEach(([name, file]) => import(file).then(plugin => plugin(fn(name))).catch(console.error))
+      new Set(Object.values(data.plugins).flat()).forEach(loadPlugin)
       setGlobalData(data)
       pages = { }
       initPages(nekoMaid)

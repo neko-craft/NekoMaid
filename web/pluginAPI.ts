@@ -30,3 +30,9 @@ import language, { languages } from '../languages/index'
   languages,
   language
 })
+
+export default (url: string) => {
+  const node = document.createElement('script')
+  node.src = url
+  document.body.appendChild(node)
+}

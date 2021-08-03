@@ -36,6 +36,7 @@ import org.bukkit.util.CachedServerIcon;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.reflect.Field;
@@ -334,7 +335,9 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     public NekoMaid addScript(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String script) {
         Objects.requireNonNull(plugin);
         Objects.requireNonNull(script);
-        pluginScripts.put(plugin.getName(), script);
+        String name = plugin.getName();
+        if (!pluginScripts.has(name)) pluginScripts.put(name, new JSONArray());
+        pluginScripts.getJSONArray(name).put(script);
         return this;
     }
 
