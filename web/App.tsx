@@ -4,9 +4,9 @@ import socketIO from 'socket.io-client'
 import darkScrollbar from '@material-ui/core/darkScrollbar'
 import { zhCN } from '@material-ui/core/locale/index'
 import { useLocation, Route, NavLink, useHistory } from 'react-router-dom'
-import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar, MenuItem,
+import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar, MenuItem, Tooltip,
   Typography, Drawer, Toolbar, IconButton, useMediaQuery, Menu as MenuComponent } from '@material-ui/core'
-import { Build, Menu, Brightness4, Brightness7, Translate, Backpack } from '@material-ui/icons'
+import { Build, Menu, Brightness4, Brightness7, Translate, Backpack, ChevronLeft } from '@material-ui/icons'
 import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
 
 import languages from '../languages/index'
@@ -15,7 +15,7 @@ import { address, origin, token, pathname } from './url'
 import { typography } from './theme'
 import { version } from '../package.json'
 import { GlobalItems } from './components/ItemViewer'
-import { pluginCtx, globalCtx } from './Context'
+import { pluginCtx, globalCtx, drawerWidthCtx } from './Context'
 import toast, { Snackbars } from './toast'
 import dialog, { DialogWrapper } from './dialog'
 import Plugin, { GlobalInfo, Page } from './Plugin'
@@ -37,8 +37,6 @@ const LanguageSwitch: React.FC = () => {
   </>
 }
 
-const drawerWidth = 240
-
 let sent = false
 const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = ({ darkMode, setDarkMode }) => {
   const loc = useLocation()
@@ -47,6 +45,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   const [mobileOpen, setMobileOpen] = useState(false)
   const [globalItemsOpen, setGlobalItemsOpen] = useState(false)
   const [globalData, setGlobalData] = useState<GlobalInfo>({ } as any)
+  const [drawerWidth, setDrawerWidth] = useState(240)
   const updateF = useState(0)[1]
   const create = useMemo(() => {
     const io = socketIO(origin!, { path: pathname!, auth: { token } })
@@ -86,7 +85,12 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     return () => { update = undefined as any }
   }, [])
 
-  const handleDrawerToggle = () => setMobileOpen(!mobileOpen)
+  const handleDrawerToggle = () => {
+    setDrawerWidth(240)
+    setMobileOpen(!mobileOpen)
+  }
+
+  const isExpand = drawerWidth === 240
 
   const routes: JSX.Element[] = []
   const mapToItem = (name: string, it: Page) => {
@@ -101,10 +105,11 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
         sensitive={it.sensitive}
       />
     </pluginCtx.Provider>)
+    const icon = <ListItemIcon>{it.icon || <Build />}</ListItemIcon>
     return <NavLink key={key} to={'/' + name + '/' + (it.url || path)} activeClassName='actived'>
       <ListItem button>
-        <ListItemIcon>{it.icon || <Build />}</ListItemIcon>
-        <ListItemText primary={it.title} />
+        {isExpand ? icon : <Tooltip title={it.title} placement='right'>{icon}</Tooltip>}
+        {isExpand && <ListItemText primary={it.title} />}
       </ListItem>
     </NavLink>
   }
@@ -121,24 +126,22 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   }
   if (singlePages.length) multiPagesPages.push(<Divider key={index++} />, singlePages)
 
-  const drawer = (
-    <div>
-      <Toolbar />
-      <Divider sx={{ display: { sm: 'none', xs: 'block' } }} />
-      <List sx={{
-        '& a': {
-          color: 'inherit',
-          textDecoration: 'inherit'
-        },
-        '& .actived > div': {
-          fontWeight: 'bold',
-          color: theme => theme.palette.primary.main,
-          backgroundColor: theme => alpha(theme.palette.primary.main, theme.palette.action.selectedOpacity) + '!important',
-          '& svg': { color: theme => theme.palette.primary.main + '!important' }
-        }
-      }}>{multiPagesPages.flat()}</List>
-    </div>
-  )
+  const drawer = <div>
+    <Toolbar />
+    <Divider sx={{ display: { sm: 'none', xs: 'block' } }} />
+    <List sx={{
+      '& a': {
+        color: 'inherit',
+        textDecoration: 'inherit'
+      },
+      '& .actived > div': {
+        fontWeight: 'bold',
+        color: theme => theme.palette.primary.main,
+        backgroundColor: theme => alpha(theme.palette.primary.main, theme.palette.action.selectedOpacity) + '!important',
+        '& svg': { color: theme => theme.palette.primary.main + '!important' }
+      }
+    }}>{multiPagesPages.flat()}</List>
+  </div>
 
   return <Box sx={{ display: 'flex' }}>
     <CssBaseline />
@@ -146,13 +149,11 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       <Toolbar>
         <IconButton
           color='inherit'
-          aria-label='open drawer'
           edge='start'
-          onClick={handleDrawerToggle}
-          sx={{ mr: 2, display: { sm: 'none' } }}
-        >
-          <Menu />
-        </IconButton>
+          onClick={() => setDrawerWidth(isExpand ? 57 : 240)}
+          sx={{ mr: 1, display: { sm: 'inline-flex', xs: 'none' } }}
+        ><ChevronLeft sx={{ transition: '.3s', transform: isExpand ? undefined : 'rotate(-180deg)' }} /></IconButton>
+        <IconButton color='inherit' edge='start' onClick={handleDrawerToggle} sx={{ mr: 2, display: { sm: 'none' } }}><Menu /></IconButton>
         <Typography variant='h3' noWrap component='div' sx={{ flexGrow: 1 }}>NekoMaid</Typography>
         {globalData.hasNBTAPI && <IconButton
           color='inherit'
@@ -183,23 +184,24 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
         {drawer}
       </Drawer>
       <Drawer
+        open
         variant='permanent'
         sx={{
           display: { xs: 'none', sm: 'block' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: drawerWidth,
+            transition: 'width .3s',
             backgroundImage: theme => theme.palette.mode === 'dark' ? 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))' : undefined
           }
         }}
-        open
       >
         {drawer}
       </Drawer>
     </Box>
     <Box component='main' sx={{ flexGrow: 1, width: '100vw' }}>
       <globalCtx.Provider value={globalData}>
-        {routes}
+        <drawerWidthCtx.Provider value={drawerWidth}>{routes}</drawerWidthCtx.Provider>
         {globalData.hasNBTAPI && <pluginCtx.Provider value={pluginRef.current}>
           <GlobalItems open={globalItemsOpen} onClose={() => setGlobalItemsOpen(false)} />
         </pluginCtx.Provider>}

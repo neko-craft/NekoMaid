@@ -17,7 +17,15 @@ import Uptime from '../components/Uptime'
 import dialog from '../dialog'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }
-interface CurrentStatus { players: string[], mspt: number, tps: number, time: number, memory: number, totalMemory: number, behinds: number }
+interface CurrentStatus {
+  players: Array<string | { name: string, ip?: string }>
+  mspt: number
+  tps: number
+  time: number
+  memory: number
+  totalMemory: number
+  behinds: number
+}
 
 const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.ReactNode, color: string }> = ({ title, content, icon, children, color }) =>
   <Card sx={{ height: '100%' }}>
@@ -35,7 +43,7 @@ const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.R
     </CardContent>
   </Card>
 
-const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
+const Players: React.FC<{ players: CurrentStatus['players'] | undefined }> = ({ players }) => {
   const his = useHistory()
   const plugin = usePlugin()
   const [page, setPage] = useState(1)
@@ -49,34 +57,39 @@ const Players: React.FC<{ players: string[] | undefined }> = ({ players }) => {
         : <>
         <List sx={{ paddingTop: 0 }}>
           {players
-            ? players.slice((page - 1) * 8, page * 8).map(name => <ListItem
-              key={name}
-              secondaryAction={<>
-                <IconButton
-                  edge='end'
-                  size='small'
-                  onClick={() => dialog(<>确认要将 <span className='bold'>{name}</span> 踢出游戏吗?</>, '理由')
-                    .then(it => it != null && plugin.emit('dashboard:kick', (res: boolean) => {
-                      action(res)
-                      if (!players) return
-                      players.splice(players.indexOf(it!), 1)
-                      update(id + 1)
-                    }, name, it || null))
+            ? players.slice((page - 1) * 8, page * 8).map(p => {
+              const name = typeof p === 'string' ? p : p.name
+              return <Tooltip key={name} title={'IP: ' + ((p as any).ip || '未知')}>
+                <ListItem
+                  secondaryAction={<>
+                    <IconButton
+                      edge='end'
+                      size='small'
+                      onClick={() => dialog(<>确认要将 <span className='bold'>{name}</span> 踢出游戏吗?</>, '理由')
+                        .then(it => it != null && plugin.emit('dashboard:kick', (res: boolean) => {
+                          action(res)
+                          if (!players) return
+                          players.splice(players.indexOf(it!), 1)
+                          update(id + 1)
+                        }, name, it || null))
+                      }
+                    ><ExitToApp /></IconButton>
+                    <IconButton edge='end' onClick={() => his.push('/NekoMaid/playerList/' + name)} size='small'><MoreHoriz /></IconButton>
+                  </>
                   }
-                ><ExitToApp /></IconButton>
-                <IconButton edge='end' onClick={() => his.push('/NekoMaid/playerList/' + name)} size='small'><MoreHoriz /></IconButton>
-              </>}
-            >
-              <ListItemAvatar>
-                <Avatar
-                  src={`https://mc-heads.net/avatar/${name}/40`}
-                  imgProps={{ crossOrigin: 'anonymous', onClick () { his.push('/NekoMaid/playerList/' + name) } }}
-                  sx={{ cursor: 'pointer' }}
-                  variant='rounded'
-                />
-              </ListItemAvatar>
-              <ListItemText primary={name} />
-            </ListItem>)
+                >
+                  <ListItemAvatar>
+                    <Avatar
+                      src={`https://mc-heads.net/avatar/${name}/40`}
+                      imgProps={{ crossOrigin: 'anonymous', onClick () { his.push('/NekoMaid/playerList/' + name) } }}
+                      sx={{ cursor: 'pointer' }}
+                      variant='rounded'
+                    />
+                  </ListItemAvatar>
+                  <ListItemText primary={name} />
+                </ListItem>
+              </Tooltip>
+            })
             : <LoadingList />
           }
         </List>

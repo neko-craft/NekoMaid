@@ -6,7 +6,7 @@ import * as ServerSwitch from './components/ServerSwitch'
 import * as Uptime from './components/Uptime'
 import * as ValidInput from './components/ValidInput'
 
-import { usePlugin, useGlobalData } from './Context'
+import { usePlugin, useGlobalData, useDrawerWidth } from './Context'
 import * as dialog from './dialog'
 import * as toast from './toast'
 import * as url from './url'
@@ -23,6 +23,7 @@ import language, { languages, currentLanguage } from '../languages/index'
   ValidInput,
   usePlugin,
   useGlobalData,
+  useDrawerWidth,
   dialog,
   toast,
   url,

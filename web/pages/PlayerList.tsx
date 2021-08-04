@@ -223,85 +223,86 @@ const Players: React.FC = () => {
       title='玩家列表'
       action={
         <ToggleButtonGroup
-        size='small'
-        color={(state === 1 ? 'warning' : state === 2 ? 'error' : undefined) as any}
-        value={state}
-        exclusive
-        onChange={(_, it) => {
-          if (it === 3) return
-          setState(it)
-          if (state === 3) refresh()
-        }}
-        aria-label="text alignment"
-      >
-        <ToggleButton value={1}><Star /></ToggleButton>
-        <ToggleButton value={2}><Block /></ToggleButton>
-        <ToggleButton value={3} onClick={() => state !== 3 && dialog('请输入你要查找的游戏名:', '游戏名').then(filter => {
-          if (filter == null) return
-          his.push('/NekoMaid/playerList/' + filter)
-          setState(3)
-          setLoading(true)
-          plugin.emit('playerList:fetchPage', (it: any) => {
-            if (it.players == null) it.players = []
-            setPage(0)
-            setData(it)
-            setLoading(false)
-          }, page, 0, filter)
-        })}><Search /></ToggleButton>
-      </ToggleButtonGroup>
+          size='small'
+          color={(state === 1 ? 'warning' : state === 2 ? 'error' : undefined) as any}
+          value={state}
+          exclusive
+          onChange={(_, it) => {
+            if (it === 3) return
+            setState(it)
+            if (state === 3) refresh()
+          }}
+        >
+          <ToggleButton disabled={loading} value={1}><Star /></ToggleButton>
+          <ToggleButton disabled={loading} value={2}><Block /></ToggleButton>
+          <ToggleButton disabled={loading} value={3} onClick={() => state !== 3 && dialog('请输入你要查找的游戏名:', '游戏名').then(filter => {
+            if (filter == null) return
+            his.push('/NekoMaid/playerList/' + filter)
+            setState(3)
+            setLoading(true)
+            plugin.emit('playerList:fetchPage', (it: any) => {
+              if (it.players == null) it.players = []
+              setPage(0)
+              setData(it)
+              setLoading(false)
+            }, page, 0, filter)
+          })}><Search /></ToggleButton>
+        </ToggleButtonGroup>
       }
     />
     <Divider />
-    <TableContainer sx={{ position: 'relative' }}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell padding='checkbox' />
-            <TableCell>游戏名</TableCell>
-            <TableCell align='right'>在线时间</TableCell>
-            <TableCell align='right'>最后登录</TableCell>
-            <TableCell align='right'>操作</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.players.map(it => <TableRow key={it.name}>
-            <TableCell sx={{ cursor: 'pointer', padding: theme => theme.spacing(1, 1, 1, 2) }} onClick={() => his.push('/NekoMaid/playerList/' + it.name)}>
-              <Avatar src={`https://mc-heads.net/avatar/${it.name}/40`} imgProps={{ crossOrigin: 'anonymous' }} variant='rounded' />
-            </TableCell>
-            <TableCell>{it.name}</TableCell>
-            <TableCell align='right'>{dayjs.duration(it.playTime / 20, 'seconds').humanize()}</TableCell>
-            <TableCell align='right'>{dayjs(it.lastOnline).fromNow()}</TableCell>
-            <TableCell align='right'>
-              {(state === 1 || hasWhitelist) && <Tooltip title={it.whitelisted ? '点击可将该玩家移出白名单' : '点击可将该玩家添加到白名单'}>
-                <IconButton onClick={() => whitelist(it.name, plugin, refresh, !it.whitelisted)}>
-                  {it.whitelisted ? <Star color='warning' /> : <StarBorder />}
-                </IconButton>
-              </Tooltip>}
-              <Tooltip title={it.ban == null ? '点击可封禁该玩家' : '已被封禁: ' + it.ban}>
-                <IconButton onClick={() => it.ban == null ? banPlayer(it.name, plugin, refresh) : pardonPlayer(it.name, plugin, refresh)}>
-                  <Block color={it.ban == null ? undefined : 'error'} />
-                </IconButton>
-              </Tooltip>
-              {actions.length
-                ? <IconButton onClick={e => {
-                  setActivedPlayer(anchorEl ? null : it)
-                  setAnchorEl(anchorEl ? null : e.currentTarget)
-                }}><MoreHoriz /></IconButton>
-                : null}
-            </TableCell>
-          </TableRow>)}
-        </TableBody>
-      </Table>
+    <Box sx={{ position: 'relative' }}>
       <CircularLoading loading={loading} />
-    </TableContainer>
-    <TablePagination
-      rowsPerPageOptions={[]}
-      component='div'
-      count={data.count}
-      rowsPerPage={10}
-      page={page}
-      onPageChange={(_, it) => !loading && setPage(it)}
-    />
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell padding='checkbox' />
+              <TableCell>游戏名</TableCell>
+              <TableCell align='right'>在线时间</TableCell>
+              <TableCell align='right'>最后登录</TableCell>
+              <TableCell align='right'>操作</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data.players.map(it => <TableRow key={it.name}>
+              <TableCell sx={{ cursor: 'pointer', padding: theme => theme.spacing(1, 1, 1, 2) }} onClick={() => his.push('/NekoMaid/playerList/' + it.name)}>
+                <Avatar src={`https://mc-heads.net/avatar/${it.name}/40`} imgProps={{ crossOrigin: 'anonymous' }} variant='rounded' />
+              </TableCell>
+              <TableCell>{it.name}</TableCell>
+              <TableCell align='right'>{dayjs.duration(it.playTime / 20, 'seconds').humanize()}</TableCell>
+              <TableCell align='right'>{dayjs(it.lastOnline).fromNow()}</TableCell>
+              <TableCell align='right'>
+                {(state === 1 || hasWhitelist) && <Tooltip title={it.whitelisted ? '点击可将该玩家移出白名单' : '点击可将该玩家添加到白名单'}>
+                  <IconButton onClick={() => whitelist(it.name, plugin, refresh, !it.whitelisted)}>
+                    {it.whitelisted ? <Star color='warning' /> : <StarBorder />}
+                  </IconButton>
+                </Tooltip>}
+                <Tooltip title={it.ban == null ? '点击可封禁该玩家' : '已被封禁: ' + it.ban}>
+                  <IconButton onClick={() => it.ban == null ? banPlayer(it.name, plugin, refresh) : pardonPlayer(it.name, plugin, refresh)}>
+                    <Block color={it.ban == null ? undefined : 'error'} />
+                  </IconButton>
+                </Tooltip>
+                {actions.length
+                  ? <IconButton onClick={e => {
+                    setActivedPlayer(anchorEl ? null : it)
+                    setAnchorEl(anchorEl ? null : e.currentTarget)
+                  }}><MoreHoriz /></IconButton>
+                  : null}
+              </TableCell>
+            </TableRow>)}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <TablePagination
+        rowsPerPageOptions={[]}
+        component='div'
+        count={data.count}
+        rowsPerPage={10}
+        page={page}
+        onPageChange={(_, it) => !loading && setPage(it)}
+      />
+    </Box>
     <Menu
       anchorEl={anchorEl}
       open={Boolean(anchorEl)}

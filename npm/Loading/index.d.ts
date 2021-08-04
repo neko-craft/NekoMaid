@@ -1,1 +1,1 @@
-export { LoadingList } from '../types/web/components/Loading'
+export * from '../types/web/components/Loading'

@@ -20,8 +20,8 @@ import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, Icon, CardCon
 import { ArrowDropDown, ArrowRight, Save, Undo, Redo, DeleteForever, CreateNewFolder, Refresh, MoreHoriz,
   Description, Upload, Download, Outbox, Inbox, DriveFileRenameOutline, FileCopy, ContentPaste } from '@material-ui/icons'
 import { useHistory, useLocation } from 'react-router-dom'
+import { usePlugin, useDrawerWidth } from '../Context'
 import { UnControlled } from 'react-codemirror2'
-import { usePlugin } from '../Context'
 import { address } from '../url'
 import validFilename from 'valid-filename'
 import Empty from '../components/Empty'
@@ -247,6 +247,7 @@ const Files: React.FC = () => {
   const theme = useTheme()
   const his = useHistory()
   const loc = useLocation()
+  const drawerWidth = useDrawerWidth()
   const tree = useRef<HTMLHRElement | null>(null)
   const editor = useRef<UnControlled | null>(null)
   const prevExpanded = useRef<string[]>([])
@@ -290,7 +291,7 @@ const Files: React.FC = () => {
   return <Box sx={{ height: '100vh', py: 3 }}>
     <Toolbar />
     <Container maxWidth={false}>
-      <Grid container spacing={3} sx={{ width: { sm: `calc(100vw - 240px - ${theme.spacing(3)})` } }}>
+      <Grid container spacing={3} sx={{ width: { sm: `calc(100vw - ${drawerWidth}px - ${theme.spacing(3)})` } }}>
         <Grid item lg={4} md={12} xl={3} xs={12}>
           <Card sx={{ minHeight: 400 }}>
             <CardHeader

@@ -36,8 +36,11 @@ final class Dashboard {
         public int entities;
         public int chunks;
     }
+    private final static class PlayerInfo {
+        public String name, ip;
+    }
     private final static class CurrentStatus {
-        public String[] players;
+        public PlayerInfo[] players;
         public double tps, mspt;
         public long time, memory, totalMemory;
         public int behinds;
@@ -104,9 +107,13 @@ final class Dashboard {
 
     private void refresh() {
         Collection<? extends Player> list = Bukkit.getOnlinePlayers();
-        String[] arr = new String[list.size()];
+        PlayerInfo[] arr = new PlayerInfo[list.size()];
         int i = 0;
-        for (Player it : list) arr[i++] = it.getName();
+        for (Player p : list) {
+            PlayerInfo it = arr[i++] = new PlayerInfo();
+            it.name = p.getName();
+            if (p.getAddress() != null) it.ip = p.getAddress().getHostString();
+        }
         current = new CurrentStatus();
         current.players = arr;
         current.tps = Utils.getTPS();
