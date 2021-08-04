@@ -204,7 +204,7 @@ const Dashboard: React.FC = () => {
           <TopCard title='在线人数' content={current ? playerCount : <Skeleton animation='wave' width={150} />} icon={<People />} color={deepPurple[600]}>
             <Box sx={{ pt: 2, display: 'flex', alignItems: 'flex-end' }}>
               {percent === 0 ? <Remove color='primary' /> : percent < 0 ? <ArrowDownward color='error' /> : <ArrowUpward color='success' />}
-              <Typography sx={{ color: (percent === 0 ? blue : percent < 0 ? red : green)[900], mr: 1 }} variant='body2'>{Math.abs(percent)}%</Typography>
+              <Typography sx={{ color: (percent === 0 ? blue : percent < 0 ? red : green)[900], mr: 1 }} variant='body2'>{Math.abs(percent).toFixed(0)}%</Typography>
               <Typography color='textSecondary' variant='caption'>相比于上一小时</Typography>
             </Box>
           </TopCard>

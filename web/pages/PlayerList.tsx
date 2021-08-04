@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import Empty from '../components/Empty'
 import dialog from '../dialog'
 import { success } from '../toast'
+import { CircularLoading } from '../components/Loading'
 import { usePlugin, useGlobalData } from '../Context'
 import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Today, Event,
   Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline, Search, MoreHoriz } from '@material-ui/icons'
@@ -197,15 +198,18 @@ const Players: React.FC = () => {
   const his = useHistory()
   const plugin = usePlugin()
   const [page, setPage] = useState(0)
+  const [loading, setLoading] = useState(true)
   const [state, setState] = useState<number | null>(null)
   const [activedPlayer, setActivedPlayer] = useState<PlayerData | null>(null)
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
   const [data, setData] = useState<{ count: number, players: PlayerData[] }>(() => ({ count: 0, players: [] }))
   const { hasWhitelist } = useGlobalData()
   const refresh = () => {
+    setLoading(true)
     plugin.emit('playerList:fetchPage', (it: any) => {
       if (it.players == null) it.players = []
       setData(it)
+      setLoading(false)
     }, page, state === 1 || state === 2 ? state : 0, null)
   }
   useMemo(refresh, [page, state])
@@ -236,17 +240,19 @@ const Players: React.FC = () => {
           if (filter == null) return
           his.push('/NekoMaid/playerList/' + filter)
           setState(3)
+          setLoading(true)
           plugin.emit('playerList:fetchPage', (it: any) => {
             if (it.players == null) it.players = []
             setPage(0)
             setData(it)
+            setLoading(false)
           }, page, 0, filter)
         })}><Search /></ToggleButton>
       </ToggleButtonGroup>
       }
     />
     <Divider />
-    <TableContainer>
+    <TableContainer sx={{ position: 'relative' }}>
       <Table>
         <TableHead>
           <TableRow>
@@ -286,6 +292,7 @@ const Players: React.FC = () => {
           </TableRow>)}
         </TableBody>
       </Table>
+      <CircularLoading loading={loading} />
     </TableContainer>
     <TablePagination
       rowsPerPageOptions={[]}
@@ -293,7 +300,7 @@ const Players: React.FC = () => {
       count={data.count}
       rowsPerPage={10}
       page={page}
-      onPageChange={(_, it) => setPage(it)}
+      onPageChange={(_, it) => !loading && setPage(it)}
     />
     <Menu
       anchorEl={anchorEl}

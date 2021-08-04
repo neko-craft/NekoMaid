@@ -137,7 +137,6 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                 client.disconnect(false);
                 return;
             }
-            client.send("globalData", GLOBAL_DATA);
             client.once("disconnect", args -> {
                 pages.remove(client);
                 clients.remove(client);
@@ -164,8 +163,9 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                     if (pageAction != null && pageAction.getKey() != null) pageAction.getKey()
                             .accept(wrappedClient == null ? getClient(namespace, client) : wrappedClient);
                 } catch (Throwable e) {e.printStackTrace();}
-            }).on("error", System.out::println);
+            });
             connectListeners.forEach((k, v) -> v.accept(getClient(k, client)));
+            client.send("globalData", GLOBAL_DATA);
         }).on("error", System.out::println);
         Uniporter.registerHandler("NekoMaid", new MainHandler(), true);
 

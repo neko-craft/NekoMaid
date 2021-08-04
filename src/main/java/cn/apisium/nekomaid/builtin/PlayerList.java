@@ -2,11 +2,12 @@ package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
 import cn.apisium.nekomaid.Utils;
+import org.apache.commons.lang.ObjectUtils;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;
-import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -51,48 +52,51 @@ final class PlayerList {
     }
     @SuppressWarnings({"deprecation", "ConstantConditions"})
     public static void initPlayerList(NekoMaid main) {
+        Server server = main.getServer();
         main.onConnected(main, client -> client.onWithAck("playerList:fetchPage", args -> {
-            Stream<OfflinePlayer> list = Arrays.stream(main.getServer().getOfflinePlayers());
+            Stream<OfflinePlayer> list;
             int page = (int) args[0], state = (int) args[1];
-            String filter = (String) args[2];
-            if (state != 0 || filter != null) {
-                if (state == 1) list = list.filter(OfflinePlayer::isWhitelisted);
-                else if (state == 2) list = list.filter(OfflinePlayer::isBanned);
-                if (filter != null) list = list.filter(p -> p.getName() != null && p.getName().toLowerCase().contains(filter));
+            Set<OfflinePlayer> whiteList = server.getWhitelistedPlayers();
+            BanList banList = server.getBanList(BanList.Type.NAME);
+            int count;
+            switch (state) {
+                case 1:
+                    list = whiteList.parallelStream();
+                    count = whiteList.size();
+                    break;
+                case 2:
+                    Set<BanEntry> entries = banList.getBanEntries();
+                    list = entries.parallelStream().map(it -> server.getOfflinePlayer(it.getTarget()));
+                    count = entries.size();
+                    break;
+                default:
+                    OfflinePlayer[] players = server.getOfflinePlayers();
+                    count = players.length;
+                    list = Arrays.stream(players).parallel();
             }
-            java.util.List<OfflinePlayer> newList = list.collect(Collectors.toList());
-            BanList banList = Bukkit.getBanList(BanList.Type.NAME);
-            return new List(newList.size(), newList.stream().skip(page * 10L).limit(10).map(p -> {
-                String ban = null;
-                BanEntry be = banList.getBanEntry(Objects.requireNonNull(p.getName()));
-                if (be != null) ban = be.getReason();
-                PlayerData pd = new PlayerData();
-                pd.online = p.isOnline();
-                pd.name = p.getName();
-                pd.ban = ban;
-                pd.whitelisted = p.isWhitelisted();
-                pd.playTime = getPlayerTime(p);
-                pd.lastOnline = Utils.getPlayerLastPlayTime(p);
-                return pd;
-            }).toArray());
+            String filter = (String) args[2];
+            if (filter == null) return new List(count, mapPlayersToObject(page, whiteList, banList, list));
+            java.util.List<OfflinePlayer> copy = list.filter(p -> p.getName() != null && p.getName().toLowerCase()
+                    .contains(filter)).collect(Collectors.toList());
+            return new List(copy.size(), mapPlayersToObject(page, whiteList, banList, copy.stream()));
         }).on("playerList:ban", it -> {
             String msg = ((String) it[1]).isEmpty() ? null : (String) it[1];
-            Bukkit.getBanList(BanList.Type.NAME).addBan((String) it[0], msg, null, "NekoMaid");
+            main.getServer().getBanList(BanList.Type.NAME).addBan((String) it[0], msg, null, "NekoMaid");
             Player p = Bukkit.getPlayerExact((String) it[0]);
             if (p != null) p.kickPlayer(msg);
             main.getLogger().info("Banned " + it[0] + ": " + (msg == null ? "" : msg));
         }).on("playerList:pardon", it -> {
-            Bukkit.getBanList(BanList.Type.NAME).pardon((String) it[0]);
+            main.getServer().getBanList(BanList.Type.NAME).pardon((String) it[0]);
             main.getLogger().info("Unbanned " + it[0]);
         }).on("playerList:addWhitelist", it -> {
-            Bukkit.getOfflinePlayer((String) it[0]).setWhitelisted(true);
+            main.getServer().getOfflinePlayer((String) it[0]).setWhitelisted(true);
             main.getLogger().info("Added " + it[0] + " to the whitelist");
         }).on("playerList:removeWhitelist", it -> {
-            Bukkit.getOfflinePlayer((String) it[0]).setWhitelisted(false);
+            main.getServer().getOfflinePlayer((String) it[0]).setWhitelisted(false);
             main.getLogger().info("Removed " + it[0] + " from the whitelist");
         }).onWithAck("playerList:query", it -> {
-            OfflinePlayer p = Bukkit.getOfflinePlayer((String) it[0]);
-            BanEntry ban = Bukkit.getBanList(BanList.Type.NAME).getBanEntry((String) it[0]);
+            OfflinePlayer p = main.getServer().getOfflinePlayer((String) it[0]);
+            BanEntry ban = main.getServer().getBanList(BanList.Type.NAME).getBanEntry((String) it[0]);
             PlayerData2 d = new PlayerData2();
             d.id = p.getUniqueId().toString();
             if (ban != null) d.ban = ban.getReason();
@@ -124,5 +128,25 @@ final class PlayerList {
     private static int getPlayerTime(OfflinePlayer p) {
         return p.isOnline() ? p.getPlayer().getStatistic(PLAY_ON_TICK) : canAssessOfflinePlayer
                 ? p.getStatistic(PLAY_ON_TICK) : 0;
+    }
+
+    private static Object[] mapPlayersToObject(int page, Set<OfflinePlayer> whiteList,
+                                               BanList banList, Stream<OfflinePlayer> list) {
+        return list.skip(page * 10L).limit(10).map(p -> {
+            String ban = null, name = p.getName();
+            if (name != null) {
+                BanEntry be = banList.getBanEntry(name);
+                if (be != null) ban = (String) ObjectUtils.defaultIfNull(be.getReason(), "Banned by " +
+                        be.getTarget() + "!");
+            }
+            PlayerData pd = new PlayerData();
+            pd.online = p.isOnline();
+            pd.name = p.getName();
+            pd.ban = ban;
+            pd.whitelisted = whiteList.contains(p);
+            pd.playTime = getPlayerTime(p);
+            pd.lastOnline = Utils.getPlayerLastPlayTime(p);
+            return pd;
+        }).toArray();
     }
 }
