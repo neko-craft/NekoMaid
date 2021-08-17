@@ -21,7 +21,7 @@ export interface GlobalInfo {
   canLoadPlugin: boolean
   pluginVersion?: string
   icon?: string
-  isPaper: boolean
+  isPaper?: boolean
   hasVault?: boolean
   hasVaultPermission?: boolean
   hasVaultGroups?: boolean
@@ -29,7 +29,10 @@ export interface GlobalInfo {
   hasOpenInv?: boolean
   hasNBTAPI?: boolean
   hasMultiverse?: boolean
+  canSetMaxPlayers?: boolean
   canSetViewDistance?: boolean
+  maxPlayers: number
+  spawnRadius: number
   plugins: Record<string, string[]>
   vaultEconomy?: {
     singular: string

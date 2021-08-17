@@ -10,7 +10,8 @@ public final class BuiltinPlugins {
     public BuiltinPlugins(NekoMaid main) {
         new Dashboard(main);
         console = new Console(main);
-        PlayerList.initPlayerList(main);
+        PlayerList.init(main);
+        Options.init(main);
         files = new FilesManager(main);
         main.getServer().getScheduler().runTask(main, () -> {
             new Plugins(main);
@@ -19,7 +20,7 @@ public final class BuiltinPlugins {
             if (pm.getPlugin("Vault") != null) new Vault(main);
             new OpenInv(main);
             new Worlds(main);
-            if (pm.getPlugin("NBTAPI") != null) ItemEditor.initItemEditor(main);
+            if (pm.getPlugin("NBTAPI") != null) ItemEditor.init(main);
         });
     }
     public void disable() {

@@ -51,7 +51,7 @@ final class PlayerList {
         }
     }
     @SuppressWarnings({"deprecation", "ConstantConditions"})
-    public static void initPlayerList(NekoMaid main) {
+    public static void init(NekoMaid main) {
         Server server = main.getServer();
         main.onConnected(main, client -> client.onWithAck("playerList:fetchPage", args -> {
             Stream<OfflinePlayer> list;

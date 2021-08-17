@@ -13,7 +13,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
-import org.bukkit.event.world.TimeSkipEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
@@ -22,8 +21,8 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.FutureTask;
 
-final class Worlds implements Listener {
-    private boolean hasWorldGameRuleChangeEvent = false, canSetViewDistance;
+final class Worlds {
+    private boolean hasWorldGameRuleChangeEvent = false, canSetViewDistance, hasSeparateViewDistance;
     private final Plugin mv;
     private final NekoMaid main;
     private final static class World {
@@ -38,67 +37,74 @@ final class Worlds implements Listener {
         this.main = main;
         mv = main.getServer().getPluginManager().getPlugin("Multiverse-Core");
         if (mv != null) main.GLOBAL_DATA.put("hasMultiverse", true);
-        main.onConnected(main, client -> client.onWithAck("worlds:fetch", this::getWorlds)
-                .onWithAck("worlds:weather", args -> {
+        main.onConnected(main, client -> {
+            client.onWithAck("worlds:fetch", this::getWorlds)
+                    .onWithAck("worlds:weather", args -> {
+                        org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
+                        if (world == null) return;
+                        main.getServer().getScheduler().runTask(main, () -> {
+                            if (world.isThundering()) {
+                                world.setThundering(false);
+                                world.setStorm(false);
+                            } else if (world.hasStorm()) world.setThundering(true);
+                            else world.setStorm(true);
+                        });
+                    }).onWithAck("worlds:rule", args -> {
+                org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
+                if (world == null) return;
+                String k = (String) args[1], v = (String) args[2];
+                main.getServer().getScheduler().runTask(main, () -> {
+                    world.setGameRuleValue(k, v);
+                    if (!hasWorldGameRuleChangeEvent) update();
+                });
+            }).onWithAck("worlds:difficulty", args -> {
+                org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
+                if (world == null) return;
+                String value = (String) args[1];
+                Difficulty diff = Difficulty.valueOf(value);
+                main.getServer().getScheduler().runTask(main, () -> {
+                    world.setDifficulty(diff);
+                    if (mv != null) try {
+                        MVWorldManager wm = ((MultiverseCore) mv).getMVWorldManager();
+                        wm.getMVWorld(world).setPropertyValue("difficulty", value);
+                        ((MultiverseCore) mv).getMVWorldManager().saveWorldsConfig();
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                    update();
+                });
+            }).onWithAck("worlds:pvp", args -> {
+                org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
+                if (world == null) return;
+                boolean value = (boolean) args[1];
+                main.getServer().getScheduler().runTask(main, () -> {
+                    world.setPVP(value);
+                    if (mv != null) try {
+                        MVWorldManager wm = ((MultiverseCore) mv).getMVWorldManager();
+                        wm.getMVWorld(world).setPropertyValue("pvp", String.valueOf(value));
+                        ((MultiverseCore) mv).getMVWorldManager().saveWorldsConfig();
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                    update();
+                });
+            }).onWithAck("worlds:viewDistance", args -> {
+                org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
+                if (world == null || !canSetViewDistance) return;
+                main.getServer().getScheduler().runTask(main, () -> {
+                    world.setViewDistance((int) args[1]);
+                    update();
+                });
+            }).onWithAck("worlds:save", args -> {
+                org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
+                if (world == null) return;
+                main.getServer().getScheduler().runTask(main, world::save);
+            });
+            if (mv != null) {
+                MVWorldManager wm = ((MultiverseCore) mv).getMVWorldManager();
+                client.onWithAck("worlds:set", args -> {
                     org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
                     if (world == null) return;
-                    main.getServer().getScheduler().runTask(main, () -> {
-                        if (world.isThundering()) {
-                            world.setThundering(false);
-                            world.setStorm(false);
-                        } else if (world.hasStorm()) world.setThundering(true);
-                        else world.setStorm(true);
-                    });
-                }).onWithAck("worlds:rule", args -> {
-                    org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
-                    if (world == null) return;
-                    String k = (String) args[1], v = (String) args[2];
-                    main.getServer().getScheduler().runTask(main, () -> {
-                        world.setGameRuleValue(k, v);
-                        if (!hasWorldGameRuleChangeEvent) update();
-                    });
-                }).onWithAck("worlds:difficulty", args -> {
-                    org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
-                    if (world == null) return;
-                    String value = (String) args[1];
-                    Difficulty diff = Difficulty.valueOf(value);
-                    main.getServer().getScheduler().runTask(main, () -> {
-                        world.setDifficulty(diff);
-                        if (mv != null) try {
-                            MVWorldManager wm = ((MultiverseCore) mv).getMVWorldManager();
-                            wm.getMVWorld(world).setPropertyValue("difficulty", value);
-                            ((MultiverseCore) mv).getMVWorldManager().saveWorldsConfig();
-                        } catch (Throwable e) {
-                            e.printStackTrace();
-                        }
-                        update();
-                    });
-                }).onWithAck("worlds:pvp", args -> {
-                    org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
-                    if (world == null) return;
-                    boolean value = (boolean) args[1];
-                    main.getServer().getScheduler().runTask(main, () -> {
-                        world.setPVP(value);
-                        if (mv != null) try {
-                            MVWorldManager wm = ((MultiverseCore) mv).getMVWorldManager();
-                            wm.getMVWorld(world).setPropertyValue("pvp", String.valueOf(value));
-                            ((MultiverseCore) mv).getMVWorldManager().saveWorldsConfig();
-                        } catch (Throwable e) {
-                            e.printStackTrace();
-                        }
-                        update();
-                    });
-                }).onWithAck("worlds:viewDistance", args -> {
-                    org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
-                    if (world == null || !canSetViewDistance) return;
-                    main.getServer().getScheduler().runTask(main, () -> {
-                        world.setViewDistance((int) args[1]);
-                        update();
-                    });
-                }).onWithAck("worlds:set", args -> {
-                    org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
-                    if (world == null || mv == null) return;
-                    MVWorldManager wm = ((MultiverseCore) mv).getMVWorldManager();
                     main.getServer().getScheduler().runTask(main, () -> {
                         try {
                             wm.getMVWorld(world).setPropertyValue((String) args[1], (String) args[2]);
@@ -108,41 +114,50 @@ final class Worlds implements Listener {
                             e.printStackTrace();
                         }
                     });
-                }).onWithAck("worlds:save", args -> {
-                    org.bukkit.World world = main.getServer().getWorld(UUID.fromString((String) args[0]));
-                    if (world == null) return;
-                    main.getServer().getScheduler().runTask(main, world::save);
-                }));
+                });
+            }
+        });
+        Events events = new Events();
         main.getServer().getScheduler()
-                .runTask(main, () -> main.getServer().getPluginManager().registerEvents(this, main));
+                .runTask(main, () -> main.getServer().getPluginManager().registerEvents(events, main));
         try {
             Class<? extends Event> clazz = (Class<? extends Event>)
                     Class.forName("io.papermc.paper.event.world.WorldGameRuleChangeEvent");
-            main.getServer().getPluginManager().registerEvent(clazz, this,
+            main.getServer().getPluginManager().registerEvent(clazz, events,
                     EventPriority.MONITOR, (a, b) -> update(), main, true);
             hasWorldGameRuleChangeEvent = true;
+        } catch (Throwable ignored) { }
+        try {
+            Class<? extends Event> clazz = (Class<? extends Event>)
+                    Class.forName("org.bukkit.event.world.TimeSkipEvent");
+            main.getServer().getPluginManager().registerEvent(clazz, events,
+                    EventPriority.MONITOR, (a, b) -> update(), main, true);
         } catch (Throwable ignored) { }
         try {
             org.bukkit.World.class.getMethod("setViewDistance", int.class);
             canSetViewDistance = true;
             main.GLOBAL_DATA.put("canSetViewDistance", true);
         } catch (Throwable ignored) { }
+        try {
+            org.bukkit.World.class.getMethod("getViewDistance");
+            hasSeparateViewDistance = true;
+        } catch (Throwable ignored) { }
     }
 
     private void update() { main.broadcastInPage(main, "worlds", "worlds:update"); }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onWeatherChange(WeatherChangeEvent e) { update(); }
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onThunderChange(ThunderChangeEvent e) { update(); }
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onTimeSkip(TimeSkipEvent e) { update(); }
-    @EventHandler
-    public void onPlayerChangedWorld(PlayerChangedWorldEvent e) { update(); }
-    @EventHandler
-    public void onWorldLoad(WorldLoadEvent e) { update(); }
-    @EventHandler
-    public void onWorldUnload(WorldUnloadEvent e) { update(); }
+    private final class Events implements Listener {
+        @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+        public void onWeatherChange(WeatherChangeEvent e) { update(); }
+        @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+        public void onThunderChange(ThunderChangeEvent e) { update(); }
+        @EventHandler
+        public void onPlayerChangedWorld(PlayerChangedWorldEvent e) { update(); }
+        @EventHandler
+        public void onWorldLoad(WorldLoadEvent e) { update(); }
+        @EventHandler
+        public void onWorldUnload(WorldUnloadEvent e) { update(); }
+    }
 
     @SuppressWarnings("deprecation")
     private Object[] getWorlds() {
@@ -155,7 +170,7 @@ final class Worlds implements Listener {
             w.players = it.getPlayers().size();
             w.chunks = chunks.length;
             w.weather = it.isThundering() ? 2 : it.hasStorm() ? 1 : 0;
-            w.viewDistance = it.getViewDistance();
+            w.viewDistance = hasSeparateViewDistance ? it.getViewDistance() : main.getServer().getViewDistance();
             w.allowMonsters = it.getAllowMonsters();
             w.allowAnimals = it.getAllowAnimals();
             w.pvp = it.getPVP();

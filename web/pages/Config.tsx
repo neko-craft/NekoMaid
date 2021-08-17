@@ -1,16 +1,56 @@
 import React, { useState } from 'react'
 import dayjs from 'dayjs'
+import dialog from '../dialog'
 import * as colors from '@material-ui/core/colors'
 import { success } from '../toast'
 import { configs } from '../Plugin'
-import { Delete, HelpOutline, Check, Brightness4, Brightness7, SettingsBrightness } from '@material-ui/icons'
+import { useGlobalData, usePlugin } from '../Context'
+import { Delete, HelpOutline, Check, Brightness4, Brightness7, SettingsBrightness, Edit } from '@material-ui/icons'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItem, IconButton,
   ToggleButton, ListItemAvatar, Avatar, ListItemText, Tooltip, CardContent, ToggleButtonGroup,
-  Paper, ListItemButton } from '@material-ui/core'
+  Paper, ListItemButton, Switch } from '@material-ui/core'
 
 import type { ServerRecord } from '../App'
 
 configs.push({
+  title: '服务端设置',
+  component: () => {
+    const plugin = usePlugin()
+    const globalData = useGlobalData()
+    const [flag, update] = useState(0)
+    const setValue = (field: string, value: any) => {
+      plugin.emit('server:set', field, ((globalData as any)[field] = value))
+      update(flag + 1)
+      success()
+      location.reload()
+    }
+    const createEditButtom = (field: string) => <IconButton
+      onClick={() => dialog({
+        content: '请输入要修改的值',
+        input: {
+          error: true,
+          type: 'number',
+          helperText: '值不合法!',
+          validator: (it: string) => /^\d+$/.test(it) && +it >= 0
+        }
+      }).then(res => res != null && setValue(field, parseInt(res as any)))}
+    ><Edit /></IconButton>
+    return <List>
+      <ListItem secondaryAction={globalData.canSetMaxPlayers
+        ? createEditButtom('maxPlayers')
+        : undefined}>
+        <ListItemText primary={'最大玩家数: ' + globalData.maxPlayers} />
+      </ListItem>
+      <ListItem secondaryAction={createEditButtom('spawnRadius')}>
+        <ListItemText primary={'出生点保护半径: ' + globalData.spawnRadius} />
+      </ListItem>
+      <ListItem secondaryAction={<Switch checked={globalData.hasWhitelist} onChange={e => setValue('hasWhitelist', e.target.checked)} />}>
+        <ListItemText primary='白名单' />
+      </ListItem>
+    </List>
+  }
+},
+{
   title: '连接记录',
   component: () => {
     const [cur, update] = useState(0)

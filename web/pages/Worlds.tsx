@@ -193,6 +193,7 @@ const Worlds: React.FC = () => {
                       {sw.rules.map(([key, value]) => {
                         const isTrue = value === 'true'
                         const isBoolean = isTrue || value === 'false'
+                        const isNumber = /^\d+$/.test(value)
                         return <ListItem
                           key={key}
                           sx={{ pl: 4 }}
@@ -207,12 +208,14 @@ const Worlds: React.FC = () => {
                             : <IconButton
                               onClick={() => dialog({
                                 content: '请输入要修改的值',
-                                input: {
-                                  error: true,
-                                  type: 'number',
-                                  helperText: '值不合法!',
-                                  validator: (it: string) => /^\d+$/.test(it)
-                                }
+                                input: isNumber
+                                  ? {
+                                      error: true,
+                                      type: 'number',
+                                      helperText: '值不合法!',
+                                      validator: (it: string) => /^\d+$/.test(it)
+                                    }
+                                  : { }
                               }).then(res => {
                                 if (res == null) return
                                 plugin.emit('worlds:rule', sw.id, key, res)
@@ -220,7 +223,7 @@ const Worlds: React.FC = () => {
                               })}
                             ><Edit /></IconButton>}
                         >
-                          <ListItemText primary={minecraft['gamerule.' + key] + (isBoolean ? '' : ': ' + value)} />
+                          <ListItemText primary={(minecraft['gamerule.' + key] || key) + (isBoolean ? '' : ': ' + value)} />
                         </ListItem>
                       })}
                     </List>

@@ -17,7 +17,7 @@ final class ItemEditor {
             data[1] = Utils.serializeToString(new String[0]);
         }
     }
-    public static void initItemEditor(NekoMaid main) {
+    public static void init(NekoMaid main) {
         main.GLOBAL_DATA.put("hasNBTAPI", true);
         main.onConnected(main, client -> client.onWithMultiArgsAck("item:fetch", () -> data));
     }

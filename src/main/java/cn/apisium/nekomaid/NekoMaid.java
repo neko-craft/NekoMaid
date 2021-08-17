@@ -96,7 +96,6 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                 .put("plugins", pluginScripts)
                 .put("version", getServer().getVersion())
                 .put("onlineMode", getServer().getOnlineMode())
-                .put("hasWhitelist", getServer().hasWhitelist())
                 .put("pluginVersion", getDescription().getVersion());
         if (Utils.IS_PAPER) GLOBAL_DATA.put("isPaper", true);
         try {
@@ -167,6 +166,10 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                 } catch (Throwable e) {e.printStackTrace();}
             });
             connectListeners.forEach((k, v) -> v.accept(getClient(k, client)));
+            GLOBAL_DATA
+                    .put("hasWhitelist", getServer().hasWhitelist())
+                    .put("maxPlayers", getServer().getMaxPlayers())
+                    .put("spawnRadius", getServer().getSpawnRadius());
             client.send("globalData", GLOBAL_DATA);
         }).on("error", System.out::println);
         Uniporter.registerHandler("NekoMaid", new MainHandler(), true);
