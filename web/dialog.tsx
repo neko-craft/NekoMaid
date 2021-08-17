@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { ButtonProps } from '@material-ui/core/Button'
 import ValidInput, { ValidInputProps } from './components/ValidInput'
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@material-ui/core'
+import { minecraft } from '../languages'
 
 export interface DialogOptionsWithoutInput {
   content: React.ReactNode
@@ -61,13 +62,13 @@ export const DialogWrapper: React.FC = () => {
       {inputElm}
     </DialogContent>
     <DialogActions>
-      <Button onClick={cancel}>取消</Button>
+      <Button onClick={cancel}>{minecraft['gui.cancel']}</Button>
       <Button {...data.okButton} disabled={canClick} onClick={() => {
         setOpen(false)
         setDate(undefined)
         setText('')
         data.resolve((data as any).input ? text : true)
-      }}>确认</Button>
+      }}>{minecraft['gui.ok']}</Button>
     </DialogActions>
   </Dialog>
 }

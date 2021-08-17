@@ -9,12 +9,10 @@ import { useGlobalData, usePlugin } from '../Context'
 import { parseComponent, stringifyTextComponent } from '../utils'
 import MojangSON, { parse, stringify, Byte, Short } from 'nbt-ts'
 import set from 'lodash/set'
-import language from '../../languages/zh_CN'
+import { minecraft } from '../../languages'
 import * as icons from '../../minecraftIcons.json'
 
 import type { PaperProps } from '@material-ui/core/Paper'
-
-const { minecraft } = language
 
 export interface Enchantment extends MojangSON.TagObject {
   id: string
@@ -181,7 +179,7 @@ const ItemViewer: React.FC<ItemViewerProps> = ({ item, data, onDrag, onDrop, onE
       {nbt.tag?.Enchantments?.length
         ? nbt.tag?.Enchantments.map((it, i) => <React.Fragment key={i}><br />{getEnchantmentName(it)}</React.Fragment>)
         : null}
-      {nbt.tag?.Unbreakable?.value === 1 && <><br />无法破坏</>}
+      {nbt.tag?.Unbreakable?.value === 1 && <><br />{minecraft['item.unbreakable']}</>}
     </>
     : null
   return item
@@ -268,7 +266,7 @@ const ItemEditor: React.FC = () => {
       </Box>}
       <Tabs centered value={tab} onChange={(_, it) => setTab(it)} sx={{ marginBottom: 2 }}>
         <Tab label='基础属性' disabled={isAir} />
-        <Tab label='附魔' disabled={isAir} />
+        <Tab label={minecraft['container.enchant']} disabled={isAir} />
         <Tab label='NBT' disabled={isAir} />
       </Tabs>
       {nbt && tab === 0 && <Grid container spacing={1} rowSpacing={1}>
@@ -309,7 +307,7 @@ const ItemEditor: React.FC = () => {
             }}
           />
           <FormControlLabel
-            label='无限耐久'
+            label={minecraft['container.enchant']}
             disabled={isAir}
             checked={nbt.tag?.Unbreakable?.value === 1}
             control={<Checkbox
@@ -352,10 +350,10 @@ const ItemEditor: React.FC = () => {
           <DialogContent>
             <Box component='form' sx={{ display: 'flex', flexWrap: 'wrap' }}>
               <FormControl variant='standard' sx={{ m: 1, minWidth: 120 }}>
-                <InputLabel htmlFor='item-editor-enchantment-selector'>附魔</InputLabel>
+                <InputLabel htmlFor='item-editor-enchantment-selector'>{minecraft['container.enchant']}</InputLabel>
                 <Select
                   id='item-editor-enchantment-selector'
-                  label='附魔'
+                  label={minecraft['container.enchant']}
                   value={enchantment || ''}
                   onChange={e => setEnchantment(e.target.value)}
                 >{enchantments
@@ -369,12 +367,12 @@ const ItemEditor: React.FC = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setEnchantment(undefined)}>取消</Button>
+            <Button onClick={() => setEnchantment(undefined)}>{minecraft['gui.cancel']}</Button>
             <Button disabled={!enchantment || isNaN(level)} onClick={() => {
               nbt?.tag?.Enchantments?.push({ id: enchantment!, lvl: new Short(level) })
               setEnchantment(undefined)
               update()
-            }}>确认</Button>
+            }}>{minecraft['gui.ok']}</Button>
           </DialogActions>
         </Dialog>
       </Grid>}
@@ -395,14 +393,14 @@ const ItemEditor: React.FC = () => {
       />
     </Box>}
     <DialogActions>
-      <Button onClick={cancel}>取消</Button>
+      <Button onClick={cancel}>{minecraft['gui.cancel']}</Button>
       <Button onClick={() => {
         setItem(undefined)
         if (_resolve) {
           _resolve(!item || item.type === 'AIR' ? null : item)
           _resolve = null
         }
-      }}>确认</Button>
+      }}>{minecraft['gui.ok']}</Button>
     </DialogActions>
   </Dialog>
 }

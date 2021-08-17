@@ -15,6 +15,7 @@ import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContaine
 import { FXAASkinViewer, createOrbitControls, WalkingAnimation, RotatingAnimation } from 'skinview3d'
 import { useTheme } from '@material-ui/core/styles'
 import { useParams, useHistory } from 'react-router-dom'
+import { minecraft } from '../../languages'
 
 interface IPlayerInfo {
   id: string
@@ -108,19 +109,19 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
         {info.hasPlayedBefore && <>
             <ListItemButton onClick={() => setOpen(!open)}>
             <ListItemIcon><Equalizer /></ListItemIcon>
-            <ListItemText primary='统计数据' />
+            <ListItemText primary={minecraft['gui.stats']} />
             {open ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <List component='div' dense disablePadding>
               {[
-                '在线时间: ' + dayjs.duration(info.playTime / 20, 'seconds').humanize(),
+                minecraft['stat.minecraft.play_time'] + ': ' + dayjs.duration(info.playTime / 20, 'seconds').humanize(),
                 '首次登录: ' + dayjs(info.firstPlay).fromNow(),
                 '最后登录: ' + dayjs(info.lastOnline).fromNow(),
-                '登录次数: ' + info.quit,
-                '死亡次数: ' + info.death,
-                '玩家击杀次数: ' + info.playerKill,
-                '实体击杀次数: ' + info.entityKill,
+                minecraft['stat.minecraft.leave_game'] + ': ' + info.quit,
+                minecraft['stat.minecraft.deaths'] + ': ' + info.death,
+                minecraft['stat.minecraft.player_kills'] + ': ' + info.playerKill,
+                minecraft['stat.minecraft.mob_kills'] + ': ' + info.entityKill,
                 'TNT放置次数: ' + info.tnt
               ].map((it, i) => <ListItem key={i} sx={{ pl: 4 }}>
                 <ListItemIcon>{icons[i]}</ListItemIcon>

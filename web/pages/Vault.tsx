@@ -9,6 +9,7 @@ import { Box, Toolbar, Container, Card, CardHeader, Grid, DialogContent, DialogC
 import { DataGrid, GridCellParams, GridSortItem } from '@material-ui/data-grid'
 import { useHistory } from 'react-router-dom'
 import { action, success } from '../toast'
+import { minecraft } from '../../languages'
 import dialog from '../dialog'
 
 interface PlayerInfo { id: string, balance?: number, group?: string, prefix?: string, suffix?: string }
@@ -67,7 +68,8 @@ const PermissionDialog: React.FC<{ plugin: Plugin, id: string | undefined, isGro
   return <Dialog open={!!id} onClose={onClose}>
     <DialogTitle>权限节点查询及修改</DialogTitle>
     <DialogContent sx={{ overflow: 'hidden' }}>
-      <DialogContentText>请输入要查询的权限节点: <span className='bold' style={{ }}>({isGroup ? '权限组' : '玩家'}: {id})</span></DialogContentText>
+      <DialogContentText>请输入要查询的权限节点: <span className='bold' style={{ }}>
+        ({isGroup ? '权限组' : minecraft['entity.minecraft.player']}: {id})</span></DialogContentText>
       <Autocomplete
         freeSolo
         options={options}

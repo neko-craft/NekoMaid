@@ -30,4 +30,21 @@ const Uptime: React.FC<BoxProps & { time: number }> = ({ time, ...props }) => {
   return <Box ref={ref} component='span' {...props} />
 }
 
+export const Countdown: React.FC<BoxProps & { time: number, max?: number, interval?: number, step?: number }> =
+  ({ time, max, interval, step, ...props }) => {
+    const ref = useRef<HTMLSpanElement | null>(null)
+    useEffect(() => {
+      if (!ref.current) return
+      let curTime = time
+      const update = () => {
+        ref.current!.innerText = curTime.toString()
+        if (max && curTime >= max) curTime = 0; else curTime += (step || 1)
+      }
+      update()
+      const timer = setInterval(update, interval || 1000)
+      return () => clearInterval(timer)
+    }, [ref.current, time])
+    return <Box ref={ref} component='span' {...props} />
+  }
+
 export default Uptime

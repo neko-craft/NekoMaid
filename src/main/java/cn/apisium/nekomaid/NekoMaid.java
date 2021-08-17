@@ -61,6 +61,7 @@ import java.util.function.*;
 @SoftDependency("OpenInv")
 @SoftDependency("PlugMan")
 @SoftDependency("PlaceholderAPI")
+@SoftDependency("Multiverse-Core")
 public final class NekoMaid extends JavaPlugin implements Listener {
     private final static String UNIPORTER_VERSION = "1.2.6-SNAPSHOT";
     private final static String URL_MESSAGE = ChatColor.translateAlternateColorCodes('&',
@@ -97,6 +98,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                 .put("onlineMode", getServer().getOnlineMode())
                 .put("hasWhitelist", getServer().hasWhitelist())
                 .put("pluginVersion", getDescription().getVersion());
+        if (Utils.IS_PAPER) GLOBAL_DATA.put("isPaper", true);
         try {
             CachedServerIcon icon = getServer().getServerIcon();
             if (icon != null && !icon.isEmpty()) GLOBAL_DATA.put("icon", icon.getData());

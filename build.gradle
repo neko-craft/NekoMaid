@@ -36,6 +36,10 @@ repositories {
         name = 'CodeMC'
         url = 'https://repo.codemc.org/repository/maven-public/'
     }
+    maven {
+        name = 'onarandombox'
+        url = "http://repo.onarandombox.com/content/groups/public/"
+    }
 }
 
 dependencies {
@@ -48,6 +52,7 @@ dependencies {
     compileOnly 'com.github.jikoo.OpenInv:openinvapi:2f36a4d4dc'
     compileOnly 'me.clip:placeholderapi:2.10.10'
     compileOnly 'de.tr7zw:item-nbt-api-plugin:2.8.0'
+    compileOnly 'com.onarandombox.multiversecore:Multiverse-Core:4.3.1-SNAPSHOT'
     compileOnly ('com.github.MilkBowl:VaultAPI:1.7') {
         exclude group: 'org.bukkit'
     }
@@ -71,13 +76,6 @@ dependencies {
     }
 
     annotationProcessor 'org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT'
-
-    jar {
-        from {
-            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-            configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
-        }
-    }
 }
 
 shadowJar {

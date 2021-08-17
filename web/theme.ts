@@ -33,3 +33,12 @@ export const typography = {
     fontWeight: 500
   }
 }
+
+export const cardActionStyles: any = {
+  position: 'absolute',
+  right: (theme: any) => theme.spacing(1),
+  top: '50%',
+  transform: 'translateY(-50%)',
+  display: 'flex',
+  alignItems: 'center'
+}

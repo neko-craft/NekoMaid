@@ -4,12 +4,12 @@ import { Delete, Add, Save } from '@material-ui/icons'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItemButton, Checkbox, ListItemIcon,
   ListItem, IconButton, ListItemText, CardContent, TextField } from '@material-ui/core'
 import { usePlugin } from '../Context'
+import { cardActionStyles } from '../theme'
 import Empty from '../components/Empty'
 import Cron from 'material-ui-cron'
 import dialog from '../dialog'
 
 interface Task { name: string, cron: string, values: string[], enabled: boolean }
-const iconStyles: any = { position: 'absolute', right: (theme: any) => theme.spacing(1), top: '50%', transform: 'translateY(-50%)' }
 const Scheduler: React.FC = () => {
   const plugin = usePlugin()
   const [id, setId] = useState(-1)
@@ -51,7 +51,7 @@ const Scheduler: React.FC = () => {
                   setName(task.name)
                   setValues(task.values.join('\n'))
                 }}
-                sx={iconStyles}
+                sx={cardActionStyles}
               ><Add /></IconButton>}
             />
             <Divider />
@@ -106,9 +106,10 @@ const Scheduler: React.FC = () => {
                   tasks[id].name = name
                   save()
                 }}
-                sx={iconStyles}
+                sx={cardActionStyles}
                 disabled={!tasks[id] || !!cronError}
-              ><Save /></IconButton>} />
+              ><Save /></IconButton>}
+            />
             <Divider />
             <CardContent>
               {tasks[id]

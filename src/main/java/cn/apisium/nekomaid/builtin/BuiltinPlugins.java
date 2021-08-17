@@ -18,6 +18,7 @@ public final class BuiltinPlugins {
             PluginManager pm = main.getServer().getPluginManager();
             if (pm.getPlugin("Vault") != null) new Vault(main);
             new OpenInv(main);
+            new Worlds(main);
             if (pm.getPlugin("NBTAPI") != null) ItemEditor.initItemEditor(main);
         });
     }

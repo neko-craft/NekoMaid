@@ -44,6 +44,7 @@ public final class Utils {
     private static Object server;
     private static Field recentTps, mspt;
     private static final String JSON_OBJECT = "\ud83c\udf7a";
+    public static final boolean IS_PAPER;
     protected static boolean HAS_NBT_API;
     static {
         try {
@@ -54,10 +55,13 @@ public final class Utils {
             Class.forName("com.tuinity.tuinity.config.TuinityConfig");
             isTuinity = true;
         } catch (Throwable ignored) { }
+        boolean isPaper = false;
         try {
             Class.forName("com.destroystokyo.paper.event.server.AsyncTabCompleteEvent");
             hasAsyncTabComplete = true;
+            isPaper = true;
         } catch (Throwable ignored) { }
+        IS_PAPER = isPaper;
         try {
             OfflinePlayer.class.getMethod("getLastLogin");
             canGetLastLogin = true;
@@ -175,7 +179,7 @@ public final class Utils {
     }
 
     private static boolean canSerialise(Object object) {
-        return object == null || object == JSONObject.NULL || object instanceof JSONObject ||
+        return object == JSONObject.NULL || object instanceof JSONObject ||
                 object instanceof JSONArray || object instanceof Number || object instanceof Boolean ||
                 object instanceof byte[];
     }
@@ -186,8 +190,8 @@ public final class Utils {
 
     public static Object serialize(Object object) {
         try {
-
             if (canSerialise(object)) return object;
+            if (object == null) return JSONObject.NULL;
             if (object instanceof String) {
                 return ((String) object).startsWith(JSON_OBJECT) ? object : "\ud83d\udc2e" + object;
             } else return serializeToString(object);

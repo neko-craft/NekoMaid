@@ -21,12 +21,15 @@ export interface GlobalInfo {
   canLoadPlugin: boolean
   pluginVersion?: string
   icon?: string
+  isPaper: boolean
   hasVault?: boolean
   hasVaultPermission?: boolean
   hasVaultGroups?: boolean
   hasVaultChat?: boolean
   hasOpenInv?: boolean
   hasNBTAPI?: boolean
+  hasMultiverse?: boolean
+  canSetViewDistance?: boolean
   plugins: Record<string, string[]>
   vaultEconomy?: {
     singular: string

@@ -69,7 +69,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       initPages(nekoMaid)
       onGlobalDataReceived(nekoMaid, data)
       update(Math.random())
-      if (data.pluginVersion !== version) toast('发现插件更新! 推荐立即更新!', 'warning')
+      if (process.env.NODE_ENV !== 'development' && data.pluginVersion !== version) toast('发现插件更新! 推荐立即更新!', 'warning')
     }).on('!', () => {
       io.close()
       dialog('密钥错误或插件版本过旧, 最新版本为: ' + version).then(() => (location.href = '//maid.neko-craft.com'))

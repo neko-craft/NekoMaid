@@ -14,6 +14,10 @@
         "@material-ui/lab": {
           "transform": "@material-ui/lab/${member}",
           "preventFullImport": true
+        },
+        "mdi-material-ui": {
+          "transform": "mdi-material-ui/${member}",
+          "preventFullImport": true
         }
       }
     ]

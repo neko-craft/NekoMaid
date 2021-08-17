@@ -6,6 +6,7 @@ import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, IconButton,
 import { useGlobalData, usePlugin } from '../Context'
 import { ActionComponent } from './PlayerList'
 import { useHistory, useParams } from 'react-router-dom'
+import { cardActionStyles } from '../theme'
 import ItemViewer, { Item, InvType } from '../components/ItemViewer'
 import Empty from '../components/Empty'
 
@@ -18,15 +19,6 @@ export const playerAction: ActionComponent = ({ onClose, player }) => {
   }}>
     <ListItemIcon><Backpack /></ListItemIcon>背包/末影箱
   </MenuItem>
-}
-
-const cardActionStyles: any = {
-  position: 'absolute',
-  right: (theme: any) => theme.spacing(1),
-  top: '50%',
-  transform: 'translateY(-50%)',
-  display: 'flex',
-  alignItems: 'center'
 }
 
 const OpenInv: React.FC = () => {

@@ -44,10 +44,11 @@ final class Vault {
         main.onConnected(main, client -> client.onWithMultiArgsAck("vault:fetch", args -> {
             try {
                 OfflinePlayer[] arr = main.getServer().getOfflinePlayers();
-                Stream<OfflinePlayer> stream = Arrays.stream(arr);
+                Stream<OfflinePlayer> stream = Arrays.stream(arr).filter(it -> it.getName() != null);
                 if (args.length == 4) {
                     String name = (String) args[2];
-                    stream = stream.filter(it -> it.getName() != null && it.getName().toLowerCase().contains(name));
+                    // noinspection ConstantConditions
+                    stream = stream.filter(it -> it.getName().toLowerCase().contains(name));
                 }
                 if (econ != null && args[1] != null) stream = "asc".equals(args[1])
                         ? stream.sorted((a, b) -> (int) (econ.getBalance(a) - econ.getBalance(b)))
