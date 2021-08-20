@@ -66,7 +66,7 @@ const Players: React.FC<{ players: CurrentStatus['players'] | undefined }> = ({ 
                     <IconButton
                       edge='end'
                       size='small'
-                      onClick={() => dialog(lang.dashboard.confirmKick(<span className='bold'>{name}</span>), lang.dashboard.reason)
+                      onClick={() => dialog(lang.dashboard.confirmKick(<span className='bold'>{name}</span>), lang.reason)
                         .then(it => it != null && plugin.emit('dashboard:kick', (res: boolean) => {
                           action(res)
                           if (!players) return

@@ -8,6 +8,7 @@ import { cardActionStyles } from '../theme'
 import Empty from '../components/Empty'
 import Cron from 'material-ui-cron'
 import dialog from '../dialog'
+import lang from '../../languages'
 
 interface Task { name: string, cron: string, values: string[], enabled: boolean }
 const Scheduler: React.FC = () => {
@@ -33,13 +34,13 @@ const Scheduler: React.FC = () => {
         <Grid item lg={4} md={12} xl={4} xs={12}>
           <Card>
             <CardHeader
-              title='任务列表'
+              title={lang.scheduler.title}
               sx={{ position: 'relative' }}
               action={<IconButton
                 size='small'
                 onClick={() => {
                   const task = {
-                    name: '新任务',
+                    name: lang.scheduler.newTask,
                     cron: '*/1 * * * *',
                     enabled: true,
                     values: ['/say Hello, %server_tps% (PlaceholderAPI)', 'This is a chat message']
@@ -65,7 +66,7 @@ const Scheduler: React.FC = () => {
                   disablePadding
                   secondaryAction={<IconButton
                     edge='end'
-                    onClick={() => dialog('确认要删除这个任务吗?')
+                    onClick={() => dialog(lang.scheduler.confirmDelete)
                       .then(it => {
                         if (it == null) return
                         setTasks((tasks = tasks.filter((_, id) => i !== id)))
@@ -96,7 +97,7 @@ const Scheduler: React.FC = () => {
         <Grid item lg={8} md={12} xl={8} xs={12}>
           <Card>
             <CardHeader
-              title='任务编辑'
+              title={lang.scheduler.editor}
               sx={{ position: 'relative' }}
               action={<IconButton
                 size='small'
@@ -114,21 +115,28 @@ const Scheduler: React.FC = () => {
             <CardContent>
               {tasks[id]
                 ? <>
-                  <TextField required fullWidth variant='standard' label='任务名' value={name} onChange={e => setName(e.target.value)} />
                   <TextField
-                    label='命令、文本信息'
+                    required
+                    fullWidth
+                    variant='standard'
+                    label={lang.scheduler.name}
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                  />
+                  <TextField
                     fullWidth
                     multiline
                     rows={4}
                     value={values}
                     sx={{ marginTop: 3 }}
+                    label={lang.scheduler.content}
                     onChange={e => setValues(e.target.value)}
                   />
                 </>
-                : <Empty title='请先在左侧选择一个任务!' />}
+                : <Empty title={lang.scheduler.notSelected} />}
             </CardContent>
             {tasks[id] && <>
-              <Divider textAlign='left'>定时器</Divider>
+              <Divider textAlign='left'>{lang.scheduler.timer}</Divider>
               <CardContent>
                 <Box sx={{
                   '& .MuiTextField-root': { backgroundColor: 'inherit!important' },

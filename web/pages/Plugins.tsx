@@ -7,6 +7,7 @@ import { Box, Toolbar, Container, Card, CardHeader, Divider, TableContainer, Tab
 import { action } from '../toast'
 import ReactECharts from 'echarts-for-react'
 import dialog from '../dialog'
+import lang from '../../languages'
 
 interface Plugin {
   name: string
@@ -80,18 +81,18 @@ const Plugins: React.FC = () => {
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Card>
-            <CardHeader title='插件列表' />
+            <CardHeader title={lang.plugins.title} />
             <Divider />
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ paddingRight: 0 }}>启用</TableCell>
-                    <TableCell>插件名</TableCell>
-                    <TableCell>版本</TableCell>
-                    <TableCell>作者</TableCell>
-                    <TableCell>简介</TableCell>
-                    <TableCell align='right'>操作</TableCell>
+                    <TableCell sx={{ paddingRight: 0 }}>{lang.plugins.enable}</TableCell>
+                    <TableCell>{lang.plugins.name}</TableCell>
+                    <TableCell>{lang.plugins.version}</TableCell>
+                    <TableCell>{lang.plugins.author}</TableCell>
+                    <TableCell>{lang.plugins.description}</TableCell>
+                    <TableCell align='right'>{lang.operations}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -115,20 +116,20 @@ const Plugins: React.FC = () => {
                       <TableCell>{it.author}</TableCell>
                       <TableCell>{it.description}</TableCell>
                       <TableCell align='right' sx={{ whiteSpace: 'nowrap' }}>
-                        <Tooltip title={disabledForever ? '启用插件' : '永久禁用'}><span>
+                        <Tooltip title={lang.plugins[disabledForever ? 'enablePlugin' : 'disableForever']}><span>
                           <IconButton
                             disabled={it.enabled || (it.loaded && !canLoadPlugin)}
                             onClick={() => plugin.emit('plugins:disableForever', it.file, action)}
                           >{disabledForever ? <LockOpen /> : <Lock />}</IconButton>
                         </span></Tooltip>
-                        {disabledForever && <Tooltip title='删除插件'><span>
+                        {disabledForever && <Tooltip title={lang.plugins.delete}><span>
                             <IconButton
                               color='error'
                               disabled={canBeDisabled}
                               onClick={() => dialog({
                                 okButton: { color: 'error' },
-                                content: <>确认要删除插件 <span className='bold'>{it.file.replace(/\.disabled$/, '')}</span> 吗?&nbsp;
-                                  <span className='bold' style={{ color: theme.palette.error.main }}>(不可撤销!)</span></>
+                                content: <>{lang.plugins.confirmDelete(<span className='bold'>{it.file.replace(/\.disabled$/, '')}</span>)}&nbsp;
+                                  <span className='bold' style={{ color: theme.palette.error.main }}>({lang.unrecoverable})</span></>
                               }).then(res => res && plugin.emit('plugins:delete', it.file, action))}
                             ><DeleteForever /></IconButton>
                           </span></Tooltip>}
@@ -142,11 +143,11 @@ const Plugins: React.FC = () => {
         </Grid>
         <Grid item xs={12}>
           <Card>
-            <CardHeader title='依赖关系' />
+            <CardHeader title={lang.plugins.dependency} />
             <Divider />
             <ReactECharts style={{ marginTop: theme.spacing(1), height: 450 }} theme={theme.palette.mode === 'dark' ? 'dark' : undefined} option={{
               backgroundColor: 'rgba(0, 0, 0, 0)',
-              legend: { data: ['已安装', '未启用', '可选插件', '缺少的前置'] },
+              legend: { data: lang.plugins.categories },
               series: [
                 {
                   edgeSymbol: ['none', 'arrow'],
@@ -155,8 +156,7 @@ const Plugins: React.FC = () => {
                   layout: 'force',
                   data,
                   links,
-                  categories: [{ name: '已安装', base: '已安装' }, { name: '未启用', base: '未启用' }, { name: '可选插件', base: '可选插件' },
-                    { name: '缺少的前置', base: '缺少的前置' }],
+                  categories: lang.plugins.categories.map(name => ({ name, base: name })),
                   roam: true,
                   label: {
                     show: true,

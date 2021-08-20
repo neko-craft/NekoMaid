@@ -15,7 +15,7 @@ import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContaine
 import { FXAASkinViewer, createOrbitControls, WalkingAnimation, RotatingAnimation } from 'skinview3d'
 import { useTheme } from '@material-ui/core/styles'
 import { useParams, useHistory } from 'react-router-dom'
-import { minecraft } from '../../languages'
+import lang, { minecraft } from '../../languages'
 
 interface IPlayerInfo {
   id: string
@@ -36,25 +36,18 @@ interface IPlayerInfo {
 export type ActionComponent = React.ComponentType<{ onClose: () => void, player: PlayerData | null }>
 export const actions: ActionComponent[] = []
 
-const banPlayer = (name: string, plugin: Plugin, refresh: () => void) => void dialog(<>确认要封禁 <span className='bold'>{name}</span> 吗?</>, '封禁原因')
-  .then(it => {
-    if (it == null) return
-    plugin.emit('playerList:ban', name, it)
+const banPlayer = (name: string, plugin: Plugin, refresh: () => void, isBan: boolean) => {
+  const span = <span className='bold'>{name}</span>
+  (isBan ? dialog(lang.playerList.confirmBan(span), lang.reason) : dialog(lang.playerList.confirmPardon(span))).then(it => {
+    if (it == null || it === false) return
+    plugin.emit('playerList:' + (isBan ? 'ban' : 'pardon'), name, it)
     refresh()
     success()
   })
-
-const pardonPlayer = (name: string, plugin: Plugin, refresh: () => void) => void dialog(<>确认要解除 <span className='bold'>{name}</span> 的封禁吗?</>)
-  .then(it => {
-    if (!it) return
-    plugin.emit('playerList:pardon', name)
-    refresh()
-    success()
-  })
+}
 
 const whitelist = (name: string, plugin: Plugin, refresh: () => void, isAdd: boolean) => {
-  const span = <span className='bold'>{name}</span>
-  dialog(isAdd ? <>确认要将玩家 {span} 添加到白名单中吗?</> : <>确认要将玩家 {span} 从白名单中移出吗?</>).then(it => {
+  dialog(lang.playerList[isAdd ? 'confirmAddWhitelist' : 'confirmRemoveWhitelist'](<span className='bold'>{name}</span>)).then(it => {
     if (!it) return
     plugin.emit(`playerList:${isAdd ? 'add' : 'remove'}Whitelist`, name)
     refresh()
@@ -81,7 +74,7 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
       <List
         sx={{ width: '100%' }}
         component='nav'
-        subheader={<ListSubheader component='div' sx={{ backgroundColor: 'inherit' }}>详细信息</ListSubheader>}
+        subheader={<ListSubheader component='div' sx={{ backgroundColor: 'inherit' }}>{lang.playerList.details}</ListSubheader>}
       >
         <ListItem>
           <ListItemIcon><AssignmentInd /></ListItemIcon>
@@ -92,19 +85,19 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
         </ListItem>
         {!info.hasPlayedBefore && <ListItem>
           <ListItemIcon><ErrorOutline color='error' /></ListItemIcon>
-          <ListItemText primary='该玩家还从未进入过服务器!' />
+          <ListItemText primary={lang.playerList.hasNotPlayed} />
         </ListItem>}
         {info.ban != null && <ListItem>
           <ListItemIcon><Block color='error' /></ListItemIcon>
-          <ListItemText primary={'已被封禁' + (info.ban ? ': ' + info.ban : '')} />
+          <ListItemText primary={lang.playerList.banned + (info.ban ? ': ' + info.ban : '')} />
         </ListItem>}
         {info.whitelisted && <ListItem>
           <ListItemIcon><Star color='warning' /></ListItemIcon>
-          <ListItemText primary='白名单成员' />
+          <ListItemText primary={lang.playerList.whitelisted} />
         </ListItem>}
         {info.isOP && <ListItem>
           <ListItemIcon><Security color='primary' /></ListItemIcon>
-          <ListItemText primary='管理员' />
+          <ListItemText primary={lang.playerList.op} />
           </ListItem>}
         {info.hasPlayedBefore && <>
             <ListItemButton onClick={() => setOpen(!open)}>
@@ -116,13 +109,13 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
             <List component='div' dense disablePadding>
               {[
                 minecraft['stat.minecraft.play_time'] + ': ' + dayjs.duration(info.playTime / 20, 'seconds').humanize(),
-                '首次登录: ' + dayjs(info.firstPlay).fromNow(),
-                '最后登录: ' + dayjs(info.lastOnline).fromNow(),
+                lang.playerList.firstPlay + ': ' + dayjs(info.firstPlay).fromNow(),
+                lang.playerList.lastPlay + ': ' + dayjs(info.lastOnline).fromNow(),
                 minecraft['stat.minecraft.leave_game'] + ': ' + info.quit,
                 minecraft['stat.minecraft.deaths'] + ': ' + info.death,
                 minecraft['stat.minecraft.player_kills'] + ': ' + info.playerKill,
                 minecraft['stat.minecraft.mob_kills'] + ': ' + info.entityKill,
-                'TNT放置次数: ' + info.tnt
+                lang.playerList.tnt + ': ' + info.tnt
               ].map((it, i) => <ListItem key={i} sx={{ pl: 4 }}>
                 <ListItemIcon>{icons[i]}</ListItemIcon>
                 <ListItemText primary={it} />
@@ -132,13 +125,13 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
         </>}
       </List>
       <CardActions disableSpacing sx={{ justifyContent: 'flex-end' }}>
-        <Tooltip title={info.whitelisted ? '点击可将该玩家移出白名单' : '点击可将该玩家添加到白名单'}>
+        <Tooltip title={lang.playerList[info.whitelisted ? 'clickToRemoveWhitelist' : 'clickToAddWhitelist']}>
           <IconButton onClick={() => whitelist(name, plugin, refresh, !info.whitelisted)}>
             {info.whitelisted ? <Star color='warning' /> : <StarBorder />}
           </IconButton>
         </Tooltip>
-        <Tooltip title={info.ban == null ? '点击可封禁该玩家' : '点击可解除该玩家的封禁'}>
-          <IconButton onClick={() => info.ban == null ? banPlayer(name, plugin, refresh) : pardonPlayer(name, plugin, refresh)}>
+        <Tooltip title={lang.playerList[info.ban == null ? 'clickToBan' : 'clickToPardon']}>
+          <IconButton onClick={() => banPlayer(name, plugin, refresh, info.ban == null)}>
             <Block color={info.ban == null ? undefined : 'error'} />
           </IconButton>
         </Tooltip>
@@ -176,7 +169,7 @@ const PlayerActions: React.FC = () => {
   const color = theme.palette.mode === 'dark' ? 255 : 0
 
   return <Card>
-    <CardHeader title={name ? name + ' 的详细信息' : '请选择一名玩家'} />
+    <CardHeader title={name ? lang.playerList.whosDetails(name) : lang.openInv.notSelected} />
     <Divider />
     <Box sx={{ position: 'relative', '& canvas': { width: '100%!important' } }}>
       {name
@@ -221,7 +214,7 @@ const Players: React.FC = () => {
 
   return <Card>
     <CardHeader
-      title='玩家列表'
+      title={lang.playerList.title}
       action={
         <ToggleButtonGroup
           size='small'
@@ -236,18 +229,19 @@ const Players: React.FC = () => {
         >
           <ToggleButton disabled={loading} value={1}><Star /></ToggleButton>
           <ToggleButton disabled={loading} value={2}><Block /></ToggleButton>
-          <ToggleButton disabled={loading} value={3} onClick={() => state !== 3 && dialog('请输入你要查找的游戏名:', '游戏名').then(filter => {
-            if (filter == null) return
-            his.push('/NekoMaid/playerList/' + filter)
-            setState(3)
-            setLoading(true)
-            plugin.emit('playerList:fetchPage', (it: any) => {
-              if (it.players == null) it.players = []
-              setPage(0)
-              setData(it)
-              setLoading(false)
-            }, page, 0, filter)
-          })}><Search /></ToggleButton>
+          <ToggleButton disabled={loading} value={3} onClick={() => state !== 3 && dialog(lang.playerList.nameToSearch, lang.playerList.username)
+            .then(filter => {
+              if (filter == null) return
+              his.push('/NekoMaid/playerList/' + filter)
+              setState(3)
+              setLoading(true)
+              plugin.emit('playerList:fetchPage', (it: any) => {
+                if (it.players == null) it.players = []
+                setPage(0)
+                setData(it)
+                setLoading(false)
+              }, page, 0, filter)
+            })}><Search /></ToggleButton>
         </ToggleButtonGroup>
       }
     />
@@ -259,10 +253,10 @@ const Players: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell padding='checkbox' />
-              <TableCell>游戏名</TableCell>
-              <TableCell align='right'>在线时间</TableCell>
-              <TableCell align='right'>最后登录</TableCell>
-              <TableCell align='right'>操作</TableCell>
+              <TableCell>{lang.playerList.username}</TableCell>
+              <TableCell align='right'>{minecraft['stat.minecraft.play_time']}</TableCell>
+              <TableCell align='right'>{lang.playerList.lastPlay}</TableCell>
+              <TableCell align='right'>{lang.operations}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -274,13 +268,13 @@ const Players: React.FC = () => {
               <TableCell align='right'>{dayjs.duration(it.playTime / 20, 'seconds').humanize()}</TableCell>
               <TableCell align='right'>{dayjs(it.lastOnline).fromNow()}</TableCell>
               <TableCell align='right'>
-                {(state === 1 || hasWhitelist) && <Tooltip title={it.whitelisted ? '点击可将该玩家移出白名单' : '点击可将该玩家添加到白名单'}>
+                {(state === 1 || hasWhitelist) && <Tooltip title={lang.playerList[it.whitelisted ? 'clickToRemoveWhitelist' : 'clickToAddWhitelist']}>
                   <IconButton onClick={() => whitelist(it.name, plugin, refresh, !it.whitelisted)}>
                     {it.whitelisted ? <Star color='warning' /> : <StarBorder />}
                   </IconButton>
                 </Tooltip>}
-                <Tooltip title={it.ban == null ? '点击可封禁该玩家' : '已被封禁: ' + it.ban}>
-                  <IconButton onClick={() => it.ban == null ? banPlayer(it.name, plugin, refresh) : pardonPlayer(it.name, plugin, refresh)}>
+                <Tooltip title={it.ban == null ? lang.playerList.clickToBan : lang.playerList.banned + ': ' + it.ban}>
+                  <IconButton onClick={() => banPlayer(it.name, plugin, refresh, it.ban == null)}>
                     <Block color={it.ban == null ? undefined : 'error'} />
                   </IconButton>
                 </Tooltip>

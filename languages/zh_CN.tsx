@@ -16,6 +16,9 @@ export default {
   unknown: '未知',
   more: '更多...',
   refresh: '刷新',
+  reason: '理由',
+  operations: '操作',
+  unrecoverable: '不可恢复!',
   itemEditor: {
     title: '物品编辑器',
     itemType: '物品类型',
@@ -44,6 +47,7 @@ export default {
     second: '秒'
   },
   config: {
+    title: '设置',
     serverConfig: '服务端设置',
     maxPlayers: '最大玩家数',
     spawnRadius: '出生点保护半径',
@@ -54,6 +58,7 @@ export default {
     dark: '暗色'
   },
   console: {
+    title: '终端',
     fatal: '严重',
     error: '错误',
     warn: '警告',
@@ -69,7 +74,6 @@ export default {
   dashboard: {
     title: '概览',
     onlinePlayers: '在线玩家',
-    reason: '理由',
     confirmKick: (name: any) => <>确认要将 {name} 踢出游戏吗?</>,
     players: '玩家数',
     chunks: '区块数',
@@ -85,6 +89,7 @@ export default {
     behinds: (version: number) => `当前已落后 ${version} 个版本!`
   },
   files: {
+    title: '文件',
     wrongName: '文件名不合法!',
     exists: '文件已存在!',
     compress: '压缩文件',
@@ -116,7 +121,58 @@ export default {
     notSelected: '请先在左侧选择要编辑的文件',
     filesList: '文件列表',
     uploadTooBig: '文件超过128MB!',
-    confirmDelete: (file: any) => <>确认要删除 {file} 吗?</>,
-    unrecoverable: '不可恢复!'
+    confirmDelete: (file: any) => <>确认要删除 {file} 吗?</>
+  },
+  openInv: {
+    title: '背包',
+    notSelected: '请先选择一名玩家!',
+    whosBackpack: (name: string) => name + '的背包',
+    whosEnderChest: (name: string) => name + '的末影箱'
+  },
+  playerList: {
+    title: '玩家列表',
+    details: '详细信息',
+    hasNotPlayed: '该玩家还从未进入过服务器!',
+    banned: '已被封禁',
+    whitelisted: '白名单成员',
+    op: '管理员',
+    firstPlay: '首次登录',
+    lastPlay: '首次登录',
+    tnt: 'TNT放置次数',
+    username: '游戏名',
+    nameToSearch: '请输入你要查找的游戏名:',
+    clickToAddWhitelist: '点击可将该玩家移出白名单',
+    clickToRemoveWhitelist: '点击可将该玩家移出白名单',
+    clickToBan: '点击可封禁该玩家',
+    clickToPardon: '点击可解除该玩家的封禁',
+    whosDetails: (name: string) => name + ' 的详细信息',
+    confirmBan: (name: any) => <>确认要封禁 {name} 吗?</>,
+    confirmPardon: (name: any) => <>确认要解除 {name} 的封禁吗?</>,
+    confirmAddWhitelist: (name: any) => <>确认要将玩家 {name} 添加到白名单中吗?</>,
+    confirmRemoveWhitelist: (name: any) => <>确认要将玩家 {name} 从白名单中移出吗?</>
+  },
+  plugins: {
+    title: '插件',
+    enable: '启用',
+    name: '插件名',
+    version: '版本',
+    author: '作者',
+    description: '简介',
+    enablePlugin: '启用插件',
+    disableForever: '永久禁用',
+    delete: '删除插件',
+    dependency: '依赖关系',
+    categories: ['已安装', '未启用', '可选插件', '缺少的前置'],
+    confirmDelete: (name: any) => <>确认要删除插件 {name} 吗?</>
+  },
+  scheduler: {
+    title: '任务',
+    newTask: '新任务',
+    confirmDelete: '确认要删除这个任务吗?',
+    editor: '任务编辑',
+    content: '命令或文本信息',
+    notSelected: '请先在左侧选择一个任务!',
+    timer: '定时器',
+    name: '任务名'
   }
 }

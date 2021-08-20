@@ -307,7 +307,7 @@ const ItemEditor: React.FC = () => {
             }}
           />
           <FormControlLabel
-            label={minecraft['container.enchant']}
+            label={minecraft['item.unbreakable']}
             disabled={isAir}
             checked={nbt.tag?.Unbreakable?.value === 1}
             control={<Checkbox

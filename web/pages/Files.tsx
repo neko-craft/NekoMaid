@@ -324,7 +324,7 @@ const Files: React.FC = () => {
                   onClick={() => dialog({
                     okButton: { color: 'error' },
                     content: <>{lang.files.confirmDelete(<span className='bold'>{curPath}</span>)}&nbsp;
-                      <span className='bold' style={{ color: theme.palette.error.main }}>({lang.files.unrecoverable})</span></>
+                      <span className='bold' style={{ color: theme.palette.error.main }}>({lang.unrecoverable})</span></>
                   }).then(it => it && plugin.emit('files:update', (res: boolean) => {
                     action(res)
                     if (!res) return

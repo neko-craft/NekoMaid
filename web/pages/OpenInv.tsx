@@ -9,6 +9,7 @@ import { useHistory, useParams } from 'react-router-dom'
 import { cardActionStyles } from '../theme'
 import ItemViewer, { Item, InvType } from '../components/ItemViewer'
 import Empty from '../components/Empty'
+import lang, { minecraft } from '../../languages'
 
 export const playerAction: ActionComponent = ({ onClose, player }) => {
   const his = useHistory()
@@ -17,7 +18,7 @@ export const playerAction: ActionComponent = ({ onClose, player }) => {
     onClose()
     if (player) his.push('/NekoMaid/openInv/' + player.name)
   }}>
-    <ListItemIcon><Backpack /></ListItemIcon>背包/末影箱
+    <ListItemIcon><Backpack /></ListItemIcon>{lang.openInv.title}
   </MenuItem>
 }
 
@@ -50,7 +51,7 @@ const OpenInv: React.FC = () => {
           player, i, JSON.stringify(item), obj?.type === type && obj?.player === player ? obj.solt : -1)}
         onEdit={item => item !== false && plugin.emit('openInv:set', updateWithAction, type, player, i, item && JSON.stringify(item), -1)}
       />{!((i + 1) % 9) && <br />}</React.Fragment>)
-      : <Empty title='请先选择一名玩家!' />
+      : <Empty title={lang.openInv.notSelected} />
   }
 
   return <Box sx={{ minHeight: '100%', py: 3 }}>
@@ -60,7 +61,7 @@ const OpenInv: React.FC = () => {
         <Grid item lg={6} md={12} xl={6} xs={12}>
           <Card>
             <CardHeader
-              title={(player || '玩家') + '的背包'}
+              title={lang.openInv.whosBackpack(player || minecraft['entity.minecraft.player'])}
               sx={{ position: 'relative' }}
               action={<IconButton
                 size='small'
@@ -79,7 +80,7 @@ const OpenInv: React.FC = () => {
         <Grid item lg={6} md={12} xl={6} xs={12}>
           <Card>
             <CardHeader
-              title={(player || '玩家') + '的末影箱'}
+              title={lang.openInv.whosEnderChest(player || minecraft['entity.minecraft.player'])}
               sx={{ position: 'relative' }}
               action={<IconButton
                 size='small'
