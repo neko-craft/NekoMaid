@@ -8,7 +8,8 @@ import 'codemirror/mode/properties/properties'
 import 'codemirror/mode/javascript/javascript'
 
 import React, { useEffect, useState, useRef } from 'react'
-import toast, { action, failed } from '../toast'
+import toast, { action, failed, success } from '../toast'
+import lang, { minecraft } from '../../languages'
 import * as icons from '../../icons.json'
 import { styled, alpha, useTheme } from '@material-ui/core/styles'
 import { TreeView, TreeItem } from '@material-ui/lab'
@@ -23,6 +24,7 @@ import { useHistory, useLocation } from 'react-router-dom'
 import { usePlugin, useDrawerWidth } from '../Context'
 import { UnControlled } from 'react-codemirror2'
 import { address } from '../url'
+import { cardActionStyles } from '../theme'
 import validFilename from 'valid-filename'
 import Empty from '../components/Empty'
 import Plugin from '../Plugin'
@@ -73,26 +75,26 @@ const CompressDialog: React.FC<{ file: string | null, dirs: Record<string, boole
       setValue(file || 'server')
     }, [file])
     let error: string | undefined
-    if (!validFilename(value)) error = '文件名不合法!'
-    else if (((path || '/') + value + '.' + ext) in dirs) error = '文件已存在!'
+    if (!validFilename(value)) error = lang.files.wrongName
+    else if (((path || '/') + value + '.' + ext) in dirs) error = lang.files.exists
     return <Dialog open={file != null} onClose={onClose}>
-      <DialogTitle>压缩文件</DialogTitle>
+      <DialogTitle>{lang.files.compress}</DialogTitle>
       <DialogContent>
-        <DialogContentText>请输入压缩后的文件名</DialogContentText>
+        <DialogContentText>{lang.files.compressName}</DialogContentText>
         <TextField value={value} variant='standard' error={!!error} helperText={error} onChange={e => setValue(e.target.value)} />
         <Select variant='standard' value={ext} onChange={e => setExt(e.target.value)}>
           {compressFileExt.map(it => <MenuItem key={it} value={it}>.{it}</MenuItem>)}
         </Select>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>取消</Button>
+        <Button onClick={onClose}>{minecraft['gui.cancel']}</Button>
         <Button disabled={!!error} onClick={() => {
           onClose()
           plugin.emit('files:compress', (res: boolean) => {
             action(res)
             refresh()
           }, file, value, ext)
-        }}>确认</Button>
+        }}>{minecraft['gui.ok']}</Button>
       </DialogActions>
     </Dialog>
   }
@@ -163,15 +165,15 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
       plugin.emit('files:content', (data: number | string | null) => {
         loading['!#LOADING'] = false
         switch (data) {
-          case null: return setError('文件格式不被支持!')
-          case 0: return setError('文件不存在!')
+          case null: return setError(lang.files.unsupportFormat)
+          case 0: return setError(lang.files.notExists)
           case 1:
             setIsNewFile(true)
             setText('')
             setNotSave(true)
             break
           case 2: return his.replace('./')
-          case 3: return setError('文件太大了!')
+          case 3: return setError(lang.files.tooBig)
           default:
             if (typeof data !== 'string') return
             setText(data)
@@ -182,13 +184,18 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
     }, [path])
     return <Card sx={{ position: 'relative' }}>
       <CardHeader
-        title={<span style={{ fontWeight: 'normal' }}>编辑器{path && ': ' + path}{path && isNewFile && <span className='bold'> (新文件)</span>}</span>}
+        title={<span style={{ fontWeight: 'normal' }}>
+          {lang.files.editor}{path && ': ' + path}{path && isNewFile && <span className='bold'> ({lang.files.newFile})</span>}</span>}
         sx={{ position: 'relative' }}
         action={!error && path && text != null
-          ? <Box sx={{ position: 'absolute', right: theme.spacing(1), top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center' }}>
-            <Tooltip title='撤销'><span><IconButton size='small' disabled={notUndo} onClick={() => doc?.undo()}><Undo /></IconButton></span></Tooltip>
-            <Tooltip title='重做'><span><IconButton size='small' disabled={notRedo} onClick={() => doc?.redo()}><Redo /></IconButton></span></Tooltip>
-            <Tooltip title='保存'>{saving
+          ? <Box sx={cardActionStyles}>
+            <Tooltip title={lang.files.undo}>
+              <span><IconButton size='small' disabled={notUndo} onClick={() => doc?.undo()}><Undo /></IconButton></span>
+            </Tooltip>
+            <Tooltip title={lang.files.undo}>
+              <span><IconButton size='small' disabled={notRedo} onClick={() => doc?.redo()}><Redo /></IconButton></span>
+            </Tooltip>
+            <Tooltip title={lang.files.save}>{saving
               ? <CircularProgress size={24} sx={{ margin: '5px' }} />
               : <span><IconButton
               size='small'
@@ -199,13 +206,13 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
                 const data = doc.getValue(text?.includes('\r\n') ? '\r\n' : '\n')
                 plugin.emit('files:update', (res: boolean) => {
                   setSaving(false)
-                  if (!res) toast('保存失败!', 'error')
+                  if (!res) failed()
                   lnText.current = data.replace(/\r/g, '')
                   setText(data)
                   setNotSave(true)
                   if (isNewFile) {
                     setIsNewFile(false)
-                    toast('保存成功!', 'success')
+                    success()
                     refresh()
                   }
                 }, path, data)
@@ -215,7 +222,7 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
           : undefined}
       />
       <Divider />
-      {(error || !path) && <CardContent><Empty title={error || '请先在左侧选择要编辑的文件'} /></CardContent>}
+      {(error || !path) && <CardContent><Empty title={error || lang.files.notSelected} /></CardContent>}
       <div style={{ position: text == null ? 'absolute' : undefined }}>
         <UnControlled
           ref={editorRef}
@@ -237,6 +244,17 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
       </div>
     </Card>
   }
+
+const fileNameDialog = (title: string, dirPath: string) => dialog({
+  title,
+  content: lang.files.dialogContent,
+  input: {
+    error: true,
+    helperText: lang.files.invalidName,
+    validator: validFilename,
+    InputProps: { startAdornment: <InputAdornment position='start'>{dirPath}/</InputAdornment> }
+  }
+})
 
 const anchorOrigin: any = {
   vertical: 'top',
@@ -295,54 +313,37 @@ const Files: React.FC = () => {
         <Grid item lg={4} md={12} xl={3} xs={12}>
           <Card sx={{ minHeight: 400 }}>
             <CardHeader
-              title='文件列表'
+              title={lang.files.filesList}
               sx={{ position: 'relative' }}
               action={<Box sx={{ position: 'absolute', right: theme.spacing(1), top: '50%', transform: 'translateY(-50%)' }}
             >
-              <Tooltip title='删除'><span>
+              <Tooltip title={lang.files.delete}><span>
                 <IconButton
                   disabled={!curPath}
                   size='small'
                   onClick={() => dialog({
                     okButton: { color: 'error' },
-                    content: <>确认要删除 <span className='bold'>{curPath}</span> 吗?&nbsp;
-                      <span className='bold' style={{ color: theme.palette.error.main }}>(不可撤销!)</span></>
+                    content: <>{lang.files.confirmDelete(<span className='bold'>{curPath}</span>)}&nbsp;
+                      <span className='bold' style={{ color: theme.palette.error.main }}>({lang.files.unrecoverable})</span></>
                   }).then(it => it && plugin.emit('files:update', (res: boolean) => {
-                    if (!res) return toast('删除失败!', 'error')
+                    action(res)
+                    if (!res) return
                     refresh()
-                    toast('删除成功!', 'success')
                     if (loc.pathname.replace(/^\/NekoMaid\/files\/?/, '') === curPath) his.push('/NekoMaid/files')
                   }, curPath))}
                 ><DeleteForever /></IconButton>
               </span></Tooltip>
-              <Tooltip title='新建文件'>
-                <IconButton size='small' onClick={() => dialog({
-                  title: '新建文件',
-                  content: '请输入您要创建的文件名:',
-                  input: {
-                    error: true,
-                    helperText: '文件名不合法!',
-                    validator: validFilename,
-                    InputProps: { startAdornment: <InputAdornment position='start'>{dirPath}/</InputAdornment> }
-                  }
-                }).then(it => it != null && his.push(`/NekoMaid/files/${dirPath ? dirPath + '/' : ''}${it}`))}>
+              <Tooltip title={lang.files.createFile}>
+                <IconButton size='small' onClick={() => fileNameDialog(lang.files.createFile, curPath)
+                  .then(it => it != null && his.push(`/NekoMaid/files/${dirPath ? dirPath + '/' : ''}${it}`))}>
               <Description /></IconButton></Tooltip>
-              <Tooltip title='新建目录'>
-                <IconButton size='small' onClick={() => dialog({
-                  title: '创建文件夹',
-                  content: '请输入您要创建的文件夹名:',
-                  input: {
-                    error: true,
-                    helperText: '文件名不合法!',
-                    validator: validFilename,
-                    InputProps: { startAdornment: <InputAdornment position='start'>{dirPath}/</InputAdornment> }
-                  }
-                }).then(it => it != null && plugin.emit('files:createDirectory', (res: boolean) => {
-                  if (!res) return toast('创建失败!', 'error')
-                  toast('创建成功!', 'success')
-                  refresh()
-                }, dirPath + '/' + it))}><CreateNewFolder /></IconButton></Tooltip>
-              <Tooltip title='更多...'>
+              <Tooltip title={lang.files.createFolder}>
+                <IconButton size='small' onClick={() => fileNameDialog(lang.files.createFolder, curPath)
+                  .then(it => it != null && plugin.emit('files:createDirectory', (res: boolean) => {
+                    action(res)
+                    if (res) refresh()
+                  }, dirPath + '/' + it))}><CreateNewFolder /></IconButton></Tooltip>
+              <Tooltip title={lang.more}>
                 <IconButton size='small' onClick={e => setAnchorEl(anchorEl ? null : e.currentTarget)}><MoreHoriz /></IconButton>
               </Tooltip>
             </Box>} />
@@ -393,62 +394,53 @@ const Files: React.FC = () => {
       <MenuItem onClick={() => {
         refresh()
         setAnchorEl(null)
-      }}><ListItemIcon><Refresh /></ListItemIcon>刷新</MenuItem>
+      }}><ListItemIcon><Refresh /></ListItemIcon>{lang.refresh}</MenuItem>
       <MenuItem disabled={!curPath} onClick={() => {
         setAnchorEl(null)
-        dialog({
-          title: '重命名',
-          content: '请输入您想要的新文件名:',
-          input: {
-            error: true,
-            helperText: '文件名不合法!',
-            validator: validFilename,
-            InputProps: { startAdornment: <InputAdornment position='start'>{dirPath}/</InputAdornment> }
-          }
-        }).then(it => it != null && plugin.emit('files:rename', (res: boolean) => {
+        fileNameDialog(lang.files.rename, curPath).then(it => it != null && plugin.emit('files:rename', (res: boolean) => {
           action(res)
           if (res) refresh()
         }, curPath, dirPath + '/' + it))
-      }}><ListItemIcon><DriveFileRenameOutline /></ListItemIcon>重命名</MenuItem>
+      }}><ListItemIcon><DriveFileRenameOutline /></ListItemIcon>{lang.files.rename}</MenuItem>
       <MenuItem disabled={!curPath} onClick={() => {
         setAnchorEl(null)
         setCopyPath(curPath)
       }}>
-        <ListItemIcon><FileCopy /></ListItemIcon>复制
+        <ListItemIcon><FileCopy /></ListItemIcon>{lang.files.copy}
       </MenuItem>
       <MenuItem disabled={!copyPath} onClick={() => {
         setAnchorEl(null)
-        toast('粘贴中...')
+        toast(lang.files.pasting)
         plugin.emit('files:copy', (res: boolean) => {
           action(res)
           refresh()
         }, copyPath, dirPath)
       }}>
-        <ListItemIcon><ContentPaste /></ListItemIcon>粘贴
+        <ListItemIcon><ContentPaste /></ListItemIcon>{lang.files.paste}
       </MenuItem>
       <MenuItem disabled={progress !== -1} component='label' htmlFor='NekoMaid-files-upload-input' onClick={() => setAnchorEl(null)}>
-        <ListItemIcon><Upload /></ListItemIcon>{progress === -1 ? '上传文件' : `上传中... (${progress.toFixed(2)}%)`}
+        <ListItemIcon><Upload /></ListItemIcon>{progress === -1 ? lang.files.upload : `${lang.files.uploading} (${progress.toFixed(2)}%)`}
       </MenuItem>
       <MenuItem disabled={isDir} onClick={() => {
         setAnchorEl(null)
-        toast('下载中...')
+        toast(lang.files.downloading)
         plugin.emit('files:download', (res: ArrayBuffer | null) => {
           if (res) window.open(address! + 'Download/' + res, '_blank')
           else failed()
         }, curPath)
-      }}><ListItemIcon><Download /></ListItemIcon>下载文件</MenuItem>
+      }}><ListItemIcon><Download /></ListItemIcon>{lang.files.download}</MenuItem>
       <MenuItem onClick={() => {
         setAnchorEl(null)
         setCompressFile(curPath)
-      }}><ListItemIcon><Inbox /></ListItemIcon>压缩文件</MenuItem>
+      }}><ListItemIcon><Inbox /></ListItemIcon>{lang.files.compress}</MenuItem>
       <MenuItem onClick={() => {
         setAnchorEl(null)
-        toast('操作进行中...')
+        toast(lang.files.uncompressing)
         plugin.emit('files:compress', (res: boolean) => {
           action(res)
           refresh()
         }, curPath)
-      }}><ListItemIcon><Outbox /></ListItemIcon>解压文件</MenuItem>
+      }}><ListItemIcon><Outbox /></ListItemIcon>{lang.files.uncompress}</MenuItem>
     </Menu>
     <Input id='NekoMaid-files-upload-input' type='file' sx={{ display: 'none' }} onChange={e => {
       const elm = e.target as HTMLInputElement
@@ -456,12 +448,12 @@ const Files: React.FC = () => {
       elm.value = ''
       if (!file) return
       const size = file.size
-      if (size > 128 * 1024 * 1024) return failed('文件超过128MB!')
-      toast('上传中...')
+      if (size > 128 * 1024 * 1024) return failed(lang.files.uploadTooBig)
+      toast(lang.files.uploading)
       const name = dirPath + '/' + file.name
-      if (dirs.current[name] != null) return failed('文件已存在!')
+      if (dirs.current[name] != null) return failed(lang.files.exists)
       plugin.emit('files:upload', (res: string | null) => {
-        if (!res) return failed('文件已存在!')
+        if (!res) return failed(lang.files.exists)
         const formdata = new FormData()
         formdata.append('file', file)
         const xhr = new XMLHttpRequest()

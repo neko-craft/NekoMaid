@@ -1,9 +1,6 @@
 import zhCN from './zh_CN'
 
-export interface Language {
-  minecraft: Record<string, string>
-  name: string
-}
+export type Language = typeof zhCN
 
 export const currentLanguage: string = 'zh_CN'
 export const languages: Record<string, Language> = { zhCN }

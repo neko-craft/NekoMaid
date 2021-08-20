@@ -88,6 +88,6 @@ jobs:
         uses: crazy-max/ghaction-github-pages@v2
         with:
           build_dir: dist
-          fqdn: maid.neko-craft.com
+          fqdn: github.maid.neko-craft.com
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

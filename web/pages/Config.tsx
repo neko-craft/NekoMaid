@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import dayjs from 'dayjs'
 import dialog from '../dialog'
+import lang from '../../languages'
 import * as colors from '@material-ui/core/colors'
 import { success } from '../toast'
 import { configs } from '../Plugin'
@@ -13,7 +14,7 @@ import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListIte
 import type { ServerRecord } from '../App'
 
 configs.push({
-  title: '服务端设置',
+  title: lang.config.serverConfig,
   component: () => {
     const plugin = usePlugin()
     const globalData = useGlobalData()
@@ -26,11 +27,11 @@ configs.push({
     }
     const createEditButtom = (field: string) => <IconButton
       onClick={() => dialog({
-        content: '请输入要修改的值',
+        content: lang.inputValue,
         input: {
           error: true,
           type: 'number',
-          helperText: '值不合法!',
+          helperText: lang.invalidValue,
           validator: (it: string) => /^\d+$/.test(it) && +it >= 0
         }
       }).then(res => res != null && setValue(field, parseInt(res as any)))}
@@ -39,19 +40,19 @@ configs.push({
       <ListItem secondaryAction={globalData.canSetMaxPlayers
         ? createEditButtom('maxPlayers')
         : undefined}>
-        <ListItemText primary={'最大玩家数: ' + globalData.maxPlayers} />
+        <ListItemText primary={lang.config.maxPlayers + ': ' + globalData.maxPlayers} />
       </ListItem>
       <ListItem secondaryAction={createEditButtom('spawnRadius')}>
-        <ListItemText primary={'出生点保护半径: ' + globalData.spawnRadius} />
+        <ListItemText primary={lang.config.spawnRadius + ': ' + globalData.spawnRadius} />
       </ListItem>
       <ListItem secondaryAction={<Switch checked={globalData.hasWhitelist} onChange={e => setValue('hasWhitelist', e.target.checked)} />}>
-        <ListItemText primary='白名单' />
+        <ListItemText primary={lang.config.whitelist} />
       </ListItem>
     </List>
   }
 },
 {
-  title: '连接记录',
+  title: lang.history,
   component: () => {
     const [cur, update] = useState(0)
     const list: ServerRecord[] = JSON.parse(localStorage.getItem('NekoMaid:servers') || '[]')
@@ -81,7 +82,7 @@ configs.push({
   }
 },
 {
-  title: '主题设置',
+  title: lang.config.theme,
   component: () => {
     const color = localStorage.getItem('NekoMaid:color') || 'blue'
     return <CardContent sx={{ textAlign: 'center' }}>
@@ -90,9 +91,9 @@ configs.push({
           localStorage.setItem('NekoMaid:colorMode', it)
           location.reload()
         }}>
-          <ToggleButton value='light'><Brightness7 /> 亮色</ToggleButton>
-          <ToggleButton value=''><SettingsBrightness /> 随系统</ToggleButton>
-          <ToggleButton value='dark'><Brightness4 /> 暗色</ToggleButton>
+          <ToggleButton value='light'><Brightness7 /> {lang.config.light}</ToggleButton>
+          <ToggleButton value=''><SettingsBrightness /> {lang.config.system}</ToggleButton>
+          <ToggleButton value='dark'><Brightness4 /> {lang.config.dark}</ToggleButton>
         </ToggleButtonGroup>
       </Box>
       <Paper sx={{ marginTop: 2, width: '176px', overflow: 'hidden', display: 'inline-block' }}>

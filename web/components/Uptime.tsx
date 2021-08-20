@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react'
-
+import lang from '../../languages'
 import { Box } from '@material-ui/core'
+
 import type { BoxProps } from '@material-ui/core/Box'
 
 const SRC = 1000
@@ -18,10 +19,10 @@ const Uptime: React.FC<BoxProps & { time: number }> = ({ time, ...props }) => {
       const min = (t -= HOUR * hour) / MIN | 0
       const sec = (t - MIN * min) / SRC | 0
       let text = ''
-      if (day) text += day + '天'
-      if (day || hour) text += hour + '时'
-      if (day || hour || min) text += min + '分'
-      ref.current!.innerText = text + sec + '秒'
+      if (day) text += day + lang.time.day
+      if (day || hour) text += hour + lang.time.hour
+      if (day || hour || min) text += min + lang.time.minute
+      ref.current!.innerText = text + sec + lang.time.second
     }
     update()
     const timer = setInterval(update, 1000)

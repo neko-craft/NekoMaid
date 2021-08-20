@@ -15,6 +15,7 @@ import ReactECharts from 'echarts-for-react'
 import Empty from '../components/Empty'
 import Uptime from '../components/Uptime'
 import dialog from '../dialog'
+import lang from '../../languages'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }
 interface CurrentStatus {
@@ -49,7 +50,7 @@ const Players: React.FC<{ players: CurrentStatus['players'] | undefined }> = ({ 
   const [page, setPage] = useState(1)
   const [id, update] = useState(0)
   return <Card>
-    <CardHeader title='在线玩家' />
+    <CardHeader title={lang.dashboard.onlinePlayers} />
     <Divider />
     <CardContent>
       {players?.length === 0
@@ -59,13 +60,13 @@ const Players: React.FC<{ players: CurrentStatus['players'] | undefined }> = ({ 
           {players
             ? players.slice((page - 1) * 8, page * 8).map(p => {
               const name = typeof p === 'string' ? p : p.name
-              return <Tooltip key={name} title={'IP: ' + ((p as any).ip || '未知')}>
+              return <Tooltip key={name} title={'IP: ' + ((p as any).ip || lang.unknown)}>
                 <ListItem
                   secondaryAction={<>
                     <IconButton
                       edge='end'
                       size='small'
-                      onClick={() => dialog(<>确认要将 <span className='bold'>{name}</span> 踢出游戏吗?</>, '理由')
+                      onClick={() => dialog(lang.dashboard.confirmKick(<span className='bold'>{name}</span>), lang.dashboard.reason)
                         .then(it => it != null && plugin.emit('dashboard:kick', (res: boolean) => {
                           action(res)
                           if (!players) return
@@ -104,7 +105,7 @@ const Players: React.FC<{ players: CurrentStatus['players'] | undefined }> = ({ 
   </Card>
 }
 
-const config = [['玩家数', 'bar', 0], ['TPS', 'line', 1], ['区块数', 'line', 2], ['实体数', 'line', 2]]
+const config = [[lang.dashboard.players, 'bar', 0], ['TPS', 'line', 1], [lang.dashboard.chunks, 'line', 2], [lang.dashboard.entities, 'line', 2]]
 const Charts: React.FC<{ data: Status[] }> = props => {
   const theme = useTheme()
   const labels: string[] = []
@@ -119,7 +120,7 @@ const Charts: React.FC<{ data: Status[] }> = props => {
   })
 
   return <Card>
-    <CardHeader title='概览' />
+    <CardHeader title={lang.dashboard.title} />
     <Divider />
     <CardContent>
       <Box sx={{ position: 'relative' }}>
@@ -141,7 +142,7 @@ const Charts: React.FC<{ data: Status[] }> = props => {
           yAxis: [
             {
               type: 'value',
-              name: '玩家数',
+              name: config[0][0],
               position: 'left',
               offset: 35,
               minInterval: 1
@@ -155,7 +156,7 @@ const Charts: React.FC<{ data: Status[] }> = props => {
             },
             {
               type: 'value',
-              name: '区块/实体',
+              name: config[2][0] + '/' + config[3][0],
               position: 'right',
               minInterval: 1
             }
@@ -195,7 +196,12 @@ const Dashboard: React.FC = () => {
     <Container maxWidth={false}>
       <Grid container spacing={3}>
         <Grid item lg={3} sm={6} xl={3} xs={12}>
-          <TopCard title='服务端版本' content={current ? version : <Skeleton animation='wave' width={150} />} icon={<Handyman />} color={orange[600]}>
+          <TopCard
+            title={lang.dashboard.version}
+            content={current ? version : <Skeleton animation='wave' width={150} />}
+            icon={<Handyman />}
+            color={orange[600]}
+          >
             <Box sx={{ pt: 2, display: 'flex', alignItems: 'flex-end' }}>
               {!current || current.behinds < 0
                 ? <Refresh htmlColor={blue[900]} />
@@ -203,22 +209,30 @@ const Dashboard: React.FC = () => {
                   ? <Check htmlColor={green[900]} />
                   : <Update htmlColor={yellow[900]} />}
               <Typography color='textSecondary' variant='caption'>&nbsp;{!current || current.behinds === -3
-                ? '检查更新中...'
+                ? lang.dashboard.updateChecking
                 : current.behinds < 0
                   ? <Link underline='hover' color='inherit' sx={{ cursor: 'pointer' }} onClick={() => {
-                    toast('获取中...')
+                    toast(lang.dashboard.updateChecking)
                     plugin.emit('dashboard:checkUpdate')
-                  }}>获取失败, 点击重新获取</Link>
-                  : current.behinds === 0 ? '当前已为最新版' : `当前已落后 ${current.behinds} 个版本!`}</Typography>
+                  }}>{lang.dashboard.updateFailed}</Link>
+                  : current.behinds === 0 ? lang.dashboard.updated : lang.dashboard.behinds(current.behinds)}</Typography>
             </Box>
           </TopCard>
         </Grid>
         <Grid item lg={3} sm={6} xl={3} xs={12}>
-          <TopCard title='在线人数' content={current ? playerCount : <Skeleton animation='wave' width={150} />} icon={<People />} color={deepPurple[600]}>
+          <TopCard
+            title={lang.dashboard.onlinePlayers}
+            content={current ? playerCount : <Skeleton animation='wave' width={150} />}
+            icon={<People />}
+            color={deepPurple[600]}
+          >
             <Box sx={{ pt: 2, display: 'flex', alignItems: 'flex-end' }}>
               {percent === 0 ? <Remove color='primary' /> : percent < 0 ? <ArrowDownward color='error' /> : <ArrowUpward color='success' />}
-              <Typography sx={{ color: (percent === 0 ? blue : percent < 0 ? red : green)[900], mr: 1 }} variant='body2'>{Math.abs(percent).toFixed(0)}%</Typography>
-              <Typography color='textSecondary' variant='caption'>相比于上一小时</Typography>
+              <Typography
+                sx={{ color: (percent === 0 ? blue : percent < 0 ? red : green)[900], mr: 1 }}
+                variant='body2'
+              >{Math.abs(percent).toFixed(0)}%</Typography>
+              <Typography color='textSecondary' variant='caption'>{lang.dashboard.lastHour}</Typography>
             </Box>
           </TopCard>
         </Grid>
@@ -226,19 +240,29 @@ const Dashboard: React.FC = () => {
           <TopCard
             title='TPS'
             content={current ? (current.tps === -1 ? '?' : current.tps.toFixed(2)) : <Skeleton animation='wave' width={150} />}
-            icon={!current || current.tps >= 18 || current.tps === -1 ? <SentimentVerySatisfied /> : current.tps >= 15 ? <SentimentSatisfied /> : <SentimentDissatisfied />}
+            icon={!current || current.tps >= 18 || current.tps === -1
+              ? <SentimentVerySatisfied />
+              : current.tps >= 15 ? <SentimentSatisfied /> : <SentimentDissatisfied />}
             color={tpsColor[600]}
           >
             <Box sx={{ pt: 2.1, display: 'flex', alignItems: 'flex-end' }}>
-              <Typography sx={{ color: tpsColor[900], mr: 1 }} variant='body2'>{!current || current.mspt === -1 ? '?' : current.mspt.toFixed(2) + 'ms'}</Typography>
-              <Typography color='textSecondary' variant='caption'>每Tick耗时</Typography>
+              <Typography
+                sx={{ color: tpsColor[900], mr: 1 }}
+                variant='body2'
+              >{!current || current.mspt === -1 ? '?' : current.mspt.toFixed(2) + 'ms'}</Typography>
+              <Typography color='textSecondary' variant='caption'>{lang.dashboard.mspt}</Typography>
             </Box>
           </TopCard>
         </Grid>
         <Grid item lg={3} sm={6} xl={3} xs={12}>
-          <TopCard title='运行时间' content={current ? <Uptime time={current.time} /> : <Skeleton animation='wave' width={150} />} icon={<AccessTime />} color={blue[600]}>
+          <TopCard
+            title={lang.dashboard.uptime}
+            content={current ? <Uptime time={current.time} /> : <Skeleton animation='wave' width={150} />}
+            icon={<AccessTime />}
+            color={blue[600]}
+          >
             <Box sx={{ pt: 2.7, display: 'flex', alignItems: 'center' }}>
-              <Typography color='textSecondary' variant='caption' sx={{ marginRight: 1 }}>内存占用</Typography>
+              <Typography color='textSecondary' variant='caption' sx={{ marginRight: 1 }}>{lang.dashboard.memory}</Typography>
               <Tooltip title={current?.totalMemory ? prettyBytes(current.memory) + ' / ' + prettyBytes(current.totalMemory) : ''}>
                 <LinearProgress
                   variant='determinate'

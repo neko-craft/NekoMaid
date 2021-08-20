@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { ButtonProps } from '@material-ui/core/Button'
 import ValidInput, { ValidInputProps } from './components/ValidInput'
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@material-ui/core'
-import { minecraft } from '../languages'
+import lang, { minecraft } from '../languages'
 
 export interface DialogOptionsWithoutInput {
   content: React.ReactNode
@@ -56,7 +56,7 @@ export const DialogWrapper: React.FC = () => {
   }
 
   return <Dialog open={!!open} onClose={cancel}>
-    <DialogTitle>{data.title || '提示'}</DialogTitle>
+    <DialogTitle>{data.title || lang.tip}</DialogTitle>
     <DialogContent>
       <DialogContentText>{data.content}</DialogContentText>
       {inputElm}

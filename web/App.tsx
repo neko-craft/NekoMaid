@@ -9,13 +9,13 @@ import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, 
 import { Build, Menu, Brightness4, Brightness7, Translate, Backpack, ChevronLeft } from '@material-ui/icons'
 import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
 
-import languages from '../languages/index'
 import loadPlugin from './pluginAPI'
 import { address, origin, token, pathname } from './url'
 import { typography } from './theme'
 import { version } from '../package.json'
 import { GlobalItems } from './components/ItemViewer'
 import { pluginCtx, globalCtx, drawerWidthCtx } from './Context'
+import lang, { languages } from '../languages'
 import toast, { Snackbars } from './toast'
 import dialog, { DialogWrapper } from './dialog'
 import Plugin, { GlobalInfo, Page } from './Plugin'
@@ -32,7 +32,10 @@ const LanguageSwitch: React.FC = () => {
   return <>
     <IconButton onClick={e => setAnchorEl(e.currentTarget)} color='inherit'><Translate /></IconButton>
     <MenuComponent anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(undefined)}>
-      {Object.entries(languages).map(([key, value]) => <MenuItem key={key} onClick={() => setAnchorEl(undefined)}>{value.name}</MenuItem>)}
+      {Object.entries(languages).map(([key, value]) => <MenuItem
+        key={key}
+        onClick={() => setAnchorEl(undefined)}
+      >{value.minecraft['language.name']}</MenuItem>)}
     </MenuComponent>
   </>
 }
@@ -69,12 +72,12 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       initPages(nekoMaid)
       onGlobalDataReceived(nekoMaid, data)
       update(Math.random())
-      if (process.env.NODE_ENV !== 'development' && data.pluginVersion !== version) toast('发现插件更新! 推荐立即更新!', 'warning')
+      if (process.env.NODE_ENV !== 'development' && data.pluginVersion !== version) toast(lang.pluginUpdate, 'warning')
     }).on('!', () => {
       io.close()
-      dialog('密钥错误或插件版本过旧, 最新版本为: ' + version).then(() => (location.href = '//maid.neko-craft.com'))
+      dialog(lang.wrongToken + ': ' + version).then(() => (location.href = '//maid.neko-craft.com'))
     }).on('reconnect', () => {
-      toast('正在尝试重新连接...')
+      toast(lang.reconnect)
       setTimeout(() => location.reload(), 5000)
     })
     return fn

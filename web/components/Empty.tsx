@@ -1,6 +1,7 @@
 import React from 'react'
 import { Box, Typography } from '@material-ui/core'
 import { useTheme } from '@material-ui/core/styles'
+import lang from '../../languages'
 
 import type { BoxProps } from '@material-ui/core/Box'
 
@@ -33,7 +34,7 @@ export const EmptyIcon: React.FC<React.SVGProps<SVGSVGElement>> = props => {
   </svg>
 }
 
-const Empty: React.FC<Omit<BoxProps, 'title'> & { title?: string | null }> = ({ title = '暂无数据', ...props }) => <Box {...props} sx={{ textAlign: 'center', ...props.sx }}>
+const Empty: React.FC<Omit<BoxProps, 'title'> & { title?: string | null }> = ({ title = lang.noData, ...props }) => <Box {...props} sx={{ textAlign: 'center', ...props.sx }}>
   <EmptyIcon />
   {title && <Typography color='textSecondary' variant='h6'>{title}</Typography>}
 </Box>

@@ -8,8 +8,8 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Paper, Toolt
 import { useGlobalData, usePlugin } from '../Context'
 import { parseComponent, stringifyTextComponent } from '../utils'
 import MojangSON, { parse, stringify, Byte, Short } from 'nbt-ts'
+import lang, { minecraft } from '../../languages'
 import set from 'lodash/set'
-import { minecraft } from '../../languages'
 import * as icons from '../../minecraftIcons.json'
 
 import type { PaperProps } from '@material-ui/core/Paper'
@@ -61,7 +61,7 @@ export interface Item {
 export const isBlock = (name: string) => ('item.minecraft.' + name) in minecraft
 export const getName = (name: string) => minecraft['item.minecraft.' + name] || minecraft['block.minecraft.' + name]
 export const getEnchantmentName = (it: string | Enchantment) => {
-  const name = minecraft['enchantment.' + (typeof it === 'string' ? it : it.id).replace(/:/g, '.')] || '未知附魔'
+  const name = minecraft['enchantment.' + (typeof it === 'string' ? it : it.id).replace(/:/g, '.')] || lang.itemEditor.unknownEnchantment
   return typeof it === 'string' ? name : name + ' ' + it.lvl.value
 }
 
@@ -247,7 +247,7 @@ const ItemEditor: React.FC = () => {
   const name = nbt?.tag?.display?.Name
   const enchantmentMap: Record<string, true> = { }
   return <Dialog open={!!item} onClose={cancel}>
-    <DialogTitle>物品编辑器</DialogTitle>
+    <DialogTitle>{lang.itemEditor.title}</DialogTitle>
     <DialogContent sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
       {item && <Box sx={{ display: 'flex', width: '100%', justifyContent: 'center' }}>
         <ItemViewer item={item} />
@@ -261,18 +261,18 @@ const ItemEditor: React.FC = () => {
             update()
           }}
           getOptionLabel={it => getName(it.toLowerCase()) + ' ' + it}
-          renderInput={(params) => <TextField {...params} label='物品类型' size='small' variant='standard' />}
+          renderInput={(params) => <TextField {...params} label={lang.itemEditor.itemType} size='small' variant='standard' />}
         />
       </Box>}
       <Tabs centered value={tab} onChange={(_, it) => setTab(it)} sx={{ marginBottom: 2 }}>
-        <Tab label='基础属性' disabled={isAir} />
+        <Tab label={lang.itemEditor.baseAttribute} disabled={isAir} />
         <Tab label={minecraft['container.enchant']} disabled={isAir} />
         <Tab label='NBT' disabled={isAir} />
       </Tabs>
       {nbt && tab === 0 && <Grid container spacing={1} rowSpacing={1}>
         <Grid item xs={12} md={6}><TextField
           fullWidth
-          label='数量'
+          label={lang.itemEditor.count}
           type='number'
           variant='standard'
           value={nbt.Count}
@@ -284,7 +284,7 @@ const ItemEditor: React.FC = () => {
         /></Grid>
         <Grid item xs={12} md={6}><TextField
           fullWidth
-          label='耐久值'
+          label={lang.itemEditor.damage}
           type='number'
           variant='standard'
           value={nbt.tag?.Damage}
@@ -297,7 +297,7 @@ const ItemEditor: React.FC = () => {
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
-            label='物品名'
+            label={lang.itemEditor.displayName}
             variant='standard'
             disabled={isAir}
             value={name ? stringifyTextComponent(JSON.parse(name)) : ''}
@@ -322,7 +322,7 @@ const ItemEditor: React.FC = () => {
         <Grid item xs={12} md={6}><TextField
           fullWidth
           multiline
-          label='物品描述'
+          label={lang.itemEditor.lore}
           variant='standard'
           maxRows={5}
           disabled={isAir}
@@ -341,12 +341,12 @@ const ItemEditor: React.FC = () => {
             update()
           }} /></Grid>
         })}
-        <Grid item><Chip label='添加新附魔' color='primary' onClick={() => {
+        <Grid item><Chip label={lang.itemEditor.newEnchantment} color='primary' onClick={() => {
           setEnchantment('')
           setLevel(1)
         }} /></Grid>
         <Dialog onClose={() => setEnchantment(undefined)} open={enchantment != null}>
-          <DialogTitle>请选择需要添加的附魔</DialogTitle>
+          <DialogTitle>{lang.itemEditor.newEnchantmentTitle}</DialogTitle>
           <DialogContent>
             <Box component='form' sx={{ display: 'flex', flexWrap: 'wrap' }}>
               <FormControl variant='standard' sx={{ m: 1, minWidth: 120 }}>
@@ -362,7 +362,13 @@ const ItemEditor: React.FC = () => {
                 </Select>
               </FormControl>
               <FormControl sx={{ m: 1, minWidth: 120 }}>
-                <TextField label='等级' type='number' variant='standard' value={level} onChange={e => setLevel(parseInt(e.target.value))} />
+                <TextField
+                  label={lang.itemEditor.level}
+                  type='number'
+                  variant='standard'
+                  value={level}
+                  onChange={e => setLevel(parseInt(e.target.value))}
+                />
               </FormControl>
             </Box>
           </DialogContent>
@@ -425,7 +431,7 @@ export const GlobalItems: React.FC<{ open: boolean, onClose: () => void }> = ({ 
           setCopyItemLeft(it)
           setCopyItemRight(it)
         }}
-      />&nbsp;{'< 克隆 >'}&nbsp;<ItemViewer
+      />&nbsp;{`< ${lang.itemEditor.clone} >`}&nbsp;<ItemViewer
         item={copyItemRight}
         data={{ type: InvType.GLOBAL_ITEMS }}
         onDrag={() => process.nextTick(setCopyItemRight)}

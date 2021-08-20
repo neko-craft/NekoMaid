@@ -5,22 +5,14 @@ import { TextField, Toolbar, IconButton, Paper, Tooltip, Box, Autocomplete } fro
 import { parseComponents, parseMessage, TextComponent } from '../utils'
 import { address } from '../url'
 import throttle from 'lodash/throttle'
-import toast, { success } from '../toast'
+import toast, { action, success } from '../toast'
 import More from '../components/More'
 import dialog from '../dialog'
+import lang from '../../languages'
 
 type Log = { level: string, msg: string, time: number, logger: string, components?: TextComponent[] }
 
 const hideLoggerRegexp = /net\.minecraft\.|Minecraft|com\.mojang\.|com\.sk89q\.|ru\.tehkode\.|Minecraft\.AWE|com\.corundumstudio\./
-
-const levelNames: Record<string, string> = {
-  FATAL: '严重',
-  ERROR: '错误',
-  WARN: '警告',
-  INFO: '信息',
-  DEBUG: '调试',
-  TRACE: '堆栈'
-}
 
 const pad = (it: number) => it.toString().padStart(2, '0')
 
@@ -30,9 +22,9 @@ const parseLog = (data: Log, runCommand: (it: string) => void, suggest: (it: str
   const onShare = () => {
     if (!ref.current) return
     const text = ref.current.textContent || ref.current.innerText
-    dialog(<><span className='bold'>确认要分享这段日志吗:</span><br />{text.slice(5, 150)}...</>).then(res => {
+    dialog(<><span className='bold'>{lang.console.confirmShare}:</span><br />{text.slice(5, 150)}...</>).then(res => {
       if (!res) return
-      toast('分享中...')
+      toast(lang.console.sharing)
       const body = new FormData()
       body.set('content', text)
       fetch('https://api.mclo.gs/1/log', { method: 'POST', body }).then(it => it.json()).then(it => {
@@ -46,7 +38,7 @@ const parseLog = (data: Log, runCommand: (it: string) => void, suggest: (it: str
   let moreLines = false
   if (data.components) {
     return <p ref={ref} key={i}>
-      <Tooltip title={time} placement='right'><span className='level' onClick={onShare}>[信息] </span></Tooltip>
+      <Tooltip title={time} placement='right'><span className='level' onClick={onShare}>[{lang.console.info}] </span></Tooltip>
       <span className='msg'>{parseComponents(data.components, runCommand, suggest)}</span>
     </p>
   } else {
@@ -55,10 +47,10 @@ const parseLog = (data: Log, runCommand: (it: string) => void, suggest: (it: str
     moreLines = (isError || data.level === 'WARN') && data.msg.includes('\n')
     const elm = <p ref={ref} key={i} className={isError ? 'error' : data.level === 'WARN' ? 'warn' : undefined}>
       <Tooltip title={time} placement='right'>
-        <span className='level' onClick={onShare}>[{levelNames[data.level] || '信息'}] </span>
+        <span className='level' onClick={onShare}>[{(lang.console as any)[data.level?.toLowerCase()] || lang.console.info}] </span>
       </Tooltip>
       <span className='msg'>
-        {moreLines && <span className='more' data-collapse='[收起]'>[展开]</span>}
+        {moreLines && <span className='more' data-collapse={`[${lang.console.fold}]`}>[{lang.console.expand}]</span>}
         {data.logger && !hideLoggerRegexp.test(data.logger) && <span className='logger'>[{data.logger}] </span>}
         {msg}</span>
     </p>
@@ -101,7 +93,7 @@ const Console: React.FC = () => {
   ), [])
   const execCommand = () => {
     if (!command) return
-    plugin.emit('console:run', (res: boolean) => res ? toast('执行成功!', 'success') : toast('执行失败!', 'error'), command)
+    plugin.emit('console:run', action, command)
     const arr = JSON.parse(localStorage.getItem(`NekoMaid:${address}:commandHistory`) || '[]').filter((it: [string]) => it[0] !== command)
     if (arr.length === 5) arr.pop()
     arr.unshift([command, true])
@@ -110,7 +102,7 @@ const Console: React.FC = () => {
   }
 
   useEffect(() => {
-    const runCommand = (it: string) => plugin.emit('console:run', (res: boolean) => res ? toast('执行成功!', 'success') : toast('执行失败!', 'error'), it)
+    const runCommand = (it: string) => plugin.emit('console:run', action, it)
     let lastLog: Log = {} as any
     const onLog = (data: Log) => {
       if (lastLog.logger === data.logger && (lastLog.time / 100 | 0) === (data.time / 100 | 0) &&
@@ -214,15 +206,20 @@ const Console: React.FC = () => {
         onKeyUp={(e: any) => e.key === 'Enter' && (!open || !suggestions.length) && execCommand()}
         sx={{ flex: '1' }}
         classes={{ popper: 'command-popper' }}
-        renderInput={params => <TextField {...params as any} label='命令' />}
+        renderInput={params => <TextField {...params as any} label={lang.console.command} />}
         getOptionLabel={it => typeof it === 'string' ? it : it[0]}
-        groupBy={it => it[1] ? '历史记录' : '命令'}
+        groupBy={it => it[1] ? lang.history : lang.console.command}
         onInputChange={(_, it) => {
           getSuggestions(it)
           setCommand(it)
         }}
       />
-      <IconButton color='primary' disabled={!command} onClick={execCommand} sx={{ margin: theme => theme.spacing('auto', 0, 'auto', 1) }}><Send /></IconButton>
+      <IconButton
+        color='primary'
+        disabled={!command}
+        onClick={execCommand}
+        sx={{ margin: theme => theme.spacing('auto', 0, 'auto', 1) }}
+      ><Send /></IconButton>
     </Paper>
   </Box>
 }
