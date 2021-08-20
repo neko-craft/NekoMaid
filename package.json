@@ -1,6 +1,6 @@
 {
   "name": "nekomaid",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "A plugin can use Web to manage your server.",
   "main": "index.js",
   "private": true,

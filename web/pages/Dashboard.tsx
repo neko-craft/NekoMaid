@@ -105,7 +105,7 @@ const Players: React.FC<{ players: CurrentStatus['players'] | undefined }> = ({ 
   </Card>
 }
 
-const config = [[lang.dashboard.players, 'bar', 0], ['TPS', 'line', 1], [lang.dashboard.chunks, 'line', 2], [lang.dashboard.entities, 'line', 2]]
+const config = [[lang.worlds.players, 'bar', 0], ['TPS', 'line', 1], [lang.worlds.chunks, 'line', 2], [lang.worlds.entities, 'line', 2]]
 const Charts: React.FC<{ data: Status[] }> = props => {
   const theme = useTheme()
   const labels: string[] = []

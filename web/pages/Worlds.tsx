@@ -7,7 +7,7 @@ import { usePlugin, useGlobalData } from '../Context'
 import { WbSunny, ExpandLess, ExpandMore, Save, Edit } from '@material-ui/icons'
 import { WeatherRainy, WeatherLightningRainy } from 'mdi-material-ui'
 import { cardActionStyles } from '../theme'
-import { minecraft } from '../../languages'
+import lang, { minecraft } from '../../languages'
 import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContainer, Table, TableBody,
   TableHead, TableRow, TableCell, Tooltip, IconButton, Checkbox, CardContent, List, ListItem,
   ListItemButton, ListItemText, Collapse, Switch, ToggleButtonGroup, ToggleButton } from '@material-ui/core'
@@ -58,7 +58,7 @@ const Worlds: React.FC = () => {
       <Grid container spacing={3}>
         <Grid item lg={8} md={12} xl={9} xs={12}>
         <Card>
-          <CardHeader title='世界列表' />
+          <CardHeader title={lang.worlds.title} />
           <Divider />
           <Box sx={{ position: 'relative' }}>
             <TableContainer>
@@ -66,14 +66,14 @@ const Worlds: React.FC = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell padding='checkbox' />
-                    <TableCell>世界名</TableCell>
-                    {globalData.hasMultiverse && <TableCell>别名</TableCell>}
-                    <TableCell>玩家数</TableCell>
-                    <TableCell>区块数</TableCell>
-                    <TableCell>实体数</TableCell>
-                    <TableCell>Tile数</TableCell>
-                    <TableCell>时间</TableCell>
-                    <TableCell>天气</TableCell>
+                    <TableCell>{lang.worlds.name}</TableCell>
+                    {globalData.hasMultiverse && <TableCell>{lang.worlds.alias}</TableCell>}
+                    <TableCell>{lang.worlds.players}</TableCell>
+                    <TableCell>{lang.worlds.chunks}</TableCell>
+                    <TableCell>{lang.worlds.entities}</TableCell>
+                    <TableCell>{lang.worlds.tiles}</TableCell>
+                    <TableCell>{lang.worlds.time}</TableCell>
+                    <TableCell>{lang.worlds.weather}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -81,7 +81,7 @@ const Worlds: React.FC = () => {
                     <TableCell padding='checkbox'><Checkbox checked={selected === it.id} onClick={() => setSelected(it.id)} /></TableCell>
                     <TableCell><Tooltip title={it.id}><span>{it.name}</span></Tooltip></TableCell>
                     {globalData.hasMultiverse && <TableCell>{it.alias}
-                      <IconButton size='small' onClick={() => dialog('请输入新的别名', '别名').then(res => {
+                      <IconButton size='small' onClick={() => dialog(lang.inputValue, lang.worlds.alias).then(res => {
                         if (res == null) return
                         plugin.emit('worlds:set', it.id, 'alias', res)
                         success()
@@ -108,9 +108,9 @@ const Worlds: React.FC = () => {
         <Grid item lg={4} md={6} xl={3} xs={12}>
           <Card>
             <CardHeader
-              title='更多操作'
+              title={lang.operations}
               sx={{ position: 'relative' }}
-              action={<Tooltip title='立即保存世界' placement='left'>
+              action={<Tooltip title={lang.worlds.save} placement='left'>
                 <IconButton
                   size='small'
                   onClick={() => {
@@ -145,33 +145,33 @@ const Worlds: React.FC = () => {
                   <ListItem secondaryAction={<Switch checked={sw.allowAnimals} disabled={!globalData.hasMultiverse} onChange={e => {
                     plugin.emit('worlds:set', sw.id, 'spawning.animals.spawn', e.target.checked.toString())
                     success()
-                  }} />}><ListItemText primary='动物生成' /></ListItem>
+                  }} />}><ListItemText primary={lang.worlds.allowAnimals} /></ListItem>
                   <ListItem secondaryAction={<Switch checked={sw.allowMonsters} disabled={!globalData.hasMultiverse} onChange={e => {
                     plugin.emit('worlds:set', sw.id, 'spawning.monsters.spawn', e.target.checked.toString())
                     success()
-                  }} />}><ListItemText primary='怪物生成' /></ListItem>
+                  }} />}><ListItemText primary={lang.worlds.allowMonsters} /></ListItem>
                   {globalData.hasMultiverse && <>
                     <ListItem secondaryAction={<Switch checked={sw.allowFlight} onChange={e => {
                       plugin.emit('worlds:set', sw.id, 'allowFlight', e.target.checked.toString())
                       success()
-                    }} />}><ListItemText primary='飞行' /></ListItem>
+                    }} />}><ListItemText primary={lang.worlds.allowFlight} /></ListItem>
                     <ListItem secondaryAction={<Switch checked={sw.autoHeal} onChange={e => {
                       plugin.emit('worlds:set', sw.id, 'autoHeal', e.target.checked.toString())
                       success()
-                    }} />}><ListItemText primary='回血' /></ListItem>
+                    }} />}><ListItemText primary={lang.worlds.autoHeal} /></ListItem>
                     <ListItem secondaryAction={<Switch checked={sw.hunger} onChange={e => {
                       plugin.emit('worlds:set', sw.id, 'hunger', e.target.checked.toString())
                       success()
-                    }} />}><ListItemText primary='饥饿' /></ListItem>
+                    }} />}><ListItemText primary={lang.worlds.hunger} /></ListItem>
                   </>}
                   <ListItem secondaryAction={globalData.canSetViewDistance
                     ? <IconButton
                       onClick={() => dialog({
-                        content: '请输入要修改的视距',
+                        content: lang.inputValue,
                         input: {
                           error: true,
                           type: 'number',
-                          helperText: '视距不合法!',
+                          helperText: lang.invalidValue,
                           validator: (it: string) => /^\d+$/.test(it) && +it > 1 && +it < 33
                         }
                       }).then(res => {
@@ -181,7 +181,7 @@ const Worlds: React.FC = () => {
                       })}
                     ><Edit /></IconButton>
                     : undefined}>
-                    <ListItemText primary={'视距: ' + sw.viewDistance} />
+                    <ListItemText primary={lang.worlds.viewDistance + ': ' + sw.viewDistance} />
                   </ListItem>
                   <ListItem><ListItemText primary={minecraft['selectWorld.enterSeed']} secondary={sw.seed} /></ListItem>
                   <ListItemButton onClick={() => setOpen(!open)}>
@@ -207,12 +207,12 @@ const Worlds: React.FC = () => {
                             />
                             : <IconButton
                               onClick={() => dialog({
-                                content: '请输入要修改的值',
+                                content: lang.inputValue,
                                 input: isNumber
                                   ? {
                                       error: true,
                                       type: 'number',
-                                      helperText: '值不合法!',
+                                      helperText: lang.invalidValue,
                                       validator: (it: string) => /^\d+$/.test(it)
                                     }
                                   : { }

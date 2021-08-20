@@ -8,7 +8,7 @@ import { cardActionStyles } from '../theme'
 import Empty from '../components/Empty'
 import Cron from 'material-ui-cron'
 import dialog from '../dialog'
-import lang from '../../languages'
+import lang, { currentLanguage } from '../../languages'
 
 interface Task { name: string, cron: string, values: string[], enabled: boolean }
 const Scheduler: React.FC = () => {
@@ -143,7 +143,7 @@ const Scheduler: React.FC = () => {
                   '& .MuiOutlinedInput-input': { color: 'inherit!important' },
                   '& .MuiTypography-h6': { color: theme => theme.palette.primary.main + '!important' }
                 }}>
-                  <Cron cron={cron} setCron={setCron} setCronError={setCronError} locale='zh_CN' isAdmin />
+                  <Cron cron={cron} setCron={setCron} setCronError={setCronError} locale={currentLanguage as any} isAdmin />
                 </Box>
               </CardContent>
             </>}

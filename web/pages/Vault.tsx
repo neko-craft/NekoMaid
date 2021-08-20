@@ -9,7 +9,7 @@ import { Box, Toolbar, Container, Card, CardHeader, Grid, DialogContent, DialogC
 import { DataGrid, GridCellParams, GridSortItem } from '@material-ui/data-grid'
 import { useHistory } from 'react-router-dom'
 import { action, success } from '../toast'
-import { minecraft } from '../../languages'
+import lang, { minecraft } from '../../languages'
 import dialog from '../dialog'
 
 interface PlayerInfo { id: string, balance?: number, group?: string, prefix?: string, suffix?: string }
@@ -35,7 +35,7 @@ const Groups: React.FC<{ plugin: Plugin, id: string | undefined, onClose: () => 
       refresh()
     }, [id])
     return <Dialog onClose={onClose} open={!!id}>
-      <DialogTitle>{id} 的权限组</DialogTitle>
+      <DialogTitle>{lang.vault.whosPermissionGroup(id!)}</DialogTitle>
       <List sx={{ pt: 0 }}>
         {groups.map(it => <ListItem onClick={() => { }} key={it.id}>
           <ListItemIcon><Checkbox
@@ -50,7 +50,7 @@ const Groups: React.FC<{ plugin: Plugin, id: string | undefined, onClose: () => 
           <ListItemText primary={it.id} />
         </ListItem>)}
       </List>
-      <DialogActions><Button onClick={onClose}>关闭</Button></DialogActions>
+      <DialogActions><Button onClick={onClose}>{minecraft['gui.back']}</Button></DialogActions>
     </Dialog>
   }
 
@@ -66,16 +66,16 @@ const PermissionDialog: React.FC<{ plugin: Plugin, id: string | undefined, isGro
   }, [id])
   const queryStatus = useMemo(() => throttle((value: string) => plugin.emit('vault:permission', setStatus, id, value, 0, isGroup), 500), [id, isGroup])
   return <Dialog open={!!id} onClose={onClose}>
-    <DialogTitle>权限节点查询及修改</DialogTitle>
+    <DialogTitle>{lang.vault.editorTitle}</DialogTitle>
     <DialogContent sx={{ overflow: 'hidden' }}>
-      <DialogContentText>请输入要查询的权限节点: <span className='bold' style={{ }}>
-        ({isGroup ? '权限组' : minecraft['entity.minecraft.player']}: {id})</span></DialogContentText>
+      <DialogContentText>{lang.vault.permissionInput}: <span className='bold' style={{ }}>
+        ({isGroup ? lang.vault.permissionGroup : minecraft['entity.minecraft.player']}: {id})</span></DialogContentText>
       <Autocomplete
         freeSolo
         options={options}
         sx={{ marginTop: 1 }}
         inputValue={value}
-        renderInput={params => <TextField {...params as any} label='权限节点' />}
+        renderInput={params => <TextField {...params as any} label={lang.vault.permission} />}
         onInputChange={(_, it) => {
           setValue(it)
           setStatus(undefined)
@@ -83,7 +83,9 @@ const PermissionDialog: React.FC<{ plugin: Plugin, id: string | undefined, isGro
         }}
       />
       <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
-        状态:{status == null ? <CircularProgress size={20} sx={{ margin: '5px' }}/> : status ? <Check color='success' /> : <Close color='error' />}
+        {lang.status}:{status == null
+          ? <CircularProgress size={20} sx={{ margin: '5px' }}/>
+          : status ? <Check color='success' /> : <Close color='error' />}
         &nbsp;{status != null && <Button
           disabled={!value}
           variant='outlined'
@@ -93,10 +95,10 @@ const PermissionDialog: React.FC<{ plugin: Plugin, id: string | undefined, isGro
             setStatus(undefined)
             queryStatus(value)
           }, id, value, status ? 2 : 1, isGroup)}
-        >{status ? '移除该权限节点' : '增加该权限节点'}</Button>}
+        >{lang.vault[status ? 'removePermission' : 'addPermission']}</Button>}
       </Box>
     </DialogContent>
-    <DialogActions><Button onClick={onClose}>关闭</Button></DialogActions>
+    <DialogActions><Button onClick={onClose}>{minecraft['gui.back']}</Button></DialogActions>
   </Dialog>
 }
 
@@ -137,7 +139,7 @@ const Vault: React.FC = () => {
     },
     {
       field: 'id',
-      headerName: '游戏名',
+      headerName: lang.username,
       sortable: false,
       width: 200
     }
@@ -145,7 +147,7 @@ const Vault: React.FC = () => {
   const columns2: any[] = [
     {
       field: 'id',
-      headerName: '组名',
+      headerName: lang.vault.groupName,
       sortable: false,
       width: 160
     }
@@ -154,7 +156,7 @@ const Vault: React.FC = () => {
   if (hasVaultGroups) {
     columns.push({
       field: 'group',
-      headerName: '默认权限组',
+      headerName: lang.vault.defaultGroup,
       width: 110,
       sortable: false
     })
@@ -162,14 +164,14 @@ const Vault: React.FC = () => {
   if (hasVaultChat) {
     const a = {
       field: 'prefix',
-      headerName: '前缀',
+      headerName: lang.vault.prefix,
       width: 110,
       editable: true,
       sortable: false
     }
     const b = {
       field: 'suffix',
-      headerName: '后缀',
+      headerName: lang.vault.suffix,
       width: 110,
       editable: true,
       sortable: false
@@ -180,7 +182,7 @@ const Vault: React.FC = () => {
   if (vaultEconomy) {
     columns.push({
       field: 'balance',
-      headerName: '经济',
+      headerName: lang.vault.balance,
       editable: true,
       valueFormatter: ({ value }: any) => (value === 0 || value === 1 ? vaultEconomy.singular : vaultEconomy.plural) +
         (vaultEconomy.digits === -1 ? value : value.toFixed(vaultEconomy.digits))
@@ -189,12 +191,14 @@ const Vault: React.FC = () => {
   if (hasVaultPermission) {
     columns.push({
       field: '_',
-      headerName: '操作',
+      headerName: lang.operations,
       width: 88,
       sortable: false,
       renderCell: (it: GridCellParams) => <>
-        <Tooltip title='权限组管理'><IconButton onClick={() => setSelectedPlayer(it.id as any)} size='small'><GroupsIcon /></IconButton></Tooltip>
-        <Tooltip title='权限查询及修改'><IconButton onClick={() => {
+        <Tooltip title={lang.vault.managePermssionGroup}>
+          <IconButton onClick={() => setSelectedPlayer(it.id as any)} size='small'><GroupsIcon /></IconButton
+        ></Tooltip>
+        <Tooltip title={lang.vault.managePermssion}><IconButton onClick={() => {
           setSelectedId(it.id as any)
           setIsGroup(false)
         }} size='small'><ListIcon /></IconButton></Tooltip>
@@ -203,10 +207,10 @@ const Vault: React.FC = () => {
     if (hasVaultGroups) {
       columns2.push({
         field: '_',
-        headerName: '操作',
+        headerName: lang.operations,
         width: 66,
         sortable: false,
-        renderCell: (it: GridCellParams) => <Tooltip title='权限查询及修改'><IconButton onClick={() => {
+        renderCell: (it: GridCellParams) => <Tooltip title={lang.vault.managePermssion}><IconButton onClick={() => {
           setSelectedId(it.id as any)
           setIsGroup(true)
         }} size='small'><ListIcon /></IconButton></Tooltip>
@@ -215,15 +219,18 @@ const Vault: React.FC = () => {
   }
 
   const playerList = <Card>
-    <CardHeader title='玩家列表' action={<IconButton onClick={() => dialog('请输入你要查找的游戏名:', '游戏名').then(filter => {
-      if (!filter) return refresh()
-      setCount(-1)
-      plugin.emit('vault:fetch', (a, b) => {
-        setCount(a)
-        setPlayers(b)
-        success()
-      }, page, sortModel.find(it => it.field === 'balance'), filter)
-    })}><Search /></IconButton>} />
+    <CardHeader
+      title={lang.playerList.title}
+      action={<IconButton onClick={() => dialog(lang.playerList.nameToSearch, lang.username).then(filter => {
+        if (!filter) return refresh()
+        setCount(-1)
+        plugin.emit('vault:fetch', (a, b) => {
+          setCount(a)
+          setPlayers(b)
+          success()
+        }, page, sortModel.find(it => it.field === 'balance'), filter)
+      })}
+    ><Search /></IconButton>} />
     <Divider />
     <div style={{ height: 594, width: '100%' }}>
       <DataGrid
@@ -265,7 +272,7 @@ const Vault: React.FC = () => {
         <Grid item lg={8} md={12} xl={8} xs={12}>{playerList}</Grid>
         <Grid item lg={4} md={12} xl={4} xs={12}>
           <Card>
-            <CardHeader title='权限组' />
+            <CardHeader title={lang.vault.permissionGroup} />
             <Divider />
             <div style={{ height: 594, width: '100%' }}>
               <DataGrid

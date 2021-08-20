@@ -229,7 +229,7 @@ const Players: React.FC = () => {
         >
           <ToggleButton disabled={loading} value={1}><Star /></ToggleButton>
           <ToggleButton disabled={loading} value={2}><Block /></ToggleButton>
-          <ToggleButton disabled={loading} value={3} onClick={() => state !== 3 && dialog(lang.playerList.nameToSearch, lang.playerList.username)
+          <ToggleButton disabled={loading} value={3} onClick={() => state !== 3 && dialog(lang.playerList.nameToSearch, lang.username)
             .then(filter => {
               if (filter == null) return
               his.push('/NekoMaid/playerList/' + filter)
@@ -253,7 +253,7 @@ const Players: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell padding='checkbox' />
-              <TableCell>{lang.playerList.username}</TableCell>
+              <TableCell>{lang.username}</TableCell>
               <TableCell align='right'>{minecraft['stat.minecraft.play_time']}</TableCell>
               <TableCell align='right'>{lang.playerList.lastPlay}</TableCell>
               <TableCell align='right'>{lang.operations}</TableCell>
