@@ -8,7 +8,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.command.CommandMap;
@@ -32,6 +35,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.FutureTask;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @SuppressWarnings("deprecation")
@@ -108,6 +112,8 @@ public final class Utils {
             commitId = map.get("Git-Commit");
         } catch (Throwable ignored) { }
     }
+
+    public static boolean hasNBTAPI() { return HAS_NBT_API; }
 
     public static double getTPS() {
         try {
@@ -350,5 +356,11 @@ public final class Utils {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public static TextComponent getCommandComponent(String cmd) {
+        TextComponent text = new TextComponent(cmd);
+        text.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, cmd));
+        return text;
     }
 }

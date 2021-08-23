@@ -2,7 +2,6 @@ package cn.apisium.nekomaid;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
-import de.tr7zw.nbtapi.NBTCompound;
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -48,9 +47,7 @@ public class ItemData {
             Material t = Material.getMaterial(type);
             Objects.requireNonNull(t);
             if (Utils.HAS_NBT_API && nbt != null) try {
-                if (nbtContainer == null) nbtContainer = Class.forName("de.tr7zw.nbtapi.NBTContainer")
-                        .getConstructor(String.class);
-                itemStack = NBTItem.convertNBTtoItem((NBTCompound) nbtContainer.newInstance(nbt));
+                itemStack = NBTItem.convertNBTtoItem(NBTAPIWrapper.createNBTContainer(nbt));
             } catch (Throwable e) { throw new RuntimeException(e); }
             else itemStack = new ItemStack(t, amount);
             if (itemStack.getAmount() != amount) itemStack.setAmount(amount);

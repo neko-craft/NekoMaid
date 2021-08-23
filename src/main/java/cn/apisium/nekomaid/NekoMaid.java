@@ -46,6 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.*;
+import java.util.stream.Collectors;
 
 @SuppressWarnings({"UnusedReturnValue", "unused"})
 @Plugin(name = "NekoMaid", version = "0.0.0")
@@ -63,15 +64,18 @@ import java.util.function.*;
 @SoftDependency("PlaceholderAPI")
 @SoftDependency("Multiverse-Core")
 public final class NekoMaid extends JavaPlugin implements Listener {
-    private final static String UNIPORTER_VERSION = "1.2.6-SNAPSHOT";
+    private final static String UNIPORTER_VERSION = "1.3.1-SNAPSHOT";
     private final static String URL_MESSAGE = ChatColor.translateAlternateColorCodes('&',
             "&e[NekoMaid] &fOpen this url to manage your server: &7"),
             SUCCESS = ChatColor.translateAlternateColorCodes('&',
-                    "&e[NekoMaid] &aSuccess!");
+                    "&e[NekoMaid] &aSuccess!"),
+            VERSION = ChatColor.translateAlternateColorCodes('&',
+                    "&e[NekoMaid] &7Version: &a");
     public static NekoMaid INSTANCE;
     { INSTANCE = this; }
 
     private final ArrayListMultimap<org.bukkit.plugin.Plugin, Consumer<Client>> connectListeners = ArrayListMultimap.create();
+    private final HashMap<String, Map.Entry<org.bukkit.plugin.Plugin, NekoMaidCommand>> pluginCommands = new HashMap<>();
     private final HashMap<String, HashMap<String, AbstractMap.SimpleEntry<Consumer<Client>,
             Consumer<Client>>>> pluginPages = new HashMap<>();
 
@@ -90,7 +94,10 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     @SuppressWarnings({"ConstantConditions", "unchecked"})
     @Override
     public void onEnable() {
-        if (getServer().getPluginManager().getPlugin("NBTAPI") != null) Utils.HAS_NBT_API = true;
+        if (getServer().getPluginManager().getPlugin("NBTAPI") != null) {
+            Utils.HAS_NBT_API = true;
+            GLOBAL_DATA.put("hasNBTAPI", true);
+        }
         saveDefaultConfig();
         GLOBAL_DATA
                 .put("plugins", pluginScripts)
@@ -183,9 +190,55 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             clients.forEach((k, v) -> v.remove(name));
             connectListeners.removeAll(p);
             pluginScripts.remove(name);
+            pluginCommands.values().removeIf(it -> it.getKey() == p);
         }, this);
-        getCommand("nekomaid").setExecutor(this);
+        setupCommands();
         new Metrics(this, 12238);
+    }
+
+    @SuppressWarnings("deprecation")
+    private static void sendUsages(CommandSender sender, String name, String[] arr) {
+        String str = ChatColor.GRAY + "/nekomaid " + ChatColor.AQUA + name + " ";
+        if (arr == null) sender.sendMessage(Utils.getCommandComponent(str));
+        else for (String s : arr) {
+            sender.spigot().sendMessage(Utils.getCommandComponent(str + Arrays.stream(s.split(" "))
+                    .map(it -> (it.charAt(0) == '[' ? ChatColor.GREEN : ChatColor.YELLOW) + it)
+                    .collect(Collectors.joining(" "))));
+        }
+    }
+
+    private void sendHelp(CommandSender sender) {
+        sender.sendMessage(VERSION + getDescription().getVersion());
+        pluginCommands.forEach((k, v) -> sendUsages(sender, k, v.getValue().getUsages()));
+    }
+
+    private void setupCommands() {
+        registerCommand(this, "reload", (sender, command, label, args) -> {
+            reloadConfig();
+            sender.sendMessage(SUCCESS);
+            return true;
+        });
+        registerCommand(this, "help", (sender, command, label, args) -> {
+            sendHelp(sender);
+            return true;
+        });
+        registerCommand(this, "temp", (sender, command, label, args) -> {
+            try {
+                String token = UUID.randomUUID().toString();
+                tempTokens.get(token, () -> false);
+                String url = getConnectUrl(token);
+                if (url != null) {
+                    sender.sendMessage(URL_MESSAGE + url);
+                    return true;
+                }
+            } catch (ExecutionException ignored) { }
+            return false;
+        });
+        registerCommand(this, "invalidate", (sender, command, label, args) -> {
+            tempTokens.cleanUp();
+            sender.sendMessage(SUCCESS);
+            return true;
+        });
     }
 
     public int getClientsCount() { return clients.size(); }
@@ -196,32 +249,15 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         if (!command.testPermission(sender)) return true;
         if (args.length == 0) {
             String url = getConnectUrl(getConfig().getString("token", ""));
-            if (url != null) {
-                sender.sendMessage(URL_MESSAGE + url);
-                return true;
-            }
-        } else switch (args[0]) {
-            case "reload":
-                reloadConfig();
-                sender.sendMessage(SUCCESS);
-                return true;
-            case "temp":
-                try {
-                    String token = UUID.randomUUID().toString();
-                    tempTokens.get(token, () -> false);
-                    String url = getConnectUrl(token);
-                    if (url != null) {
-                        sender.sendMessage(URL_MESSAGE + url);
-                        return true;
-                    }
-                } catch (ExecutionException ignored) { }
-                break;
-            case "invalidate":
-                tempTokens.cleanUp();
-                sender.sendMessage(SUCCESS);
-                return true;
+            if (url == null) return false;
+            sender.sendMessage(URL_MESSAGE + url);
+        } else {
+            Map.Entry<org.bukkit.plugin.Plugin, NekoMaidCommand> it = pluginCommands.get(args[0]);
+            if (it == null) sendHelp(sender);
+            else if (!it.getValue().onCommand(sender, command, label, Arrays.copyOfRange(args, 1, args.length)))
+                sendUsages(sender, args[0], it.getValue().getUsages());
         }
-        return false;
+        return true;
     }
 
     private String getConnectUrl(String token) {
@@ -241,10 +277,26 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         return url;
     }
 
+    @Contract("_, _, _ -> this")
+    public NekoMaid registerCommand(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String name, @NotNull NekoMaidCommand cmd) {
+        Objects.requireNonNull(plugin);
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(cmd);
+        pluginCommands.put(name, new AbstractMap.SimpleEntry<>(plugin, cmd));
+        return this;
+    }
+
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command command,
                                       @NotNull String alias, @NotNull String[] args) {
-        return args.length == 1 ? Arrays.asList("reload", "temp", "invalidate") : Collections.emptyList();
+        switch (args.length) {
+            case 0: return Collections.emptyList();
+            case 1: return new ArrayList<>(pluginCommands.keySet());
+            default:
+                Map.Entry<org.bukkit.plugin.Plugin, NekoMaidCommand> it = pluginCommands.get(args[0]);
+                if (it == null) return Collections.emptyList();
+                else return it.getValue().onTabComplete(sender, command, alias, Arrays.copyOfRange(args, 1, args.length));
+        }
     }
 
     @Override
@@ -252,17 +304,18 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         Uniporter.removeHandler("NekoMaid");
         pages.clear();
         connectListeners.clear();
+        pluginCommands.clear();
         if (engineIoServer != null) engineIoServer.shutdown();
         if (plugins != null) plugins.disable();
     }
 
-    public int getClientsCountInPage(org.bukkit.plugin.Plugin plugin, @NotNull String page) {
+    public int getClientsCountInPage(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String page) {
         if (mRoomSockets == null) return 0;
         Set<SocketIoSocket> set = mRoomSockets.get(plugin.getName() + ":page:" + page);
         return set == null ? 0 : set.size();
     }
 
-    public int getClientsCountInRoom(org.bukkit.plugin.Plugin plugin, @NotNull String room) {
+    public int getClientsCountInRoom(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String room) {
         if (mRoomSockets == null) return 0;
         Set<SocketIoSocket> set = mRoomSockets.get(plugin.getName() + ":" + room);
         return set == null ? 0 : set.size();

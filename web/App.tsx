@@ -109,22 +109,26 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       />
     </pluginCtx.Provider>)
     const icon = <ListItemIcon>{it.icon || <Build />}</ListItemIcon>
-    return <NavLink key={key} to={'/' + name + '/' + (it.url || path)} activeClassName='actived'>
-      <ListItem button>
-        {isExpand ? icon : <Tooltip title={it.title} placement='right'>{icon}</Tooltip>}
-        {isExpand && <ListItemText primary={it.title} />}
-      </ListItem>
-    </NavLink>
+    return it.title
+      ? <NavLink key={key} to={'/' + name + '/' + (it.url || path)} activeClassName='actived'>
+        <ListItem button>
+          {isExpand ? icon : <Tooltip title={it.title} placement='right'>{icon}</Tooltip>}
+          {isExpand && <ListItemText primary={it.title} />}
+        </ListItem>
+      </NavLink>
+      : undefined
   }
 
   const singlePages: JSX.Element[] = []
   const multiPagesPages: Array<JSX.Element | JSX.Element[]> = []
   let index = 0
   for (const name in pages) {
-    if (pages[name].length === 1) singlePages.push(mapToItem(name, pages[name][0]))
-    else {
+    if (pages[name].length === 1) {
+      const elm = mapToItem(name, pages[name][0])
+      if (elm) singlePages.push(elm)
+    } else {
       if (multiPagesPages.length) multiPagesPages.push(<Divider key={index++} />)
-      multiPagesPages.push(pages[name].map(it => mapToItem(name, it)))
+      multiPagesPages.push(pages[name].map(it => mapToItem(name, it)!).filter(Boolean))
     }
   }
   if (singlePages.length) multiPagesPages.push(<Divider key={index++} />, singlePages)

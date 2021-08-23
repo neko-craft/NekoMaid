@@ -1,6 +1,6 @@
 import React from 'react'
 import { DoubleArrow, Dashboard as DashboardIcon, People, Description, Extension, Settings, AccountBalance,
-  Schedule, Backpack, Public } from '@material-ui/icons'
+  Schedule, Backpack, Public, Widgets, Pets } from '@material-ui/icons'
 import Plugin, { GlobalInfo } from '../Plugin'
 import lang, { minecraft } from '../../languages'
 
@@ -10,6 +10,8 @@ import PlayerList from './PlayerList'
 import Files from './Files'
 import Plugins from './Plugins'
 import Worlds from './Worlds'
+import BlockEditor from './BlockEditor'
+import EntityEditor from './EntityEditor'
 import Config from './Config'
 import Scheduler from './Scheduler'
 import Vault from './Vault'
@@ -22,6 +24,8 @@ export default (p: Plugin) => p.addPages(
   { component: Files, path: 'files', icon: <Description />, title: lang.files.title },
   { component: Plugins, path: 'plugins', icon: <Extension />, title: lang.plugins.title },
   { component: Worlds, path: 'worlds', icon: <Public />, title: lang.worlds.title },
+  { component: BlockEditor, path: ['block', 'block/:world/:x/:y/:z'], icon: <Widgets />, title: lang.blockEditor.title },
+  { component: EntityEditor, path: ['entity', 'entity/:id'], icon: <Pets />, title: lang.entityEditor.title },
   { component: Scheduler, path: 'scheduler', icon: <Schedule />, title: lang.scheduler.title },
   { component: OpenInv, path: ['openInv', 'openInv/:name'], icon: <Backpack />, title: lang.openInv.title, exact: true },
   { component: Config, path: 'config', icon: <Settings />, title: lang.config.title }

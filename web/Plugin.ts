@@ -4,9 +4,9 @@ import { pages, update } from './App'
 import { actions, ActionComponent } from './pages/PlayerList'
 
 export interface Page {
-  title: string
   component: React.ComponentType<any>
   path: string | string[]
+  title?: string
   url?: string
   icon?: JSX.Element
   exact?: boolean

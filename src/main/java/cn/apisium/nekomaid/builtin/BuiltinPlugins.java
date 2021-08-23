@@ -20,7 +20,7 @@ public final class BuiltinPlugins {
             if (pm.getPlugin("Vault") != null) new Vault(main);
             new OpenInv(main);
             new Worlds(main);
-            if (pm.getPlugin("NBTAPI") != null) ItemEditor.init(main);
+            Editors.init(main);
         });
     }
     public void disable() {

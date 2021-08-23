@@ -23,7 +23,7 @@ export default {
   username: '游戏名',
   itemEditor: {
     title: '物品编辑器',
-    itemType: '物品类型',
+    itemType: '类型',
     unknownEnchantment: '未知附魔',
     baseAttribute: '基础属性',
     count: '数量',
@@ -207,5 +207,11 @@ export default {
     autoHeal: '回血',
     hunger: '饥饿',
     viewDistance: '视距'
+  },
+  entityEditor: {
+    title: '实体'
+  },
+  blockEditor: {
+    title: '方块'
   }
 }
