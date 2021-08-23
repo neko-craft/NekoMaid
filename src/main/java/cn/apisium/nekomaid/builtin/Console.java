@@ -30,7 +30,6 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.FutureTask;
 
 @SuppressWarnings("UnstableApiUsage")
 final class Console implements Appender {
@@ -54,22 +53,15 @@ final class Console implements Appender {
                 .onConnected(main, client -> client.onWithAck("console:complete", Utils::complete)
                         .onWithAck("console:run", args -> {
                             String command = (String) args[0];
-                            FutureTask<Boolean> future = new FutureTask<>(() -> {
+                            return Utils.sync(() -> {
                                 main.getLogger().info("NekoMaid issued server command: /" + command);
                                 try {
-                                    return main.getServer()
-                                            .dispatchCommand(sender, command);
+                                    return main.getServer().dispatchCommand(sender, command);
                                 } catch (Throwable e) {
                                     e.printStackTrace();
                                     return false;
                                 }
                             });
-                            main.getServer().getScheduler().runTask(main, future);
-                            try {
-                                return future.get();
-                            } catch (Throwable ignored) {
-                                return false;
-                            }
                         }));
         ((Logger) LogManager.getRootLogger()).addAppender(this);
     }

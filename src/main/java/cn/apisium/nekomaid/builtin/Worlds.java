@@ -1,6 +1,7 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
+import cn.apisium.nekomaid.Utils;
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.api.MultiverseWorld;
@@ -19,7 +20,6 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.Arrays;
 import java.util.UUID;
-import java.util.concurrent.FutureTask;
 
 final class Worlds {
     private boolean hasWorldGameRuleChangeEvent = false, canSetViewDistance, hasSeparateViewDistance;
@@ -161,7 +161,7 @@ final class Worlds {
 
     @SuppressWarnings("deprecation")
     private Object[] getWorlds() {
-        FutureTask<Object[]> task = new FutureTask<>(() -> main.getServer().getWorlds().stream().map(it -> {
+        return Utils.sync(() -> main.getServer().getWorlds().stream().map(it -> {
             Chunk[] chunks = it.getLoadedChunks();
             World w = new World();
             w.id = it.getUID().toString();
@@ -189,12 +189,5 @@ final class Worlds {
             }
             return w;
         }).toArray());
-        main.getServer().getScheduler().runTask(main, task);
-        try {
-            return task.get();
-        } catch (Throwable e) {
-            e.printStackTrace();
-            return new Object[0];
-        }
     }
 }

@@ -20,7 +20,7 @@ public final class BuiltinPlugins {
             if (pm.getPlugin("Vault") != null) new Vault(main);
             new OpenInv(main);
             new Worlds(main);
-            Editors.init(main);
+            new Editors(main);
         });
     }
     public void disable() {

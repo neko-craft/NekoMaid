@@ -4,14 +4,12 @@ import cn.apisium.nekomaid.ItemData;
 import cn.apisium.nekomaid.NekoMaid;
 import com.lishid.openinv.IOpenInv;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 final class OpenInv {
@@ -55,8 +53,7 @@ final class OpenInv {
     }
 
     private Object getInventoryItems(Inventory inv) {
-        return inv == null ? null : Arrays.stream(inv.getContents())
-                .map(it -> it == null || it.getType() == Material.AIR ? null : new ItemData(it)).toArray();
+        return inv == null ? null : ItemData.fromInventory(inv);
     }
 
     @SuppressWarnings({"deprecation", "ConstantConditions"})

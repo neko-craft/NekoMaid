@@ -21,6 +21,7 @@ export default {
   unrecoverable: '不可恢复!',
   status: '状态',
   username: '游戏名',
+  world: '世界',
   itemEditor: {
     title: '物品编辑器',
     itemType: '类型',
@@ -212,6 +213,7 @@ export default {
     title: '实体'
   },
   blockEditor: {
-    title: '方块'
+    title: '方块',
+    container: '容器'
   }
 }

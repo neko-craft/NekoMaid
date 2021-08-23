@@ -53,8 +53,8 @@ export interface Item {
   type: string
   name?: string
   icon?: string
-  hasEnchants: boolean
-  amount: number
+  hasEnchants?: boolean
+  amount?: number
   nbt?: string
 }
 
@@ -71,7 +71,9 @@ export enum InvType {
   // eslint-disable-next-line no-unused-vars
   ENDER_CHEST = 'ENDER_CHEST',
   // eslint-disable-next-line no-unused-vars
-  GLOBAL_ITEMS = 'GLOBAL_ITEMS'
+  GLOBAL_ITEMS = 'GLOBAL_ITEMS',
+  // eslint-disable-next-line no-unused-vars
+  BLOCK = 'BLOCK'
 }
 
 export type ItemViewerProps = Omit<PaperProps, 'onDrop' | 'onDrag'> & {
@@ -171,7 +173,7 @@ const ItemViewer: React.FC<ItemViewerProps> = ({ item, data, onDrag, onDrop, onE
         backgroundImage: 'url(/icons/minecraft/enchanted_item_glint.png)'
       }} />}
     </div>}
-    {item && item.amount > 1 ? <span>{item.amount}</span> : null}
+    {item && item.amount && item.amount > 1 ? <span>{item.amount}</span> : null}
   </Paper>
   const nbtTexts = nbt
     ? <>

@@ -11,7 +11,6 @@ import com.google.gson.JsonObject;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.command.CommandMap;
@@ -34,8 +33,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @SuppressWarnings("deprecation")
@@ -154,12 +153,10 @@ public final class Utils {
                 if (event.isCancelled() || event.isHandled()) {
                     if (!event.isCancelled() && (TabCompleteEvent.getHandlerList().getRegisteredListeners()).length > 0) {
                         final ArrayList<String> finalCompletions = new ArrayList<>(completions);
-                        FutureTask<List<String>> future = new FutureTask<>(() -> {
+                        List<String> legacyCompletions = sync(() -> {
                             TabCompleteEvent syncEvent = new TabCompleteEvent(Bukkit.getConsoleSender(), buffer, finalCompletions);
                             return syncEvent.callEvent() ? syncEvent.getCompletions() : ImmutableList.of();
                         });
-                        Bukkit.getScheduler().runTask(NekoMaid.INSTANCE, future);
-                        List<String> legacyCompletions = future.get();
                         completions.removeIf(it -> !legacyCompletions.contains(it));
                         loop: for (String completion : legacyCompletions) {
                             for (String it : completions) if (it.equals(completion)) continue loop;
@@ -169,15 +166,13 @@ public final class Utils {
                     return completions;
                 }
             }
-            FutureTask<List<String>> future = new FutureTask<>(() -> {
+            return sync(() -> {
                 List<String> offers = commandMap.tabComplete(Bukkit.getConsoleSender(), buffer);
                 TabCompleteEvent tabEvent = new TabCompleteEvent(Bukkit.getConsoleSender(), buffer, (offers == null)
                         ? Collections.emptyList() : offers);
                 Bukkit.getPluginManager().callEvent(tabEvent);
                 return tabEvent.isCancelled() ? Collections.emptyList() : tabEvent.getCompletions();
             });
-            Bukkit.getScheduler().runTask(NekoMaid.INSTANCE, future);
-            return future.get();
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -362,5 +357,16 @@ public final class Utils {
         TextComponent text = new TextComponent(cmd);
         text.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, cmd));
         return text;
+    }
+
+    public static <T> T sync(Callable<T> fn) {
+        FutureTask<T> future = new FutureTask<>(fn);
+        Bukkit.getScheduler().runTask(NekoMaid.INSTANCE, future);
+        try {
+            return future.get();
+        } catch (Throwable e) {
+            if (NekoMaid.INSTANCE.getConfig().getBoolean("debug", false)) e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.Material;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
@@ -46,9 +47,7 @@ public class ItemData {
         if (itemStack == null) {
             Material t = Material.getMaterial(type);
             Objects.requireNonNull(t);
-            if (Utils.HAS_NBT_API && nbt != null) try {
-                itemStack = NBTItem.convertNBTtoItem(NBTAPIWrapper.createNBTContainer(nbt));
-            } catch (Throwable e) { throw new RuntimeException(e); }
+            if (Utils.HAS_NBT_API && nbt != null) itemStack = NBTAPIWrapper.convertNBTtoItem(nbt);
             else itemStack = new ItemStack(t, amount);
             if (itemStack.getAmount() != amount) itemStack.setAmount(amount);
         }
@@ -75,5 +74,15 @@ public class ItemData {
             case POTION: return ((PotionMeta) is.getItemMeta()).hasColor();
             default: return false;
         }
+    }
+
+    public static ItemData[] fromInventory(Inventory inv) {
+        ItemStack[] contents = inv.getContents();
+        ItemData[] arr = new ItemData[contents.length];
+        for (int i = 0; i < contents.length; i++) {
+            ItemStack it = contents[i];
+            arr[i] = it == null || it.getType() == Material.AIR ? null : new ItemData(it);
+        }
+        return arr;
     }
 }

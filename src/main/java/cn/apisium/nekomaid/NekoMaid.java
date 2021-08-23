@@ -202,7 +202,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         if (arr == null) sender.sendMessage(Utils.getCommandComponent(str));
         else for (String s : arr) {
             sender.spigot().sendMessage(Utils.getCommandComponent(str + Arrays.stream(s.split(" "))
-                    .map(it -> (it.charAt(0) == '[' ? ChatColor.GREEN : ChatColor.YELLOW) + it)
+                    .map(it -> (it.startsWith("[") ? ChatColor.GREEN : ChatColor.YELLOW) + it)
                     .collect(Collectors.joining(" "))));
         }
     }
@@ -227,12 +227,9 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                 String token = UUID.randomUUID().toString();
                 tempTokens.get(token, () -> false);
                 String url = getConnectUrl(token);
-                if (url != null) {
-                    sender.sendMessage(URL_MESSAGE + url);
-                    return true;
-                }
-            } catch (ExecutionException ignored) { }
-            return false;
+                sender.sendMessage(URL_MESSAGE + url);
+                return true;
+            } catch (ExecutionException e) { throw new RuntimeException(e); }
         });
         registerCommand(this, "invalidate", (sender, command, label, args) -> {
             tempTokens.cleanUp();
@@ -247,11 +244,8 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     public boolean onCommand(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
         if (!command.testPermission(sender)) return true;
-        if (args.length == 0) {
-            String url = getConnectUrl(getConfig().getString("token", ""));
-            if (url == null) return false;
-            sender.sendMessage(URL_MESSAGE + url);
-        } else {
+        if (args.length == 0) sender.sendMessage(URL_MESSAGE + getConnectUrl());
+        else {
             Map.Entry<org.bukkit.plugin.Plugin, NekoMaidCommand> it = pluginCommands.get(args[0]);
             if (it == null) sendHelp(sender);
             else if (!it.getValue().onCommand(sender, command, label, Arrays.copyOfRange(args, 1, args.length)))
@@ -260,12 +254,16 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         return true;
     }
 
-    private String getConnectUrl(String token) {
+    @NotNull
+    public String getConnectUrl() { return getConnectUrl(getConfig().getString("token", "")); }
+
+    @NotNull
+    public String getConnectUrl(@NotNull String token) {
         String custom = getConfig().getString("customAddress", "");
         String url;
         if (custom.isEmpty()) {
             Optional<Route> it = Uniporter.findRoutesByHandler("NekoMaid").stream().findFirst();
-            if (!it.isPresent()) return null;
+            if (!it.isPresent()) throw new RuntimeException("Handler not registered!");
             Route route = it.get();
             url = getConfig().getString("hostname", "");
             int port = Uniporter.findPortsByHandler("NekoMaid").stream().findFirst().orElseGet(getServer()::getPort);
