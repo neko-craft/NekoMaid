@@ -11,6 +11,7 @@ import { useHistory } from 'react-router-dom'
 import { action, success } from '../toast'
 import lang, { minecraft } from '../../languages'
 import dialog from '../dialog'
+import isEqual from 'lodash/isEqual'
 
 interface PlayerInfo { id: string, balance?: number, group?: string, prefix?: string, suffix?: string }
 interface GroupInfo { id: string, prefix?: string, suffix?: string }
@@ -114,15 +115,16 @@ const Vault: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | undefined>()
   const [selectedPlayer, setSelectedPlayer] = useState<string | undefined>()
   const [isGroup, setIsGroup] = useState(false)
+  const balanceSort = sortModel[0]?.sort
   const refresh = (res?: boolean) => {
     if (res != null) action(res)
     setCount(-1)
     plugin.emit('vault:fetch', (a, b) => {
       setCount(a)
       setPlayers(b)
-    }, page, sortModel.find(it => it.field === 'balance'))
+    }, page, balanceSort)
   }
-  useEffect(refresh, [page, sortModel])
+  useEffect(refresh, [page, balanceSort])
   useEffect(() => { plugin.emit('vault:fetchGroups', setGroups) }, [])
 
   const columns: any[] = [
@@ -195,9 +197,9 @@ const Vault: React.FC = () => {
       width: 88,
       sortable: false,
       renderCell: (it: GridCellParams) => <>
-        <Tooltip title={lang.vault.managePermssionGroup}>
-          <IconButton onClick={() => setSelectedPlayer(it.id as any)} size='small'><GroupsIcon /></IconButton
-        ></Tooltip>
+        {hasVaultGroups && <Tooltip title={lang.vault.managePermssionGroup}>
+          <IconButton onClick={() => setSelectedPlayer(it.id as any)} size='small'><GroupsIcon /></IconButton>
+        </Tooltip>}
         <Tooltip title={lang.vault.managePermssion}><IconButton onClick={() => {
           setSelectedId(it.id as any)
           setIsGroup(false)
@@ -228,7 +230,7 @@ const Vault: React.FC = () => {
           setCount(a)
           setPlayers(b)
           success()
-        }, page, sortModel.find(it => it.field === 'balance'), filter)
+        }, page, sortModel.find(it => it.field === 'balance'), filter.toLowerCase())
       })}
     ><Search /></IconButton>} />
     <Divider />
@@ -246,7 +248,7 @@ const Vault: React.FC = () => {
         paginationMode='server'
         sortingMode='server'
         sortModel={sortModel}
-        onSortModelChange={setSortModel}
+        onSortModelChange={it => !isEqual(sortModel, it) && setSortModel(it)}
         onCellEditCommit={({ field, id, value }) => {
           let flag = false
           switch (field) {

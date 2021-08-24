@@ -2,14 +2,14 @@ import 'echarts/extension/bmap/bmap'
 
 import React, { useEffect, useState, useMemo } from 'react'
 import { red, green, orange, deepPurple, blue, yellow } from '@material-ui/core/colors'
-import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, SentimentDissatisfied, Refresh,
+import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, SentimentDissatisfied, Refresh, ExpandMore,
   SentimentSatisfied, AccessTime, ArrowUpward, MoreHoriz, Remove, ExitToApp, Update } from '@material-ui/icons'
 import { useHistory } from 'react-router-dom'
 import { useTheme } from '@material-ui/core/styles'
 import { usePlugin, useGlobalData } from '../Context'
 import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeader, Divider,
   Skeleton, Link, LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar,
-  Pagination, Tooltip, Avatar } from '@material-ui/core'
+  Pagination, Tooltip, Avatar, Accordion, AccordionSummary } from '@material-ui/core'
 import { LoadingList } from '../components/Loading'
 import { darkMapStyles as styleJson } from '../theme'
 import toast, { action } from '../toast'
@@ -193,51 +193,47 @@ const WorldMap: React.FC<{ players: Player[] }> = React.memo(({ players }) => {
   }
 
   return mapLoaded
-    ? <Card>
-      <CardHeader title={lang.dashboard.playersDistribution} />
-      <Divider />
-      <ReactECharts
-        style={{ height: 750, maxHeight: '100vh' }}
-        onEvents={{
-          click ({ data: { name } }: { data: { name: string } }) {
-            if (players.some(it => it.name === name)) his.push('/NekoMaid/playerList/' + name)
-          }
-        }}
-        option={{
-          backgroundColor: 'rgba(0, 0, 0, 0)',
-          tooltip: { trigger: 'item' },
-          bmap: {
-            center: [104.114129, 37.550339],
-            zoom: 3,
-            roam: true,
-            mapStyle: theme.palette.mode === 'dark' ? { styleJson } : undefined
+    ? <ReactECharts
+      style={{ height: 750, maxHeight: '100vh' }}
+      onEvents={{
+        click ({ data: { name } }: { data: { name: string } }) {
+          if (players.some(it => it.name === name)) his.push('/NekoMaid/playerList/' + name)
+        }
+      }}
+      option={{
+        backgroundColor: 'rgba(0, 0, 0, 0)',
+        tooltip: { trigger: 'item' },
+        bmap: {
+          center: [104.114129, 37.550339],
+          zoom: 3,
+          roam: true,
+          mapStyle: theme.palette.mode === 'dark' ? { styleJson } : undefined
+        },
+        series: [{
+          type: 'effectScatter',
+          coordinateSystem: 'bmap',
+          data: players.filter(it => it.loc).map(it => ({ name: it.name, value: [it.loc![0], it.loc![1]], ip: it.ip })),
+          label: {
+            formatter: '{b}',
+            position: 'right',
+            show: true
           },
-          series: [{
-            type: 'effectScatter',
-            coordinateSystem: 'bmap',
-            data: players.filter(it => it.loc).map(it => ({ name: it.name, value: [it.loc![0], it.loc![1]], ip: it.ip })),
-            label: {
-              formatter: '{b}',
-              position: 'right',
-              show: true
-            },
-            tooltip: {
-              trigger: 'item',
-              formatter: ({ data }: any) => 'IP: ' + data.ip
-            },
-            encode: { value: 2 },
-            showEffectOn: 'emphasis',
-            rippleEffect: { brushType: 'stroke' },
-            symbolSize: 10,
-            itemStyle: {
-              color: theme.palette.primary.main,
-              shadowBlur: 4
-            },
-            hoverAnimation: true
-          }]
-        }}
-      />
-    </Card>
+          tooltip: {
+            trigger: 'item',
+            formatter: ({ data }: any) => 'IP: ' + data.ip
+          },
+          encode: { value: 2 },
+          showEffectOn: 'emphasis',
+          rippleEffect: { brushType: 'stroke' },
+          symbolSize: 10,
+          itemStyle: {
+            color: theme.palette.primary.main,
+            shadowBlur: 4
+          },
+          hoverAnimation: true
+        }]
+      }}
+    />
     : <></>
 })
 
@@ -348,8 +344,15 @@ const Dashboard: React.FC = () => {
         </Grid>
         <Grid item lg={8} md={12} xl={9} xs={12}>{useMemo(() => <Charts data={status} />, [status])}</Grid>
         <Grid item lg={4} md={6} xl={3} xs={12}><Players players={current?.players} /></Grid>
-        {hasGeoIP && current?.players && typeof current.players[0] !== 'string' &&
-          <Grid item xs={12}><WorldMap players={current.players as Player[]} /></Grid>}
+        {hasGeoIP && current?.players && typeof current.players[0] !== 'string' && <Grid item xs={12}>
+          <Accordion TransitionProps={{ unmountOnExit: true }} disableGutters>
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Typography>{lang.dashboard.playersDistribution}</Typography>
+            </AccordionSummary>
+            <Divider />
+            <WorldMap players={current.players as Player[]} />
+          </Accordion>
+        </Grid>}
       </Grid>
     </Container>
   </Box>

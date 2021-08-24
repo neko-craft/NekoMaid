@@ -240,7 +240,7 @@ const Players: React.FC = () => {
                 setPage(0)
                 setData(it)
                 setLoading(false)
-              }, page, 0, filter)
+              }, page, 0, filter.toLowerCase())
             })}><Search /></ToggleButton>
         </ToggleButtonGroup>
       }
