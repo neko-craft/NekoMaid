@@ -12,6 +12,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.BlockInventoryHolder;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -55,21 +56,58 @@ final class Editors {
                 .onWithMultiArgsAck("item:fetch", () -> data)
                 .onWithMultiArgsAck("item:blocks", () -> new Object[] { blocks, getWorldNames().toArray() })
                 .onWithAck("block:fetch", (Function<Object[], Block>) args -> Utils.sync(() -> {
-                    World world = main.getServer().getWorld((String) args[0]);
-                    if (world == null) return null;
-                    org.bukkit.block.Block block = world.getBlockAt((int) args[1], (int) args[2], (int) args[3]);
-                    Block b = new Block();
-                    b.type = block.getType().name();
-                    BlockState state = block.getState();
-                    if (Utils.hasNBTAPI()) b.data = NBTAPIWrapper.serializeBlockState(state);
-                    else if (hasBlockData) b.data = state.getBlockData().getAsString();
-                    if (state instanceof BlockInventoryHolder) {
-                        Inventory inv = ((BlockInventoryHolder) state).getInventory();
-                        b.inventory = ItemData.fromInventory(inv);
-                        b.inventoryType = inv.getType().name();
+                    try {
+                        World world = main.getServer().getWorld((String) args[0]);
+                        if (world == null) return null;
+                        org.bukkit.block.Block block = world.getBlockAt((int) args[1], (int) args[2], (int) args[3]);
+                        Block b = new Block();
+                        b.type = block.getType().name();
+                        BlockState state = block.getState();
+                        if (Utils.hasNBTAPI()) b.data = NBTAPIWrapper.newNBTTileEntity(state).toString();
+                        else if (hasBlockData) b.data = state.getBlockData().getAsString();
+                        if (state instanceof BlockInventoryHolder) {
+                            Inventory inv = ((BlockInventoryHolder) state).getInventory();
+                            b.inventory = ItemData.fromInventory(inv);
+                            b.inventoryType = inv.getType().name();
+                        }
+                        return b;
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                        return null;
                     }
-                    return b;
-                }))
+                })).onWithAck("block:type", (Function<Object[], Boolean>) args -> Utils.sync(() -> {
+                    World world = main.getServer().getWorld((String) args[0]);
+                    if (world != null) try {
+                        world.getBlockAt((int) args[1], (int) args[2], (int) args[3])
+                                .setType(Objects.requireNonNull(Material.getMaterial((String) args[4])));
+                        return true;
+                    } catch (Throwable e) { e.printStackTrace(); }
+                    return false;
+                })).onWithAck("block:data", (Function<Object[], Boolean>) args -> Utils.sync(() -> {
+                    World world = main.getServer().getWorld((String) args[0]);
+                    if (world != null) try {
+                        org.bukkit.block.Block b = world.getBlockAt((int) args[1], (int) args[2], (int) args[3]);
+                        if (Utils.hasNBTAPI()) NBTAPIWrapper.mergeTileEntity(b.getState(), (String) args[4]);
+                        else b.setBlockData(main.getServer().createBlockData((String) args[4]));
+                        return true;
+                    } catch (Throwable e) { e.printStackTrace(); }
+                    return false;
+                })).onWithAck("block:setItem", args -> {
+                    World world = main.getServer().getWorld((String) args[0]);
+                    if (world != null) try {
+                        BlockState state = world.getBlockAt((int) args[1], (int) args[2], (int) args[3]).getState();
+                        if (state instanceof BlockInventoryHolder) {
+                            Inventory inv = ((BlockInventoryHolder) state).getInventory();
+                            int to = (int) args[4], from = (int) args[6];
+                            ItemStack is = inv.getItem(to);
+                            String data = (String) args[5];
+                            inv.setItem(to, data == null ? null : ItemData.fromString(data).getItemStack());
+                            if (from != -1 && is != null) inv.setItem(from, is);
+                            return true;
+                        }
+                    } catch (Throwable e) { e.printStackTrace(); }
+                    return false;
+                })
         ).registerCommand(main, "block", new NekoMaidCommand() {
             @Override
             public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,

@@ -26,6 +26,7 @@ const canPluginBeDisabled = (it: string) => {
   switch (it) {
     case 'Uniporter':
     case 'NekoMaid':
+    case 'NBTAPI':
     case 'PlugMan': return true
     default: return false
   }

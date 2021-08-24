@@ -129,7 +129,7 @@ const Charts: React.FC<{ data: Status[] }> = React.memo(props => {
     <Divider />
     <CardContent>
       <Box sx={{ position: 'relative' }}>
-        <ReactECharts style={{ height: 400, maxHeight: '100vh' }} theme={theme.palette.mode === 'dark' ? 'dark' : undefined} option={{
+        <ReactECharts theme={theme.palette.mode === 'dark' ? 'dark' : undefined} option={{
           backgroundColor: 'rgba(0, 0, 0, 0)',
           tooltip: { trigger: 'axis' },
           legend: { data: config.map(it => it[0]) },

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import ItemViewer, { getName, Item, InvType } from '../components/ItemViewer'
 import lang, { minecraft } from '../../languages'
+import { parse, stringify } from 'nbt-ts'
 import { UnControlled } from 'react-codemirror2'
 import { useTheme } from '@material-ui/core/styles'
-import { Refresh, ExpandMore } from '@material-ui/icons'
+import { Refresh, ExpandMore, Save } from '@material-ui/icons'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, IconButton, Autocomplete, Button,
   CardContent, TextField, Select, FormControl, InputLabel, MenuItem, Accordion, AccordionSummary,
   Typography, AccordionDetails } from '@material-ui/core'
 import { useHistory, useLocation } from 'react-router-dom'
-import { usePlugin } from '../Context'
+import { useDrawerWidth, useGlobalData, usePlugin } from '../Context'
 import { cardActionStyles } from '../theme'
 import { action, success } from '../toast'
 import Empty from '../components/Empty'
@@ -26,9 +27,9 @@ const compare = (obj: any, params: any) => obj && obj.type === InvType.BLOCK && 
 const BlockSelector: React.FC<{ worlds: string[] }> = ({ worlds }) => {
   const his = useHistory()
   const [world, setWorld] = useState(worlds[0])
-  const [x, setX] = useState('')
-  const [y, setY] = useState('')
-  const [z, setZ] = useState('')
+  const [x, setX] = useState('0')
+  const [y, setY] = useState('0')
+  const [z, setZ] = useState('0')
   return <Grid container>
     <Grid item xs={6}>
       <FormControl variant='standard' fullWidth>
@@ -60,6 +61,8 @@ const BlockEditor: React.FC = () => {
   const plugin = usePlugin()
   const his = useHistory()
   const loc = useLocation()
+  const globalData = useGlobalData()
+  const drawerWidth = useDrawerWidth()
   const [block, setBlock] = useState<Block>()
   const [types, setTypes] = useState<string[]>([])
   const [worlds, setWorlds] = useState<string[]>([])
@@ -82,7 +85,12 @@ const BlockEditor: React.FC = () => {
     return () => void off()
   }, [])
   const update = () => {
-    if (params.world) plugin.emit('block:fetch', setBlock, params.world, params.x, params.y, params.z)
+    if (params.world) {
+      plugin.emit('block:fetch', (block: Block) => {
+        if (globalData.hasNBTAPI && block.data) block.data = stringify(parse(block.data), { pretty: true })
+        setBlock(block)
+      }, params.world, params.x, params.y, params.z)
+    }
   }
   const updateWithAction = (res: boolean) => {
     action(res)
@@ -93,43 +101,53 @@ const BlockEditor: React.FC = () => {
   return <Box sx={{ minHeight: '100%', py: 3 }}>
     <Toolbar />
     <Container maxWidth={false}>
-      <Grid container spacing={3}>
+      <Grid container spacing={3} sx={{ width: { sm: `calc(100vw - ${drawerWidth}px - ${theme.spacing(3)})` } }}>
         <Grid item lg={6} md={12} xl={6} xs={12}>
           <Card>
             <CardHeader
               title={lang.blockEditor.title}
               sx={{ position: 'relative' }}
-              action={<IconButton
-                size='small'
-                disabled={!block}
-                sx={cardActionStyles}
-                onClick={() => {
-                  update()
-                  success()
-                }}
-              ><Refresh /></IconButton>}
+              action={<Box sx={cardActionStyles}>
+                <IconButton
+                  size='small'
+                  disabled={!block?.data}
+                  onClick={() => block && plugin.emit('block:data', (res: boolean) => {
+                    action(res)
+                    update()
+                  }, params.world, params.x, params.y, params.z, block.data)}
+                ><Save /></IconButton>
+                <IconButton
+                  size='small'
+                  disabled={!block}
+                  onClick={() => {
+                    update()
+                    success()
+                  }}
+                ><Refresh /></IconButton>
+              </Box>}
             />
             <Divider />
             {block
               ? <>
-                <Box sx={{ display: 'flex', width: '100%', justifyContent: 'center', margin: theme.spacing(2, 0) }}>
+                <CardContent sx={{ display: 'flex', width: '100%', justifyContent: 'center' }}>
                   <ItemViewer item={{ type: block.type }} />
                   <Autocomplete
                     options={types}
                     sx={{ maxWidth: 300, marginLeft: 1, flexGrow: 1 }}
                     value={block.type}
-                    onChange={(_, it) => {
+                    onChange={(_, it) => it && plugin.emit('block:type', (res: boolean) => {
+                      action(res)
                       update()
-                    }}
+                    }, params.world, params.x, params.y, params.z, (block.type = it))}
                     getOptionLabel={it => getName(it.toLowerCase()) + ' ' + it}
                     renderInput={(params) => <TextField {...params} label={lang.itemEditor.itemType} size='small' variant='standard' />}
                   />
-                </Box>
+                </CardContent>
                 {block.data != null && <Accordion sx={{ '&::before': { opacity: '1!important' } }} disableGutters>
                   <AccordionSummary expandIcon={<ExpandMore />}>
                     <Typography>方块数据</Typography>
                   </AccordionSummary>
-                  <AccordionDetails sx={{ padding: 0, '& .CodeMirror': { width: '100%' } }}>
+                  <AccordionDetails sx={{ padding: 0, '& .CodeMirror': { width: '100%', height: 350 } }}>
                     <UnControlled
                       value={block.data}
                       options={{
@@ -152,17 +170,17 @@ const BlockEditor: React.FC = () => {
                 sx={{ position: 'relative' }}
               />
               <Divider />
-              <CardContent sx={{ whiteSpace: 'nowrap', overflowX: 'auto' }}>
+              <CardContent sx={{ whiteSpace: 'nowrap', overflowX: 'auto', textAlign: 'center' }}>
                 {block.inventory.map((it, i) => <React.Fragment key={i}><ItemViewer
                   item={it}
                   data={{ type: InvType.BLOCK, solt: i, ...params }}
                   onDrag={() => plugin.emit('block:setItem', update, params.world, params.x, params.y, params.z, i, null, -1)}
-                  onDrop={(item, obj) => plugin.emit('openInv:setItem', update, params.world, params.x, params.y, params.z, i,
+                  onDrop={(item, obj) => plugin.emit('block:setItem', update, params.world, params.x, params.y, params.z, i,
                     JSON.stringify(item), compare(obj, params) ? obj.solt : -1)}
-                  onEdit={item => item !== false && plugin.emit('openInv:set', updateWithAction, params.world, params.x, params.y,
+                  onEdit={item => item !== false && plugin.emit('block:setItem', updateWithAction, params.world, params.x, params.y,
                     params.z, i, item && JSON.stringify(item), -1)}
                 />{!((i + 1) % 9) && <br />}</React.Fragment>)}
-                </CardContent>
+              </CardContent>
             </Card>
           </Grid>
           : undefined}
