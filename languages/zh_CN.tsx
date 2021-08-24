@@ -86,6 +86,7 @@ export default {
     mspt: '每Tick耗时',
     uptime: '运行时间',
     memory: '内存占用',
+    playersDistribution: '玩家分布',
     behinds: (version: number) => `当前已落后 ${version} 个版本!`
   },
   files: {

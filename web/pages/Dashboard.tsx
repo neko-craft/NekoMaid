@@ -1,3 +1,5 @@
+import 'echarts/extension/bmap/bmap'
+
 import React, { useEffect, useState, useMemo } from 'react'
 import { red, green, orange, deepPurple, blue, yellow } from '@material-ui/core/colors'
 import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, SentimentDissatisfied, Refresh,
@@ -9,6 +11,7 @@ import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeade
   Skeleton, Link, LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar,
   Pagination, Tooltip, Avatar } from '@material-ui/core'
 import { LoadingList } from '../components/Loading'
+import { darkMapStyles as styleJson } from '../theme'
 import toast, { action } from '../toast'
 import prettyBytes from 'pretty-bytes'
 import ReactECharts from 'echarts-for-react'
@@ -16,10 +19,12 @@ import Empty from '../components/Empty'
 import Uptime from '../components/Uptime'
 import dialog from '../dialog'
 import lang from '../../languages'
+import isEqual from 'lodash/isEqual'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }
+interface Player { name: string, ip?: string, loc?: [number, number] }
 interface CurrentStatus {
-  players: Array<string | { name: string, ip?: string }>
+  players: Array<string | Player>
   mspt: number
   tps: number
   time: number
@@ -44,7 +49,7 @@ const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.R
     </CardContent>
   </Card>
 
-const Players: React.FC<{ players: CurrentStatus['players'] | undefined }> = ({ players }) => {
+const Players: React.FC<{ players?: CurrentStatus['players'] }> = React.memo(({ players }) => {
   const his = useHistory()
   const plugin = usePlugin()
   const [page, setPage] = useState(1)
@@ -103,10 +108,10 @@ const Players: React.FC<{ players: CurrentStatus['players'] | undefined }> = ({ 
       </>}
     </CardContent>
   </Card>
-}
+})
 
 const config = [[lang.worlds.players, 'bar', 0], ['TPS', 'line', 1], [lang.worlds.chunks, 'line', 2], [lang.worlds.entities, 'line', 2]]
-const Charts: React.FC<{ data: Status[] }> = props => {
+const Charts: React.FC<{ data: Status[] }> = React.memo(props => {
   const theme = useTheme()
   const labels: string[] = []
   const data: any = config.map(it => ({ name: it[0], data: [] as number[], type: it[1], smooth: true, yAxisIndex: it[2] }))
@@ -124,7 +129,7 @@ const Charts: React.FC<{ data: Status[] }> = props => {
     <Divider />
     <CardContent>
       <Box sx={{ position: 'relative' }}>
-        <ReactECharts theme={theme.palette.mode === 'dark' ? 'dark' : undefined} option={{
+        <ReactECharts style={{ height: 400, maxHeight: '100vh' }} theme={theme.palette.mode === 'dark' ? 'dark' : undefined} option={{
           backgroundColor: 'rgba(0, 0, 0, 0)',
           tooltip: { trigger: 'axis' },
           legend: { data: config.map(it => it[0]) },
@@ -166,18 +171,86 @@ const Charts: React.FC<{ data: Status[] }> = props => {
       </Box>
     </CardContent>
   </Card>
-}
+})
+
+let mapAdded = false
+let mapLoaded = false
+const WorldMap: React.FC<{ players: Player[] }> = React.memo(({ players }) => {
+  const theme = useTheme()
+  const his = useHistory()
+  const globalData = useGlobalData()
+  const [, update] = useState(0)
+  if (!mapAdded) {
+    const node = document.createElement('script')
+    node.type = 'text/javascript'
+    node.src = 'http://api.map.baidu.com/getscript?v=3.0&ak=' + (globalData.bMapKey || '8G2uX6PFlYK3XCdcWYxH5sPVEA9K88QT')
+    node.onload = () => {
+      mapLoaded = true
+      update(id => id + 1)
+    }
+    document.body.appendChild(node)
+    mapAdded = true
+  }
+
+  return mapLoaded
+    ? <Card>
+      <CardHeader title={lang.dashboard.playersDistribution} />
+      <Divider />
+      <ReactECharts
+        style={{ height: 750, maxHeight: '100vh' }}
+        onEvents={{
+          click ({ data: { name } }: { data: { name: string } }) {
+            if (players.some(it => it.name === name)) his.push('/NekoMaid/playerList/' + name)
+          }
+        }}
+        option={{
+          backgroundColor: 'rgba(0, 0, 0, 0)',
+          tooltip: { trigger: 'item' },
+          bmap: {
+            center: [104.114129, 37.550339],
+            zoom: 3,
+            roam: true,
+            mapStyle: theme.palette.mode === 'dark' ? { styleJson } : undefined
+          },
+          series: [{
+            type: 'effectScatter',
+            coordinateSystem: 'bmap',
+            data: players.filter(it => it.loc).map(it => ({ name: it.name, value: [it.loc![0], it.loc![1]], ip: it.ip })),
+            label: {
+              formatter: '{b}',
+              position: 'right',
+              show: true
+            },
+            tooltip: {
+              trigger: 'item',
+              formatter: ({ data }: any) => 'IP: ' + data.ip
+            },
+            encode: { value: 2 },
+            showEffectOn: 'emphasis',
+            rippleEffect: { brushType: 'stroke' },
+            symbolSize: 10,
+            itemStyle: {
+              color: theme.palette.primary.main,
+              shadowBlur: 4
+            },
+            hoverAnimation: true
+          }]
+        }}
+      />
+    </Card>
+    : <></>
+})
 
 const Dashboard: React.FC = () => {
   const plugin = usePlugin()
-  const { version } = useGlobalData()
+  const { version, hasGeoIP } = useGlobalData()
   const [status, setStatus] = useState<Status[]>([])
   const [current, setCurrent] = useState<CurrentStatus | undefined>()
 
   useEffect(() => {
     const offSetStatus = plugin.once('dashboard:info', setStatus)
     const offCurrent = plugin.on('dashboard:current', (data: CurrentStatus) => setCurrent(old => {
-      if (old && (old.players.length === data.players.length && old.players.every((it, i) => it === data.players[i]))) data.players = old.players
+      if (old && isEqual(old.players, data.players)) data.players = old.players
       return data
     }))
     plugin.switchPage('dashboard')
@@ -275,6 +348,8 @@ const Dashboard: React.FC = () => {
         </Grid>
         <Grid item lg={8} md={12} xl={9} xs={12}>{useMemo(() => <Charts data={status} />, [status])}</Grid>
         <Grid item lg={4} md={6} xl={3} xs={12}><Players players={current?.players} /></Grid>
+        {hasGeoIP && current?.players && typeof current.players[0] !== 'string' &&
+          <Grid item xs={12}><WorldMap players={current.players as Player[]} /></Grid>}
       </Grid>
     </Container>
   </Box>

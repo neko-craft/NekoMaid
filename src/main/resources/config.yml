@@ -1,4 +1,6 @@
 token: ~
+geolite2-eula: false
+baidu-map-license-key: ''
 
 hostname: 127.0.0.1
 customAddress: ''

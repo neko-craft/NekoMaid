@@ -8,7 +8,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.lang.reflect.Constructor;
 
-public class NBTAPIWrapper {
+public final class NBTAPIWrapper {
     private static Constructor<NBTContainer> nbtContainer;
     private static Constructor<NBTTileEntity> nbtTileEntity;
     public static ItemStack convertNBTtoItem(String value) {

@@ -57,7 +57,7 @@ const whitelist = (name: string, plugin: Plugin, refresh: () => void, isAdd: boo
 
 // eslint-disable-next-line react/jsx-key
 const icons = [<AccessTime />, <Today />, <Event />, <Login />, <Sick />, <FaceRetouchingOff />, <Pets />, <Fireplace />]
-const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
+const PlayerInfo: React.FC<{ name?: string }> = React.memo(({ name }) => {
   const plugin = usePlugin()
   const globalData = useGlobalData()
   const [open, setOpen] = useState(false)
@@ -138,7 +138,7 @@ const PlayerInfo: React.FC<{ name?: string }> = ({ name }) => {
       </CardActions>
     </>
     : <></>
-}
+})
 
 const PlayerActions: React.FC = () => {
   const theme = useTheme()

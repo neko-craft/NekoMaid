@@ -20,6 +20,7 @@ export interface GlobalInfo {
   hasWhitelist: boolean
   canLoadPlugin: boolean
   pluginVersion?: string
+  bMapKey?: string
   icon?: string
   isPaper?: boolean
   hasVault?: boolean
@@ -29,6 +30,7 @@ export interface GlobalInfo {
   hasOpenInv?: boolean
   hasNBTAPI?: boolean
   hasMultiverse?: boolean
+  hasGeoIP?: boolean
   canSetMaxPlayers?: boolean
   canSetViewDistance?: boolean
   maxPlayers: number

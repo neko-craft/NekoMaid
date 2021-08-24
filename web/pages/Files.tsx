@@ -142,7 +142,7 @@ const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () 
 
 const EMPTY = '$NekoMaid$Editor$Empty'
 const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loading: { '!#LOADING'?: boolean },
-  dirs: Record<string, boolean>, refresh: () => void }> = ({ plugin, editorRef, loading, dirs, refresh }) => {
+  dirs: Record<string, boolean>, refresh: () => void }> = React.memo(({ plugin, editorRef, loading, dirs, refresh }) => {
     const doc = (editorRef as any).current?.editor?.doc
     const theme = useTheme()
     const his = useHistory()
@@ -243,7 +243,7 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
         />
       </div>
     </Card>
-  }
+  })
 
 const fileNameDialog = (title: string, dirPath: string) => dialog({
   title,

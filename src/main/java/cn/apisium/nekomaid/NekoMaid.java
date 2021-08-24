@@ -86,6 +86,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     private final Cache<String, Boolean> tempTokens = CacheBuilder.newBuilder().maximumSize(10)
             .expireAfterWrite(60, TimeUnit.MINUTES).build();
     private final JSONObject pluginScripts = new JSONObject();
+    private GeoIP geoIP;
     public SocketIoNamespace io;
     protected Map<String, Set<SocketIoSocket>> mRoomSockets;
 
@@ -94,16 +95,17 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     @SuppressWarnings({"ConstantConditions", "unchecked"})
     @Override
     public void onEnable() {
+        saveDefaultConfig();
         if (getServer().getPluginManager().getPlugin("NBTAPI") != null) {
             Utils.HAS_NBT_API = true;
             GLOBAL_DATA.put("hasNBTAPI", true);
         }
-        saveDefaultConfig();
         GLOBAL_DATA
                 .put("plugins", pluginScripts)
                 .put("version", getServer().getVersion())
                 .put("onlineMode", getServer().getOnlineMode())
                 .put("pluginVersion", getDescription().getVersion());
+        syncGlobalData();
         if (Utils.IS_PAPER) GLOBAL_DATA.put("isPaper", true);
         try {
             CachedServerIcon icon = getServer().getServerIcon();
@@ -181,6 +183,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         }).on("error", System.out::println);
         Uniporter.registerHandler("NekoMaid", new MainHandler(), true);
 
+        geoIP = new GeoIP(this);
         plugins = new BuiltinPlugins(this);
 
         getServer().getPluginManager().registerEvent(PluginDisableEvent.class, this, EventPriority.NORMAL, (a, e) -> {
@@ -212,9 +215,16 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         pluginCommands.forEach((k, v) -> sendUsages(sender, k, v.getValue().getUsages()));
     }
 
+    private void syncGlobalData() {
+        String bMapKey = getConfig().getString("baidu-map-license-key", "");
+        if (bMapKey.isEmpty()) GLOBAL_DATA.remove("bMapKey");
+        else GLOBAL_DATA.put("bMapKey", bMapKey);
+    }
+
     private void setupCommands() {
         registerCommand(this, "reload", (sender, command, label, args) -> {
             reloadConfig();
+            syncGlobalData();
             sender.sendMessage(SUCCESS);
             return true;
         });
@@ -237,6 +247,9 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             return true;
         });
     }
+
+    @NotNull
+    public GeoIP getGeoIP() { return geoIP; }
 
     public int getClientsCount() { return clients.size(); }
 

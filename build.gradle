@@ -68,6 +68,11 @@ dependencies {
     implementation ('io.socket:engine.io-server:5.0.0') {
         exclude group: 'com.google.code.gson'
     }
+    implementation ('com.maxmind.geoip2:geoip2:2.15.0') {
+        exclude group: 'org.apache.httpcomponents'
+        exclude group: 'com.fasterxml.jackson.core'
+        exclude group: 'commons-codec'
+    }
     implementation ('io.socket:socket.io-server:3.0.1') {
         exclude group: 'org.json'
         exclude group: 'com.squareup.okhttp3'
@@ -87,6 +92,7 @@ shadowJar {
         relocate('org.apache.commons.io', 'cn.apisium.nekomaid.libs.org.apache.commons.io')
         relocate('org.apache.commons.compress', 'cn.apisium.nekomaid.libs.org.apache.commons.compress')
         relocate('io.socket', 'cn.apisium.nekomaid.libs.io.socket')
+        relocate('com.maxmind', 'cn.apisium.nekomaid.libs.com.maxmind')
     }
 
     archiveClassifier.set('')

@@ -4,22 +4,25 @@ import cn.apisium.nekomaid.NekoMaid;
 import cn.apisium.nekomaid.Utils;
 import com.google.common.collect.EvictingQueue;
 import com.google.gson.Gson;
+import com.maxmind.geoip2.model.CityResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
 
 @SuppressWarnings("UnstableApiUsage")
-final class Dashboard {
+final class Dashboard implements Listener {
     private final static Runtime runtime = Runtime.getRuntime();
     private final static long startTime = ManagementFactory.getRuntimeMXBean().getStartTime();
     private final EvictingQueue<Status> queue = EvictingQueue.create(24 * 3);
@@ -28,6 +31,7 @@ final class Dashboard {
     private CurrentStatus current;
     private long lastCheckVersion;
     private int behindVersions = -3;
+    private final WeakHashMap<Player, double[]> ipCache = new WeakHashMap<>();
 
     private final static class Status {
         public long time;
@@ -38,6 +42,7 @@ final class Dashboard {
     }
     private final static class PlayerInfo {
         public String name, ip;
+        public double[] loc;
     }
     private final static class CurrentStatus {
         public PlayerInfo[] players;
@@ -83,7 +88,6 @@ final class Dashboard {
                 e.printStackTrace();
             }
         }, 0, 20 * 60 * 60);
-        refresh();
         main.onSwitchPage(main, "dashboard", it -> {
             if (main.getClientsCountInPage(main, "dashboard") != 0) refresh();
             it.emit("dashboard:info", queue).emit("dashboard:current", current);
@@ -103,6 +107,8 @@ final class Dashboard {
             refresh();
             main.broadcastInPage(main, "dashboard", "dashboard:current", current);
         }, 0, 10 * 20);
+        s.getScheduler().runTaskAsynchronously(main, this::refresh);
+        s.getPluginManager().registerEvents(this, main);
     }
 
     private void refresh() {
@@ -112,8 +118,20 @@ final class Dashboard {
         for (Player p : list) {
             PlayerInfo it = arr[i++] = new PlayerInfo();
             it.name = p.getName();
-            if (p.getAddress() != null) it.ip = p.getAddress().getHostString();
+            if (p.getAddress() != null) {
+                InetSocketAddress ip = p.getAddress();
+                it.ip = ip.getHostString();
+                if (main.getGeoIP().isAvailable())
+                    it.loc = ipCache.computeIfAbsent(p, q -> {
+                        CityResponse city = main.getGeoIP().queryCity(ip.getAddress());
+                        return city == null ? null : new double[] {
+                                city.getLocation().getLongitude(),
+                                city.getLocation().getLatitude()
+                        };
+                    });
+            }
         }
+        Arrays.sort(arr, Comparator.comparing(a -> a.name));
         current = new CurrentStatus();
         current.players = arr;
         current.tps = Utils.getTPS();
@@ -133,4 +151,7 @@ final class Dashboard {
             main.broadcastInPage(main, "dashboard", "dashboard:current", current);
         });
     }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) { ipCache.remove(e.getPlayer()); }
 }

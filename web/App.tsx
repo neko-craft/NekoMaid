@@ -41,7 +41,7 @@ const LanguageSwitch: React.FC = () => {
 }
 
 let sent = false
-const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = ({ darkMode, setDarkMode }) => {
+const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = React.memo(({ darkMode, setDarkMode }) => {
   const loc = useLocation()
   const his = useHistory()
   const pluginRef = useRef<Plugin | null>(null)
@@ -215,7 +215,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       </globalCtx.Provider>
     </Box>
   </Box>
-}
+})
 
 const AppWrap: React.FC = () => {
   const isDark = useMediaQuery('(prefers-color-scheme: dark)')
