@@ -66,14 +66,14 @@ jobs:
         with:
           node-version: 16
 
-      - name: Install dependencies
-        run: sudo apt-get install -y xvfb
-
       - name: Install npm dependencies
         run: npm install
 
+      - name: Install dependencies
+        run: sudo apt-get install xvfb
+
       - name: Generate assets
-        run: npm run gen
+        run: xvfb-run --auto-servernum npm run gen
 
       - name: Set website version
         run: version='${{ github.ref }}' && sed -i "s/[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/${version:10}/" package.json

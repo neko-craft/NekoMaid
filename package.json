@@ -9,7 +9,7 @@
     "start": "parcel web/index.html",
     "gen": "npm run gen:material:icons && npm run gen:minecraft:language && npm run gen:minecraft:assets && npm run gen:minecraft:icons && npm run gen:minecraft:icons:item && npm run gen:minecraft:icons:list",
     "gen:material:icons": "ts-node scripts/generateMaterialIcons.ts",
-    "gen:minecraft:icons": "xvfb-run --auto-servernum minecraft-render client.jar icons/minecraft -w 40 -t 40 -d 13 -A",
+    "gen:minecraft:icons": "minecraft-render client.jar icons/minecraft -w 40 -t 40 -d 13 -A",
     "gen:minecraft:icons:list": "ts-node scripts/generateMinecraftIconsList.ts",
     "gen:minecraft:assets": "ts-node scripts/generateMinecraftAssets.ts",
     "gen:minecraft:icons:item": "ts-node scripts/generateMinecraftAssets.ts itemOnly",
