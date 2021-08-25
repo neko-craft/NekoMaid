@@ -115,12 +115,14 @@ const ItemViewer: React.FC<ItemViewerProps> = ({ item, data, onDrag, onDrop, onE
       margin: 0.5,
       position: 'relative',
       overflow: 'hidden',
+      userSelect: 'none',
       cursor: globalData.hasNBTAPI && (onEdit || onDrag) ? 'pointer' : undefined,
       backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)',
       '& span': {
         position: 'absolute',
         right: 2,
         bottom: -5,
+        pointerEvents: 'none',
         textShadow: theme => theme.palette.mode === 'light'
           ? '#fff 1px 0 0, #fff 0 1px 0, #fff -1px 0 0, #fff 0 -1px 0'
           : '#000 1px 0 0, #000 0 1px 0, #000 -1px 0 0, #000 0 -1px 0'
@@ -128,6 +130,7 @@ const ItemViewer: React.FC<ItemViewerProps> = ({ item, data, onDrag, onDrop, onE
     }}
   >
     {item && <div
+      onMouseDown={() => window.getSelection()?.removeAllRanges()}
       draggable={!!onDrag}
       onDragStart={onDrag
         ? e => {

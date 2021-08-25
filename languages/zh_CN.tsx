@@ -22,6 +22,7 @@ export default {
   status: '状态',
   username: '游戏名',
   world: '世界',
+  data: '数据',
   itemEditor: {
     title: '物品编辑器',
     itemType: '类型',

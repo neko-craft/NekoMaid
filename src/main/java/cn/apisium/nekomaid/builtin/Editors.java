@@ -63,8 +63,10 @@ final class Editors {
                         Block b = new Block();
                         b.type = block.getType().name();
                         BlockState state = block.getState();
-                        if (Utils.hasNBTAPI()) b.data = NBTAPIWrapper.newNBTTileEntity(state).toString();
-                        else if (hasBlockData) b.data = state.getBlockData().getAsString();
+                        if (Utils.hasNBTAPI()) try {
+                            b.nbt = NBTAPIWrapper.newNBTTileEntity(state).toString();
+                        } catch (Throwable ignored) { }
+                        if (hasBlockData) b.data = state.getBlockData().getAsString();
                         if (state instanceof BlockInventoryHolder) {
                             Inventory inv = ((BlockInventoryHolder) state).getInventory();
                             b.inventory = ItemData.fromInventory(inv);
@@ -78,21 +80,34 @@ final class Editors {
                 })).onWithAck("block:type", (Function<Object[], Boolean>) args -> Utils.sync(() -> {
                     World world = main.getServer().getWorld((String) args[0]);
                     if (world != null) try {
-                        world.getBlockAt((int) args[1], (int) args[2], (int) args[3])
-                                .setType(Objects.requireNonNull(Material.getMaterial((String) args[4])));
+                        org.bukkit.block.Block b = world.getBlockAt((int) args[1], (int) args[2], (int) args[3]);
+                        BlockState state = b.getState();
+                        ItemStack[] contents = state instanceof BlockInventoryHolder
+                                ? ((BlockInventoryHolder) state).getInventory().getContents()
+                                : null;
+                        b.setType(Objects.requireNonNull(Material.getMaterial((String) args[4])));
+                        state = b.getState();
+                        if (state instanceof BlockInventoryHolder && contents != null) {
+                            Inventory inv = ((BlockInventoryHolder) state).getInventory();
+                            inv.setContents(Arrays.copyOf(contents, inv.getSize()));
+                        }
                         return true;
                     } catch (Throwable e) { e.printStackTrace(); }
                     return false;
-                })).onWithAck("block:data", (Function<Object[], Boolean>) args -> Utils.sync(() -> {
+                })).onWithAck("block:save", (Function<Object[], Boolean>) args -> Utils.sync(() -> {
                     World world = main.getServer().getWorld((String) args[0]);
                     if (world != null) try {
                         org.bukkit.block.Block b = world.getBlockAt((int) args[1], (int) args[2], (int) args[3]);
-                        if (Utils.hasNBTAPI()) NBTAPIWrapper.mergeTileEntity(b.getState(), (String) args[4]);
-                        else b.setBlockData(main.getServer().createBlockData((String) args[4]));
+                        BlockState state = b.getState();
+                        if (Utils.hasNBTAPI() && args[4] != null) try {
+                            NBTAPIWrapper.mergeTileEntity(state, (String) args[4]);
+                        } catch (Throwable e) { e.printStackTrace(); }
+                        if (hasBlockData && args[5] != null)
+                            state.setBlockData(main.getServer().createBlockData((String) args[5]));
                         return true;
                     } catch (Throwable e) { e.printStackTrace(); }
                     return false;
-                })).onWithAck("block:setItem", args -> {
+                })).onWithAck("block:setItem", (Function<Object[], Boolean>) args -> Utils.sync(() -> {
                     World world = main.getServer().getWorld((String) args[0]);
                     if (world != null) try {
                         BlockState state = world.getBlockAt((int) args[1], (int) args[2], (int) args[3]).getState();
@@ -107,7 +122,7 @@ final class Editors {
                         }
                     } catch (Throwable e) { e.printStackTrace(); }
                     return false;
-                })
+                }))
         ).registerCommand(main, "block", new NekoMaidCommand() {
             @Override
             public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
@@ -149,7 +164,7 @@ final class Editors {
     }
 
     private static class Block {
-        public String type, data, inventoryType;
+        public String type, nbt, data, inventoryType;
         public ItemData[] inventory;
     }
 

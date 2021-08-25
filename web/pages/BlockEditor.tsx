@@ -16,7 +16,8 @@ import Empty from '../components/Empty'
 
 interface Block {
   type: string
-  data: string
+  data?: string
+  nbt?: string
   inventory?: Item[]
   inventoryType?: string
 }
@@ -87,7 +88,7 @@ const BlockEditor: React.FC = () => {
   const update = () => {
     if (params.world) {
       plugin.emit('block:fetch', (block: Block) => {
-        if (globalData.hasNBTAPI && block.data) block.data = stringify(parse(block.data), { pretty: true })
+        if (globalData.hasNBTAPI && block.nbt) block.nbt = stringify(parse(block.nbt), { pretty: true })
         setBlock(block)
       }, params.world, params.x, params.y, params.z)
     }
@@ -96,7 +97,6 @@ const BlockEditor: React.FC = () => {
     action(res)
     update()
   }
-  console.log(block)
   useEffect(update, [params.world, params.x, params.y, params.z])
   return <Box sx={{ minHeight: '100%', py: 3 }}>
     <Toolbar />
@@ -110,11 +110,11 @@ const BlockEditor: React.FC = () => {
               action={<Box sx={cardActionStyles}>
                 <IconButton
                   size='small'
-                  disabled={!block?.data}
-                  onClick={() => block && plugin.emit('block:data', (res: boolean) => {
+                  disabled={!block || (!block.data && !block.nbt)}
+                  onClick={() => block && plugin.emit('block:save', (res: boolean) => {
                     action(res)
                     update()
-                  }, params.world, params.x, params.y, params.z, block.data)}
+                  }, params.world, params.x, params.y, params.z, block.nbt || null, block.data || null)}
                 ><Save /></IconButton>
                 <IconButton
                   size='small'
@@ -144,9 +144,7 @@ const BlockEditor: React.FC = () => {
                   />
                 </CardContent>
                 {block.data != null && <Accordion sx={{ '&::before': { opacity: '1!important' } }} disableGutters>
-                  <AccordionSummary expandIcon={<ExpandMore />}>
-                    <Typography>方块数据</Typography>
-                  </AccordionSummary>
+                  <AccordionSummary expandIcon={<ExpandMore />}><Typography>{lang.data}</Typography></AccordionSummary>
                   <AccordionDetails sx={{ padding: 0, '& .CodeMirror': { width: '100%', height: 350 } }}>
                     <UnControlled
                       value={block.data}
@@ -155,6 +153,19 @@ const BlockEditor: React.FC = () => {
                         theme: theme.palette.mode === 'dark' ? 'material' : 'one-light'
                       }}
                       onChange={(_: any, __: any, data: string) => (block.data = data)}
+                    />
+                  </AccordionDetails>
+                </Accordion>}
+                {block.nbt != null && <Accordion sx={{ '&::before': { opacity: '1!important', display: '!important' } }} disableGutters>
+                  <AccordionSummary expandIcon={<ExpandMore />}><Typography>NBT</Typography></AccordionSummary>
+                  <AccordionDetails sx={{ padding: 0, '& .CodeMirror': { width: '100%', height: 350 } }}>
+                    <UnControlled
+                      value={block.nbt}
+                      options={{
+                        mode: 'javascript',
+                        theme: theme.palette.mode === 'dark' ? 'material' : 'one-light'
+                      }}
+                      onChange={(_: any, __: any, data: string) => (block.nbt = data)}
                     />
                   </AccordionDetails>
                 </Accordion>}
