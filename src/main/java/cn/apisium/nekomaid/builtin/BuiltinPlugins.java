@@ -4,12 +4,12 @@ import cn.apisium.nekomaid.NekoMaid;
 import org.bukkit.plugin.PluginManager;
 
 public final class BuiltinPlugins {
-    private final Console console;
+    private final Terminal terminal;
     private final FilesManager files;
     private Scheduler scheduler;
     public BuiltinPlugins(NekoMaid main) {
         new Dashboard(main);
-        console = new Console(main);
+        terminal = new Terminal(main);
         PlayerList.init(main);
         Options.init(main);
         files = new FilesManager(main);
@@ -24,7 +24,7 @@ public final class BuiltinPlugins {
         });
     }
     public void disable() {
-        console.stop();
+        terminal.stop();
         files.disable();
         if (scheduler != null) scheduler.stop();
     }

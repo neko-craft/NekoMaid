@@ -22,9 +22,9 @@ const parseLog = (data: Log, runCommand: (it: string) => void, suggest: (it: str
   const onShare = () => {
     if (!ref.current) return
     const text = ref.current.textContent || ref.current.innerText
-    dialog(<><span className='bold'>{lang.console.confirmShare}:</span><br />{text.slice(5, 150)}...</>).then(res => {
+    dialog(<><span className='bold'>{lang.terminal.confirmShare}:</span><br />{text.slice(5, 150)}...</>).then(res => {
       if (!res) return
-      toast(lang.console.sharing)
+      toast(lang.terminal.sharing)
       const body = new FormData()
       body.set('content', text)
       fetch('https://api.mclo.gs/1/log', { method: 'POST', body }).then(it => it.json()).then(it => {
@@ -38,7 +38,7 @@ const parseLog = (data: Log, runCommand: (it: string) => void, suggest: (it: str
   let moreLines = false
   if (data.components) {
     return <p ref={ref} key={i}>
-      <Tooltip title={time} placement='right'><span className='level' onClick={onShare}>[{lang.console.info}] </span></Tooltip>
+      <Tooltip title={time} placement='right'><span className='level' onClick={onShare}>[{lang.terminal.info}] </span></Tooltip>
       <span className='msg'>{parseComponents(data.components, runCommand, suggest)}</span>
     </p>
   } else {
@@ -47,10 +47,10 @@ const parseLog = (data: Log, runCommand: (it: string) => void, suggest: (it: str
     moreLines = (isError || data.level === 'WARN') && data.msg.includes('\n')
     const elm = <p ref={ref} key={i} className={isError ? 'error' : data.level === 'WARN' ? 'warn' : undefined}>
       <Tooltip title={time} placement='right'>
-        <span className='level' onClick={onShare}>[{(lang.console as any)[data.level?.toLowerCase()] || lang.console.info}] </span>
+        <span className='level' onClick={onShare}>[{(lang.terminal as any)[data.level?.toLowerCase()] || lang.terminal.info}] </span>
       </Tooltip>
       <span className='msg'>
-        {moreLines && <span className='more' data-collapse={`[${lang.console.fold}]`}>[{lang.console.expand}]</span>}
+        {moreLines && <span className='more' data-collapse={`[${lang.terminal.fold}]`}>[{lang.terminal.expand}]</span>}
         {data.logger && !hideLoggerRegexp.test(data.logger) && <span className='logger'>[{data.logger}] </span>}
         {msg}</span>
     </p>
@@ -59,7 +59,7 @@ const parseLog = (data: Log, runCommand: (it: string) => void, suggest: (it: str
 }
 
 let i = 0
-const Console: React.FC = () => {
+const Terminal: React.FC = () => {
   const logs = useMemo<JSX.Element[]>(() => [], [])
   const ref = useRef<HTMLDivElement | null>(null)
   const plugin = usePlugin()
@@ -206,9 +206,9 @@ const Console: React.FC = () => {
         onKeyUp={(e: any) => e.key === 'Enter' && (!open || !suggestions.length) && execCommand()}
         sx={{ flex: '1' }}
         classes={{ popper: 'command-popper' }}
-        renderInput={params => <TextField {...params as any} label={lang.console.command} />}
+        renderInput={params => <TextField {...params as any} label={lang.terminal.command} />}
         getOptionLabel={it => typeof it === 'string' ? it : it[0]}
-        groupBy={it => it[1] ? lang.history : lang.console.command}
+        groupBy={it => it[1] ? lang.history : lang.terminal.command}
         onInputChange={(_, it) => {
           getSuggestions(it)
           setCommand(it)
@@ -224,4 +224,4 @@ const Console: React.FC = () => {
   </Box>
 }
 
-export default Console
+export default Terminal

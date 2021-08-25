@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @SuppressWarnings("UnstableApiUsage")
-final class Console implements Appender {
+final class Terminal implements Appender {
     private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getRootLogger();
     private final LevelRangeFilter filter;
     private ErrorHandler handler = new DefaultErrorHandler(this);
@@ -41,7 +41,7 @@ final class Console implements Appender {
     private final AbstractStringLayout.Serializer serializer = PatternLayout.newSerializerBuilder()
             .setPattern("%msg%xEx{full}").setDisableAnsi(true).build();
 
-    public Console(NekoMaid main) {
+    public Terminal(NekoMaid main) {
         this.main = main;
         filter = LevelRangeFilter.createFilter(
                 Level.getLevel(main.getConfig().getString("logger.minLevel", "OFF")),

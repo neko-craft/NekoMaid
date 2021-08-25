@@ -1,13 +1,16 @@
+import 'dayjs/locale/zh-cn'
 import React from 'react'
 import * as minecraft from './minecraft/zh_cn.json'
 
 export default {
   minecraft: minecraft as typeof minecraft & Record<string, string>,
+  underlineName: 'zh-cn',
   tip: '提示',
   noData: '暂无数据',
   pluginUpdate: '发现插件更新! 推荐立即更新!',
   wrongToken: '密钥错误或插件版本过旧, 最新版本为',
   reconnect: '正在尝试重新连接...',
+  disconnected: '连接已断开!',
   actionSuccess: '操作成功!',
   actionFailed: '操作失败!',
   inputValue: '请输入要修改的值',
@@ -61,7 +64,7 @@ export default {
     system: '随系统',
     dark: '暗色'
   },
-  console: {
+  terminal: {
     title: '终端',
     fatal: '严重',
     error: '错误',

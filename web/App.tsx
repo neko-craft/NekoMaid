@@ -15,8 +15,8 @@ import { typography } from './theme'
 import { version } from '../package.json'
 import { GlobalItems } from './components/ItemViewer'
 import { pluginCtx, globalCtx, drawerWidthCtx } from './Context'
-import lang, { languages } from '../languages'
-import toast, { Snackbars } from './toast'
+import lang, { languages, currentLanguage } from '../languages'
+import toast, { Snackbars, failed } from './toast'
 import dialog, { DialogWrapper } from './dialog'
 import Plugin, { GlobalInfo, Page } from './Plugin'
 import initPages, { onGlobalDataReceived } from './pages/index'
@@ -27,18 +27,25 @@ export let pages: Record<string, Page[]> = { }
 
 export let update: React.Dispatch<number>
 
-const LanguageSwitch: React.FC = () => {
+const LanguageSwitch: React.FC = React.memo(() => {
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | undefined>()
   return <>
     <IconButton onClick={e => setAnchorEl(e.currentTarget)} color='inherit'><Translate /></IconButton>
     <MenuComponent anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(undefined)}>
       {Object.entries(languages).map(([key, value]) => <MenuItem
         key={key}
-        onClick={() => setAnchorEl(undefined)}
+        selected={currentLanguage === key}
+        onClick={() => {
+          setAnchorEl(undefined)
+          if (currentLanguage !== key) {
+            localStorage.setItem('NekoMaid:language', key)
+            location.reload()
+          }
+        }}
       >{value.minecraft['language.name']}</MenuItem>)}
     </MenuComponent>
   </>
-}
+})
 
 let sent = false
 const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = React.memo(({ darkMode, setDarkMode }) => {
@@ -79,7 +86,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     }).on('reconnect', () => {
       toast(lang.reconnect)
       setTimeout(() => location.reload(), 5000)
-    })
+    }).on('disconnect', () => failed(lang.disconnected))
     return fn
   }, [])
   useEffect(() => { if (!loc.pathname || loc.pathname === '/') his.replace('/NekoMaid/dashboard') }, [loc.pathname])

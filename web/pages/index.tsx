@@ -5,7 +5,7 @@ import Plugin, { GlobalInfo } from '../Plugin'
 import lang, { minecraft } from '../../languages'
 
 import Dashboard from './Dashboard'
-import Console from './Console'
+import Terminal from './Terminal'
 import PlayerList from './PlayerList'
 import Files from './Files'
 import Plugins from './Plugins'
@@ -19,7 +19,7 @@ import OpenInv, { playerAction } from './OpenInv'
 
 export default (p: Plugin) => p.addPages(
   { component: Dashboard, path: 'dashboard', icon: <DashboardIcon />, title: lang.dashboard.title },
-  { component: Console, path: 'console', icon: <DoubleArrow />, title: lang.console.title },
+  { component: Terminal, path: 'terminal', icon: <DoubleArrow />, title: lang.terminal.title },
   { component: PlayerList, path: ['playerList', 'playerList/:name'], icon: <People />, title: minecraft['entity.minecraft.player'], exact: true },
   { component: Files, path: 'files', icon: <Description />, title: lang.files.title },
   { component: Plugins, path: 'plugins', icon: <Extension />, title: lang.plugins.title },

@@ -1,9 +1,13 @@
-import zhCN from './zh_CN'
+/* eslint-disable camelcase */
+import zh_CN from './zh_CN'
+import en from './en'
 
-export type Language = typeof zhCN
+export type Language = typeof zh_CN
 
-export const currentLanguage: string = 'zh_CN'
-export const languages: Record<string, Language> = { zhCN }
+export const currentLanguage = localStorage.getItem('NekoMaid:language') || 'zh_CN'
+export const languages: Record<string, Language> = { zh_CN, en }
 
-export default zhCN as Language
-export const minecraft = zhCN.minecraft
+const lang = languages[currentLanguage]!
+
+export default lang
+export const minecraft = lang.minecraft
