@@ -165,7 +165,7 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
       plugin.emit('files:content', (data: number | string | null) => {
         loading['!#LOADING'] = false
         switch (data) {
-          case null: return setError(lang.files.unsupportFormat)
+          case null: return setError(lang.files.unsupportedFormat)
           case 0: return setError(lang.files.notExists)
           case 1:
             setIsNewFile(true)

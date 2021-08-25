@@ -197,10 +197,10 @@ const Vault: React.FC = () => {
       width: 88,
       sortable: false,
       renderCell: (it: GridCellParams) => <>
-        {hasVaultGroups && <Tooltip title={lang.vault.managePermssionGroup}>
+        {hasVaultGroups && <Tooltip title={lang.vault.managePermissionGroup}>
           <IconButton onClick={() => setSelectedPlayer(it.id as any)} size='small'><GroupsIcon /></IconButton>
         </Tooltip>}
-        <Tooltip title={lang.vault.managePermssion}><IconButton onClick={() => {
+        <Tooltip title={lang.vault.managePermission}><IconButton onClick={() => {
           setSelectedId(it.id as any)
           setIsGroup(false)
         }} size='small'><ListIcon /></IconButton></Tooltip>
@@ -212,7 +212,7 @@ const Vault: React.FC = () => {
         headerName: lang.operations,
         width: 66,
         sortable: false,
-        renderCell: (it: GridCellParams) => <Tooltip title={lang.vault.managePermssion}><IconButton onClick={() => {
+        renderCell: (it: GridCellParams) => <Tooltip title={lang.vault.managePermission}><IconButton onClick={() => {
           setSelectedId(it.id as any)
           setIsGroup(true)
         }} size='small'><ListIcon /></IconButton></Tooltip>

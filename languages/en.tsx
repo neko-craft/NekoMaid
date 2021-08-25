@@ -5,10 +5,11 @@ import type { Language } from './index'
 const lang: Language = {
   minecraft,
   underlineName: 'en',
+  muiName: 'enUS',
   tip: 'Tip',
   noData: 'No Data',
   pluginUpdate: 'An update founded, it is recommended to use the newer version!',
-  wrongToken: 'Incorrect token!', // 密钥英文是TOKEN
+  wrongToken: 'Incorrect token!',
   reconnect: 'Reconnecting...',
   disconnected: 'Disconnected!',
   actionSuccess: 'Success!',
@@ -34,7 +35,7 @@ const lang: Language = {
     count: 'Amount',
     damage: 'Damage',
     displayName: 'Display Name',
-    lore: 'Lores',
+    lore: 'Lore',
     newEnchantment: 'Add a new enchantment',
     newEnchantmentTitle: 'Enchantment',
     level: 'Level',
@@ -100,7 +101,7 @@ const lang: Language = {
     compress: 'Compress',
     uncompress: 'Decompress',
     compressName: 'Input name for compressed file',
-    unsupportFormat: 'File format is unsupported',
+    unsupportedFormat: 'File format is unsupported',
     notExists: 'File does not exist',
     tooBig: 'File is too large!',
     editor: 'Editor',
@@ -149,7 +150,7 @@ const lang: Language = {
     clickToRemoveWhitelist: 'Click to remove from the whitelist',
     clickToBan: 'Click to ban the player',
     clickToPardon: 'Click to pardon (un-ban) the player',
-    whosDetails: (name: string) => name + ''s details',
+    whosDetails: (name: string) => name + "'s details",
     confirmBan: (name: any) => <>Are you sure to ban {name} ?</>,
     confirmPardon: (name: any) => <>Are you sure to pardon (un-ban) {name} ?</>,
     confirmAddWhitelist: (name: any) => <>Are you sure to add {name} to the whitelist?</>,
@@ -193,8 +194,8 @@ const lang: Language = {
     prefix: 'Prefix',
     suffix: 'Suffix',
     balance: 'Balance',
-    managePermssionGroup: 'Permission Group Manage',
-    managePermssion: 'Permission Manage'
+    managePermissionGroup: 'Permission Group Manage',
+    managePermission: 'Permission Manage'
   },
   worlds: {
     title: 'Worlds',

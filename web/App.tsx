@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
 import * as colors from '@material-ui/core/colors'
+import * as muiLanguages from '@material-ui/core/locale/index'
 import socketIO from 'socket.io-client'
 import darkScrollbar from '@material-ui/core/darkScrollbar'
-import { zhCN } from '@material-ui/core/locale/index'
 import { useLocation, Route, NavLink, useHistory } from 'react-router-dom'
 import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar, MenuItem, Tooltip,
   Typography, Drawer, Toolbar, IconButton, useMediaQuery, Menu as MenuComponent } from '@material-ui/core'
@@ -244,7 +244,7 @@ const AppWrap: React.FC = () => {
       mode: darkMode ? 'dark' : 'light',
       background: darkMode ? { default: '#212121', paper: '#212121' } : { default: '#f4f6f8', paper: '#ffffff' }
     }
-  }, zhCN), [darkMode])
+  }, (muiLanguages as any)[lang.muiName]), [darkMode])
   return <ThemeProvider theme={theme}>
     <DialogWrapper />
     <Snackbars />

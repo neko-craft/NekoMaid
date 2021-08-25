@@ -22,7 +22,7 @@ const parseLog = (data: Log, runCommand: (it: string) => void, suggest: (it: str
   const onShare = () => {
     if (!ref.current) return
     const text = ref.current.textContent || ref.current.innerText
-    dialog(<><span className='bold'>{lang.terminal.confirmShare}:</span><br />{text.slice(5, 150)}...</>).then(res => {
+    dialog(<><span className='bold'>{lang.terminal.confirmShare}:</span><br />{text.slice(text.indexOf(' ') + 1, 150)}...</>).then(res => {
       if (!res) return
       toast(lang.terminal.sharing)
       const body = new FormData()

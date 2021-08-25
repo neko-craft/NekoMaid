@@ -5,6 +5,7 @@ import * as minecraft from './minecraft/zh_cn.json'
 export default {
   minecraft: minecraft as typeof minecraft & Record<string, string>,
   underlineName: 'zh-cn',
+  muiName: 'zhCN',
   tip: '提示',
   noData: '暂无数据',
   pluginUpdate: '发现插件更新! 推荐立即更新!',
@@ -100,7 +101,7 @@ export default {
     compress: '压缩文件',
     uncompress: '解压文件',
     compressName: '请输入压缩后的文件名',
-    unsupportFormat: '文件格式不被支持!',
+    unsupportedFormat: '文件格式不被支持!',
     notExists: '文件不存在!',
     tooBig: '文件太大了!',
     editor: '编辑器',
@@ -193,8 +194,8 @@ export default {
     prefix: '前缀',
     suffix: '后缀',
     balance: '经济',
-    managePermssionGroup: '权限组管理',
-    managePermssion: '权限查询及修改'
+    managePermissionGroup: '权限组管理',
+    managePermission: '权限查询及修改'
   },
   worlds: {
     title: '世界',
