@@ -74,9 +74,9 @@ configs.push({
       </ListItem>
       {canGetData && <>
         <ListItemButton onClick={() => {
-          setLoading(true)
           if (infoElm.length) setOpen(!open)
           else {
+            setLoading(true)
             plugin.emit('server:fetchInfo', (data: any) => {
               setLoading(false)
               if (!data) {
