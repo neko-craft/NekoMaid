@@ -12,6 +12,7 @@ const lang: Language = {
   wrongToken: 'Incorrect token!',
   reconnect: 'Reconnecting...',
   disconnected: 'Disconnected!',
+  failedToConnect: 'Failed to connect!',
   actionSuccess: 'Success!',
   actionFailed: 'Failed!',
   inputValue: 'Input the value to be modified',
@@ -27,6 +28,8 @@ const lang: Language = {
   username: 'Username',
   world: 'World',
   data: 'Data',
+  info: 'Information',
+  unsupported: 'Unsupported!',
   itemEditor: {
     title: 'Item Editor',
     itemType: 'type',
@@ -60,10 +63,20 @@ const lang: Language = {
     maxPlayers: 'Max Players',
     spawnRadius: 'Spawn Radius',
     whitelist: 'Whitelist',
+    motd: 'MOTD',
     theme: 'Theme',
     light: 'LIGHT',
     system: 'AUTO',
-    dark: 'DARK'
+    dark: 'DARK',
+    javaVersion: 'Java Version',
+    manufacturer: 'Manufacturer',
+    model: 'Model',
+    operatingSystem: 'OS',
+    virtualMachine: 'VM',
+    cpu: 'CPU',
+    pid: 'PID',
+    threads: 'Threads',
+    javaCount: 'Number of Java Processes'
   },
   terminal: {
     title: 'Terminal',

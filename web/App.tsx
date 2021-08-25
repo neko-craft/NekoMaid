@@ -86,7 +86,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     }).on('reconnect', () => {
       toast(lang.reconnect)
       setTimeout(() => location.reload(), 5000)
-    }).on('disconnect', () => failed(lang.disconnected))
+    }).on('disconnect', () => failed(lang.disconnected)).on('connect_error', () => failed(lang.failedToConnect))
     return fn
   }, [])
   useEffect(() => { if (!loc.pathname || loc.pathname === '/') his.replace('/NekoMaid/dashboard') }, [loc.pathname])

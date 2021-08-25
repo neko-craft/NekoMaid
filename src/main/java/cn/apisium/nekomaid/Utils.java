@@ -2,6 +2,7 @@ package cn.apisium.nekomaid;
 
 import com.alibaba.fastjson.JSON;
 import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
+import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;

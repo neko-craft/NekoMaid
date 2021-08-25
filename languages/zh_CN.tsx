@@ -12,6 +12,7 @@ export default {
   wrongToken: '密钥错误或插件版本过旧, 最新版本为',
   reconnect: '正在尝试重新连接...',
   disconnected: '连接已断开!',
+  failedToConnect: '无法连接到服务器!',
   actionSuccess: '操作成功!',
   actionFailed: '操作失败!',
   inputValue: '请输入要修改的值',
@@ -27,6 +28,8 @@ export default {
   username: '游戏名',
   world: '世界',
   data: '数据',
+  info: '信息',
+  unsupported: '不支持的操作!',
   itemEditor: {
     title: '物品编辑器',
     itemType: '类型',
@@ -60,10 +63,20 @@ export default {
     maxPlayers: '最大玩家数',
     spawnRadius: '出生点保护半径',
     whitelist: '白名单',
+    motd: '服务器标语',
     theme: '主题设置',
     light: '亮色',
     system: '随系统',
-    dark: '暗色'
+    dark: '暗色',
+    javaVersion: 'Java 版本',
+    manufacturer: '制造商',
+    model: '型号',
+    operatingSystem: '操作系统',
+    virtualMachine: '虚拟机',
+    cpu: '处理器',
+    pid: '进程ID',
+    threads: '线程数',
+    javaCount: 'Java 进程数'
   },
   terminal: {
     title: '终端',

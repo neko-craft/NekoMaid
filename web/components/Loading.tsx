@@ -18,6 +18,7 @@ export const CircularLoading: React.FC<CircularProgressProps & { loading?: boole
   backdropFilter: loading ? 'blur(1px)' : undefined,
   transition: '.5s',
   opacity: loading ? '1' : '0',
+  userSelect: 'none',
   pointerEvents: loading ? undefined : 'none'
 }}>
   <CircularProgress {...props} />

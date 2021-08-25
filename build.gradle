@@ -52,6 +52,7 @@ dependencies {
     compileOnly 'com.github.jikoo.OpenInv:openinvapi:2f36a4d4dc'
     compileOnly 'me.clip:placeholderapi:2.10.10'
     compileOnly 'de.tr7zw:item-nbt-api-plugin:2.8.0'
+    compileOnly 'com.github.oshi:oshi-core:5.8.1'
     compileOnly 'com.onarandombox.multiversecore:Multiverse-Core:4.3.1-SNAPSHOT'
     compileOnly ('com.github.MilkBowl:VaultAPI:1.7') {
         exclude group: 'org.bukkit'

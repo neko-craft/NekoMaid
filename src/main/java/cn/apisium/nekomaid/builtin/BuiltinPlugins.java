@@ -11,7 +11,7 @@ public final class BuiltinPlugins {
         new Dashboard(main);
         terminal = new Terminal(main);
         PlayerList.init(main);
-        Options.init(main);
+        ServerConfig.init(main);
         files = new FilesManager(main);
         main.getServer().getScheduler().runTask(main, () -> {
             new Plugins(main);

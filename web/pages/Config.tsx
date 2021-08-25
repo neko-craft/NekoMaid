@@ -3,13 +3,15 @@ import dayjs from 'dayjs'
 import dialog from '../dialog'
 import lang from '../../languages'
 import * as colors from '@material-ui/core/colors'
-import { success } from '../toast'
+import { failed, success } from '../toast'
 import { configs } from '../Plugin'
 import { useGlobalData, usePlugin } from '../Context'
-import { Delete, HelpOutline, Check, Brightness4, Brightness7, SettingsBrightness, Edit } from '@material-ui/icons'
+import { CircularLoading } from '../components/Loading'
+import { Delete, HelpOutline, Check, Brightness4, Brightness7, SettingsBrightness, Edit,
+  Equalizer, ExpandLess, ExpandMore } from '@material-ui/icons'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItem, IconButton,
   ToggleButton, ListItemAvatar, Avatar, ListItemText, Tooltip, CardContent, ToggleButtonGroup,
-  Paper, ListItemButton, Switch } from '@material-ui/core'
+  Paper, ListItemButton, Switch, ListItemIcon, Collapse } from '@material-ui/core'
 
 import type { ServerRecord } from '../App'
 
@@ -19,24 +21,43 @@ configs.push({
     const plugin = usePlugin()
     const globalData = useGlobalData()
     const [flag, update] = useState(0)
-    const setValue = (field: string, value: any) => {
-      plugin.emit('server:set', field, ((globalData as any)[field] = value))
-      update(flag + 1)
+    const [info, setInfo] = useState<Record<string, string>>({ })
+    const [open, setOpen] = useState(false)
+    const [canGetData, setCanGetData] = useState(true)
+    const [loading, setLoading] = useState(false)
+    const setValue = (field: string, value: any, isGlobal = true) => {
+      plugin.emit('server:set', field, value)
       success()
-      location.reload()
+      if (isGlobal) {
+        (globalData as any)[field] = value
+        update(flag + 1)
+        location.reload()
+      }
     }
-    const createEditButtom = (field: string) => <IconButton
-      onClick={() => dialog({
-        content: lang.inputValue,
-        input: {
-          error: true,
-          type: 'number',
-          helperText: lang.invalidValue,
-          validator: (it: string) => /^\d+$/.test(it) && +it >= 0
-        }
-      }).then(res => res != null && setValue(field, parseInt(res as any)))}
+    const createEditButtom = (field: string, isGlobal?: boolean, isInt = true) => <IconButton
+      onClick={() => dialog(
+        {
+          content: lang.inputValue,
+          input: isInt
+            ? {
+                error: true,
+                type: 'number',
+                helperText: lang.invalidValue,
+                validator: (it: string) => /^\d+$/.test(it) && +it >= 0
+              }
+            : { }
+        }).then(res => res != null && setValue(field, isInt ? parseInt(res as any) : (res || null), isGlobal))}
     ><Edit /></IconButton>
+
+    const infoElm: JSX.Element[] = []
+    for (const key in info) {
+      infoElm.push(<ListItem key={key} sx={{ pl: 4 }}>
+        <ListItemText primary={(lang.config as any)[key]} secondary={info[key]} />
+      </ListItem>)
+    }
+
     return <List>
+      <CircularLoading loading={loading} />
       <ListItem secondaryAction={globalData.canSetMaxPlayers
         ? createEditButtom('maxPlayers')
         : undefined}>
@@ -45,9 +66,37 @@ configs.push({
       <ListItem secondaryAction={createEditButtom('spawnRadius')}>
         <ListItemText primary={lang.config.spawnRadius + ': ' + globalData.spawnRadius} />
       </ListItem>
+      <ListItem secondaryAction={createEditButtom('motd', false, false)}>
+        <ListItemText primary={lang.config.motd} />
+      </ListItem>
       <ListItem secondaryAction={<Switch checked={globalData.hasWhitelist} onChange={e => setValue('hasWhitelist', e.target.checked)} />}>
         <ListItemText primary={lang.config.whitelist} />
       </ListItem>
+      {canGetData && <>
+        <ListItemButton onClick={() => {
+          setLoading(true)
+          if (infoElm.length) setOpen(!open)
+          else {
+            plugin.emit('server:fetchInfo', (data: any) => {
+              setLoading(false)
+              if (!data) {
+                failed(lang.unsupported)
+                setCanGetData(false)
+                return
+              }
+              setInfo(data)
+              setOpen(true)
+            })
+          }
+        }}>
+        <ListItemIcon><Equalizer /></ListItemIcon>
+          <ListItemText primary={lang.info} />
+          {open ? <ExpandLess /> : <ExpandMore />}
+        </ListItemButton>
+        <Collapse in={open} timeout='auto' unmountOnExit>
+          <List component='div' dense disablePadding>{infoElm}</List>
+        </Collapse>
+      </>}
     </List>
   }
 },
