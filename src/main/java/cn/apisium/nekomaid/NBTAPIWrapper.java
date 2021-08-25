@@ -2,8 +2,10 @@ package cn.apisium.nekomaid;
 
 import de.tr7zw.nbtapi.NBTCompound;
 import de.tr7zw.nbtapi.NBTContainer;
+import de.tr7zw.nbtapi.NBTEntity;
 import de.tr7zw.nbtapi.NBTTileEntity;
 import org.bukkit.block.BlockState;
+import org.bukkit.entity.Entity;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -11,6 +13,7 @@ import java.lang.reflect.Method;
 public final class NBTAPIWrapper {
     private static Constructor<NBTContainer> nbtContainer;
     private static Constructor<NBTTileEntity> nbtTileEntity;
+    private static Constructor<NBTEntity> nbtEntity;
     private static Method mergeCompound;
 
     public static NBTContainer newNBTContainer(String value) {
@@ -31,11 +34,20 @@ public final class NBTAPIWrapper {
         }
     }
 
-    public static void mergeTileEntity(BlockState state, String nbt) {
+    public static NBTEntity newNBTEntity(Entity entity) {
         try {
-            if (mergeCompound == null) mergeCompound = NBTTileEntity
+            if (nbtEntity == null) nbtEntity = NBTEntity.class.getConstructor(Entity.class);
+            return nbtEntity.newInstance(entity);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mergeCompound(Object obj, String nbt) {
+        try {
+            if (mergeCompound == null) mergeCompound = NBTCompound
                     .class.getMethod("mergeCompound", NBTCompound.class);
-            mergeCompound.invoke(newNBTTileEntity(state), newNBTContainer(nbt));
+            mergeCompound.invoke(obj, newNBTContainer(nbt));
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }

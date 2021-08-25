@@ -343,7 +343,7 @@ const Dashboard: React.FC = () => {
           </TopCard>
         </Grid>
         <Grid item lg={8} md={12} xl={9} xs={12}>{useMemo(() => <Charts data={status} />, [status])}</Grid>
-        <Grid item lg={4} md={6} xl={3} xs={12}><Players players={current?.players} /></Grid>
+        <Grid item lg={4} md={12} xl={3} xs={12}><Players players={current?.players} /></Grid>
         {hasGeoIP && current?.players && typeof current.players[0] !== 'string' && <Grid item xs={12}>
           <Accordion TransitionProps={{ unmountOnExit: true }} disableGutters>
             <AccordionSummary expandIcon={<ExpandMore />}>

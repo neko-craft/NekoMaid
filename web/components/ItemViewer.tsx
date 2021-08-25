@@ -73,7 +73,9 @@ export enum InvType {
   // eslint-disable-next-line no-unused-vars
   GLOBAL_ITEMS = 'GLOBAL_ITEMS',
   // eslint-disable-next-line no-unused-vars
-  BLOCK = 'BLOCK'
+  BLOCK = 'BLOCK',
+  // eslint-disable-next-line no-unused-vars
+  ENTITY = 'ENTITY'
 }
 
 export type ItemViewerProps = Omit<PaperProps, 'onDrop' | 'onDrag'> & {

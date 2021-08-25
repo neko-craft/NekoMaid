@@ -11,7 +11,7 @@ import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, IconButton, A
 import { useHistory, useLocation } from 'react-router-dom'
 import { useDrawerWidth, useGlobalData, usePlugin } from '../Context'
 import { cardActionStyles } from '../theme'
-import { action, success } from '../toast'
+import { action, failed, success } from '../toast'
 import Empty from '../components/Empty'
 
 interface Block {
@@ -75,7 +75,7 @@ const BlockEditor: React.FC = () => {
       params.x = +arr[4]
       params.y = +arr[5]
       params.z = +arr[6]
-    }
+    } else his.push('/NekoMaid/block')
   }
   useEffect(() => {
     const off = plugin.emit('item:blocks', (types: string[], worlds: string[]) => {
@@ -88,6 +88,11 @@ const BlockEditor: React.FC = () => {
   const update = () => {
     if (params.world) {
       plugin.emit('block:fetch', (block: Block) => {
+        if (!block) {
+          failed()
+          his.push('/NekoMaid/block')
+          return
+        }
         if (globalData.hasNBTAPI && block.nbt) block.nbt = stringify(parse(block.nbt), { pretty: true })
         setBlock(block)
       }, params.world, params.x, params.y, params.z)

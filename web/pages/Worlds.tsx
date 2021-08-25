@@ -52,6 +52,16 @@ const Worlds: React.FC = () => {
     return () => { offUpdate() }
   }, [])
   const sw = worlds.find(it => it.id === selected)
+  const getSwitch = (name: string, configId = name) => sw
+    ? <ListItem
+      secondaryAction={<Switch disabled={!globalData.hasMultiverse} checked={(sw as any)[name]}
+      onChange={e => {
+        plugin.emit('worlds:set', sw.id, configId, e.target.checked.toString())
+        success()
+      }}
+    />}><ListItemText primary={(lang.worlds as any)[name]} /></ListItem>
+    : null
+
   return <Box sx={{ minHeight: '100%', py: 3 }}>
     <Toolbar />
     <Container maxWidth={false}>
@@ -142,27 +152,12 @@ const Worlds: React.FC = () => {
                     plugin.emit('worlds:pvp', sw.id, e.target.checked)
                     success()
                   }} />}><ListItemText primary='PVP' /></ListItem>
-                  <ListItem secondaryAction={<Switch checked={sw.allowAnimals} disabled={!globalData.hasMultiverse} onChange={e => {
-                    plugin.emit('worlds:set', sw.id, 'spawning.animals.spawn', e.target.checked.toString())
-                    success()
-                  }} />}><ListItemText primary={lang.worlds.allowAnimals} /></ListItem>
-                  <ListItem secondaryAction={<Switch checked={sw.allowMonsters} disabled={!globalData.hasMultiverse} onChange={e => {
-                    plugin.emit('worlds:set', sw.id, 'spawning.monsters.spawn', e.target.checked.toString())
-                    success()
-                  }} />}><ListItemText primary={lang.worlds.allowMonsters} /></ListItem>
+                  {getSwitch('allowAnimals', 'spawning.animals.spawn')}
+                  {getSwitch('allowMonsters', 'spawning.monsters.spawn')}
                   {globalData.hasMultiverse && <>
-                    <ListItem secondaryAction={<Switch checked={sw.allowFlight} onChange={e => {
-                      plugin.emit('worlds:set', sw.id, 'allowFlight', e.target.checked.toString())
-                      success()
-                    }} />}><ListItemText primary={lang.worlds.allowFlight} /></ListItem>
-                    <ListItem secondaryAction={<Switch checked={sw.autoHeal} onChange={e => {
-                      plugin.emit('worlds:set', sw.id, 'autoHeal', e.target.checked.toString())
-                      success()
-                    }} />}><ListItemText primary={lang.worlds.autoHeal} /></ListItem>
-                    <ListItem secondaryAction={<Switch checked={sw.hunger} onChange={e => {
-                      plugin.emit('worlds:set', sw.id, 'hunger', e.target.checked.toString())
-                      success()
-                    }} />}><ListItemText primary={lang.worlds.hunger} /></ListItem>
+                    {getSwitch('allowFlight')}
+                    {getSwitch('autoHeal')}
+                    {getSwitch('hunger')}
                   </>}
                   <ListItem secondaryAction={globalData.canSetViewDistance
                     ? <IconButton

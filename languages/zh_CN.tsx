@@ -212,7 +212,14 @@ export default {
     viewDistance: '视距'
   },
   entityEditor: {
-    title: '实体'
+    title: '实体',
+    customName: '名字',
+    customNameVisible: '显示自定义名字',
+    glowing: '发光',
+    gravity: '受重力影响',
+    invulnerable: '无敌',
+    silent: '无声',
+    container: '背包'
   },
   blockEditor: {
     title: '方块',
