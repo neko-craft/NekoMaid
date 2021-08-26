@@ -241,5 +241,17 @@ export default {
   blockEditor: {
     title: '方块',
     container: '容器'
+  },
+  codeMirrorPhrases: {
+    Yes: minecraft['gui.yes'],
+    No: minecraft['gui.no'],
+    All: minecraft['gui.all'],
+    Stop: minecraft['gui.cancel'],
+    'Search:': '搜索:',
+    'With:': '替换为:',
+    'Replace?': '确认替换?',
+    'Replace all:': '全部替换:',
+    'Replace with:': '替换为:',
+    '(Use /re/ syntax for regexp search)': '(使用 /re/ 语法来使用正则表达式)'
   }
 }

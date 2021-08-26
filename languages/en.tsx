@@ -241,7 +241,8 @@ const lang: Language = {
   blockEditor: {
     title: 'Block',
     container: 'Inventory'
-  }
+  },
+  codeMirrorPhrases: { } as any
 }
 
 export default lang

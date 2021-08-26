@@ -108,7 +108,7 @@ const BlockEditor: React.FC = () => {
     <Container maxWidth={false}>
       <Grid container spacing={3} sx={{ width: { sm: `calc(100vw - ${drawerWidth}px - ${theme.spacing(3)})` } }}>
         <Grid item lg={6} md={12} xl={6} xs={12}>
-          <Card>
+          <Card sx={{ '& .CodeMirror-dialog, .CodeMirror-scrollbar-filler': { backgroundColor: theme.palette.background.paper + '!important' } }}>
             <CardHeader
               title={lang.blockEditor.title}
               sx={{ position: 'relative' }}
@@ -155,6 +155,7 @@ const BlockEditor: React.FC = () => {
                       value={block.data}
                       options={{
                         mode: 'javascript',
+                        phrases: lang.codeMirrorPhrases,
                         theme: theme.palette.mode === 'dark' ? 'material' : 'one-light'
                       }}
                       onChange={(_: any, __: any, data: string) => (block.data = data)}
@@ -168,6 +169,7 @@ const BlockEditor: React.FC = () => {
                       value={block.nbt}
                       options={{
                         mode: 'javascript',
+                        phrases: lang.codeMirrorPhrases,
                         theme: theme.palette.mode === 'dark' ? 'material' : 'one-light'
                       }}
                       onChange={(_: any, __: any, data: string) => (block.nbt = data)}

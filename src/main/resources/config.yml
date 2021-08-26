@@ -7,7 +7,7 @@ geolite2-eula: false
 baidu-map-license-key: ''
 
 logger:
-  maxLevel: INFO
-  minLevel: OFF
+  maxLevel: 'INFO'
+  minLevel: 'OFF'
 
 debug: false

@@ -6,6 +6,15 @@ import 'codemirror/mode/shell/shell'
 import 'codemirror/mode/powershell/powershell'
 import 'codemirror/mode/properties/properties'
 import 'codemirror/mode/javascript/javascript'
+import 'codemirror/addon/scroll/annotatescrollbar.js'
+import 'codemirror/addon/search/matchesonscrollbar.js'
+import 'codemirror/addon/search/match-highlighter.js'
+import 'codemirror/addon/search/jump-to-line.js'
+
+import 'codemirror/addon/dialog/dialog.js'
+import 'codemirror/addon/dialog/dialog.css'
+import 'codemirror/addon/search/searchcursor.js'
+import 'codemirror/addon/search/search.js'
 
 import React, { useEffect, useState, useRef } from 'react'
 import toast, { action, failed, success } from '../toast'
@@ -182,7 +191,10 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
         }
       }, path)
     }, [path])
-    return <Card sx={{ position: 'relative' }}>
+    return <Card sx={{
+      position: 'relative',
+      '& .CodeMirror-dialog, .CodeMirror-scrollbar-filler': { backgroundColor: theme.palette.background.paper + '!important' }
+    }}>
       <CardHeader
         title={<span style={{ fontWeight: 'normal' }}>
           {lang.files.editor}{path && ': ' + path}{path && isNewFile && <span className='bold'> ({lang.files.newFile})</span>}</span>}
@@ -228,6 +240,7 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
           ref={editorRef}
           value={text == null ? EMPTY : text}
           options={{
+            phrases: lang.codeMirrorPhrases,
             mode: text == null ? '' : getMode(path),
             theme: theme.palette.mode === 'dark' ? 'material' : 'one-light',
             lineNumbers: true

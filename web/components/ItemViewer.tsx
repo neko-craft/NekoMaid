@@ -390,11 +390,15 @@ const ItemEditor: React.FC = () => {
         </Dialog>
       </Grid>}
     </DialogContent>
-    {nbt && tab === 2 && <Box sx={{ '& .CodeMirror': { width: '100%' } }}>
+    {nbt && tab === 2 && <Box sx={{
+      '& .CodeMirror': { width: '100%' },
+      '& .CodeMirror-dialog, .CodeMirror-scrollbar-filler': { backgroundColor: theme.palette.background.paper + '!important' }
+    }}>
       <UnControlled
         value={nbtText}
         options={{
           mode: 'javascript',
+          phrases: lang.codeMirrorPhrases,
           theme: theme.palette.mode === 'dark' ? 'material' : 'one-light'
         }}
         onChange={(_: any, __: any, nbt: string) => {

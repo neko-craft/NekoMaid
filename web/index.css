@@ -24,9 +24,13 @@ input[type=number] {
 
 .CodeMirror {
   height: 100%;
-  font-family: "Roboto Mono", Helvetica, Arial, monospace, sans-serif !important;
+  font-family: "Roboto Mono", Helvetica, Arial, sans-serif !important;
   background: inherit !important;
   color: inherit !important;
+}
+
+.CodeMirror-search-field {
+  font-family: inherit !important;
 }
 
 .CodeMirror-gutters, .CodeMirror-gutters {

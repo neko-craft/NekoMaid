@@ -145,11 +145,16 @@ const EntityEditor: React.FC = () => {
                 </CardContent>
                 {entity.nbt != null && <Accordion sx={{ '&::before': { opacity: '1!important' } }} disableGutters>
                   <AccordionSummary expandIcon={<ExpandMore />}><Typography>NBT</Typography></AccordionSummary>
-                  <AccordionDetails sx={{ padding: 0, '& .CodeMirror': { width: '100%', height: 350 } }}>
+                  <AccordionDetails sx={{
+                    padding: 0,
+                    '& .CodeMirror': { width: '100%', height: 350 },
+                    '& .CodeMirror-dialog, .CodeMirror-scrollbar-filler': { backgroundColor: theme.palette.background.paper + '!important' }
+                  }}>
                     <UnControlled
                       value={entity.nbt}
                       options={{
                         mode: 'javascript',
+                        phrases: lang.codeMirrorPhrases,
                         theme: theme.palette.mode === 'dark' ? 'material' : 'one-light'
                       }}
                       onChange={(_: any, __: any, data: string) => (entity.nbt = data)}
