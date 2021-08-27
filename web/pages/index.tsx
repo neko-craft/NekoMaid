@@ -1,6 +1,6 @@
 import React from 'react'
 import { DoubleArrow, Dashboard as DashboardIcon, People, Description, Extension, Settings, AccountBalance,
-  Schedule, Backpack, Public, Widgets, Pets } from '@material-ui/icons'
+  Schedule, Backpack, Public, Widgets, Pets, Equalizer } from '@material-ui/icons'
 import Plugin, { GlobalInfo } from '../Plugin'
 import lang, { minecraft } from '../../languages'
 
@@ -14,6 +14,7 @@ import BlockEditor from './BlockEditor'
 import EntityEditor from './EntityEditor'
 import Config from './Config'
 import Scheduler from './Scheduler'
+import Profiler from './Profiler'
 import Vault from './Vault'
 import OpenInv, { playerAction } from './OpenInv'
 
@@ -32,5 +33,6 @@ export default (p: Plugin) => p.addPages(
 ).addPlayerAction(playerAction)
 
 export const onGlobalDataReceived = (p: Plugin, data: GlobalInfo) => {
+  if (data.hasProfiler) p.addPages({ component: Profiler, path: 'profiler', icon: <Equalizer />, title: lang.profiler.title })
   if (data.hasVault) p.addPages({ component: Vault, path: 'vault', icon: <AccountBalance />, title: lang.vault.title })
 }

@@ -32,6 +32,14 @@ final class Dashboard implements Listener {
     private long lastCheckVersion;
     private int behindVersions = -3;
     private final WeakHashMap<Player, double[]> ipCache = new WeakHashMap<>();
+    private static boolean canGetPing;
+
+    static {
+        try {
+            Player.class.getMethod("getPing");
+            canGetPing = true;
+        } catch (Throwable ignored) { }
+    }
 
     private final static class Status {
         public long time;
@@ -42,6 +50,7 @@ final class Dashboard implements Listener {
     }
     private final static class PlayerInfo {
         public String name, ip;
+        public int ping;
         public double[] loc;
     }
     private final static class CurrentStatus {
@@ -118,6 +127,7 @@ final class Dashboard implements Listener {
         for (Player p : list) {
             PlayerInfo it = arr[i++] = new PlayerInfo();
             it.name = p.getName();
+            if (canGetPing) it.ping = p.getPing();
             if (p.getAddress() != null) {
                 InetSocketAddress ip = p.getAddress();
                 it.ip = ip.getHostString();

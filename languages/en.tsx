@@ -242,7 +242,15 @@ const lang: Language = {
     title: 'Block',
     container: 'Inventory'
   },
-  codeMirrorPhrases: { } as any
+  codeMirrorPhrases: { } as any,
+  profiler: {
+    title: 'Profiler',
+    entities: 'Entities',
+    chunks: 'Chunks',
+    heap: 'Heap',
+    summary: 'Summary',
+    suggestions: 'Suggestions'
+  }
 }
 
 export default lang

@@ -216,7 +216,7 @@ final class FilesManager {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            if (main.getConfig().getBoolean("debug", false)) cause.printStackTrace();
+            if (main.isDebug()) cause.printStackTrace();
         }
     }
 

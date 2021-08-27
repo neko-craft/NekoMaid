@@ -22,6 +22,7 @@ public final class BuiltinPlugins {
             new Worlds(main);
             new Editors(main);
         });
+        try { new Profiler(main); } catch (Throwable e) { e.printStackTrace(); }
     }
     public void disable() {
         terminal.stop();

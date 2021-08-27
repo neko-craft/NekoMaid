@@ -253,5 +253,13 @@ export default {
     'Replace all:': '全部替换:',
     'Replace with:': '替换为:',
     '(Use /re/ syntax for regexp search)': '(使用 /re/ 语法来使用正则表达式)'
+  },
+  profiler: {
+    title: '性能',
+    entities: '密集实体',
+    chunks: '区块加载',
+    heap: '内存占用',
+    summary: '汇总',
+    suggestions: '优化建议'
   }
 }

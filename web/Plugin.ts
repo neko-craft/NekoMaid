@@ -31,6 +31,7 @@ export interface GlobalInfo {
   hasNBTAPI?: boolean
   hasMultiverse?: boolean
   hasGeoIP?: boolean
+  hasProfiler?: boolean
   canSetMaxPlayers?: boolean
   canSetViewDistance?: boolean
   maxPlayers: number

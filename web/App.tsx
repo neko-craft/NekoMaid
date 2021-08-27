@@ -140,7 +140,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   }
   if (singlePages.length) multiPagesPages.push(<Divider key={index++} />, singlePages)
 
-  const drawer = <div>
+  const drawer = <Box sx={{ overflowX: 'hidden' }}>
     <Toolbar />
     <Divider sx={{ display: { sm: 'none', xs: 'block' } }} />
     <List sx={{
@@ -155,7 +155,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
         '& svg': { color: theme => theme.palette.primary.main + '!important' }
       }
     }}>{multiPagesPages.flat()}</List>
-  </div>
+  </Box>
 
   return <Box sx={{ display: 'flex' }}>
     <CssBaseline />
@@ -191,7 +191,9 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: drawerWidth,
-            backgroundImage: theme => theme.palette.mode === 'dark' ? 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))' : undefined
+            backgroundImage: theme => theme.palette.mode === 'dark'
+              ? 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))'
+              : undefined
           }
         }}
       >

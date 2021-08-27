@@ -11,8 +11,10 @@ A bukkit plugin that can manage your server through web pages.
 1. Download the [NekoMaid.jar](https://github.com/neko-craft/NekoMaid/releases/latest/download/NekoMaid.jar)
 2. Put the jar file into the `plugins` folder of your Minecraft server.
 3. Restart your Minecraft server.
-4. Execute `/nekomaid` or `/nm` command in the console.
-5. Open the url and manage your server!
+4. Modify the `hostname` to the address to connect to your MineCraft server.
+5. Execute `/nekomaid reload` command in the console to reload configuration.
+6. Execute `/nekomaid` or `/nm` command in the console.
+7. Open the url and manage your server!
 
 ## Configures
 

@@ -40,6 +40,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.reflect.Field;
+import java.net.URLClassLoader;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -86,7 +87,9 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     private final Cache<String, Boolean> tempTokens = CacheBuilder.newBuilder().maximumSize(10)
             .expireAfterWrite(60, TimeUnit.MINUTES).build();
     private final JSONObject pluginScripts = new JSONObject();
+    private URLClassLoader loader;
     private GeoIP geoIP;
+    private boolean debug;
     public SocketIoNamespace io;
     protected Map<String, Set<SocketIoSocket>> mRoomSockets;
 
@@ -216,6 +219,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     }
 
     private void syncGlobalData() {
+        debug = getConfig().getBoolean("debug", false);
         String bMapKey = getConfig().getString("baidu-map-license-key", "");
         if (bMapKey.isEmpty()) GLOBAL_DATA.remove("bMapKey");
         else GLOBAL_DATA.put("bMapKey", bMapKey);
@@ -250,6 +254,8 @@ public final class NekoMaid extends JavaPlugin implements Listener {
 
     @NotNull
     public GeoIP getGeoIP() { return geoIP; }
+
+    public boolean isDebug() { return debug; }
 
     public int getClientsCount() { return clients.size(); }
 
@@ -318,6 +324,11 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         pluginCommands.clear();
         if (engineIoServer != null) engineIoServer.shutdown();
         if (plugins != null) plugins.disable();
+        if (loader != null) try {
+            loader.close();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
 
     public int getClientsCountInPage(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String page) {
@@ -419,7 +430,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                     "ws://maid.neko-craft.com", 1024 * 1024 * 5) {
                 @Override
                 public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                    if (getConfig().getBoolean("debug", false)) cause.printStackTrace();
+                    if (debug) cause.printStackTrace();
                 }
             });
         }
