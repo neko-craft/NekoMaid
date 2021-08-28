@@ -115,7 +115,9 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
         sensitive={it.sensitive}
       />
     </pluginCtx.Provider>)
-    const icon = <ListItemIcon>{it.icon || <Build />}</ListItemIcon>
+    const icon = <ListItemIcon><pluginCtx.Provider value={create(name)}>
+      {(typeof it.icon === 'function' ? <it.icon /> : it.icon) || <Build />}
+    </pluginCtx.Provider></ListItemIcon>
     return it.title
       ? <NavLink key={key} to={'/' + name + '/' + (it.url || path)} activeClassName='actived'>
         <ListItem button>

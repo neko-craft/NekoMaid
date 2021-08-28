@@ -453,7 +453,7 @@ const Files: React.FC = () => {
           action(res)
           refresh()
         }, curPath)
-      }}><ListItemIcon><Outbox /></ListItemIcon>{lang.files.uncompress}</MenuItem>
+      }}><ListItemIcon><Outbox /></ListItemIcon>{lang.files.decompress}</MenuItem>
     </Menu>
     <Input id='NekoMaid-files-upload-input' type='file' sx={{ display: 'none' }} onChange={e => {
       const elm = e.target as HTMLInputElement

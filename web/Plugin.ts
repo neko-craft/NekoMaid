@@ -8,7 +8,7 @@ export interface Page {
   path: string | string[]
   title?: string
   url?: string
-  icon?: JSX.Element
+  icon?: JSX.Element | React.ElementType
   exact?: boolean
   strict?: boolean
   sensitive?: boolean
@@ -31,7 +31,7 @@ export interface GlobalInfo {
   hasNBTAPI?: boolean
   hasMultiverse?: boolean
   hasGeoIP?: boolean
-  hasProfiler?: boolean
+  profilerStarted?: boolean
   canSetMaxPlayers?: boolean
   canSetViewDistance?: boolean
   maxPlayers: number
@@ -67,7 +67,7 @@ export default class Plugin {
   public addPages (...args: Page[]) {
     if (!args.length) return this
     ;(pages[this.namespace] || (pages[this.namespace] = [])).push(...args)
-    if (update) update(++flag)
+    this.updateView()
     return this
   }
 
@@ -122,5 +122,9 @@ export default class Plugin {
   public switchPage (page: string) {
     this.#io.emit('switchPage', this.namespace, page)
     return this
+  }
+
+  public updateView () {
+    if (update) update(++flag)
   }
 }

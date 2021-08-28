@@ -15,6 +15,7 @@ const ServerSwitch: React.FC<DialogProps> = props => {
       <Autocomplete
         freeSolo
         inputValue={value}
+        clearOnBlur={false}
         onInputChange={(_: any, v: string) => setValue(v)}
         noOptionsText={lang.serverSwitch.noServer}
         style={{ width: '100%', maxWidth: 500, marginTop: 10 }}

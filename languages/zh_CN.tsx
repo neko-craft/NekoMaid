@@ -112,7 +112,7 @@ export default {
     wrongName: '文件名不合法!',
     exists: '文件已存在!',
     compress: '压缩文件',
-    uncompress: '解压文件',
+    decompress: '解压文件',
     compressName: '请输入压缩后的文件名',
     unsupportedFormat: '文件格式不被支持!',
     notExists: '文件不存在!',
@@ -258,8 +258,10 @@ export default {
     title: '性能',
     entities: '密集实体',
     chunks: '区块加载',
+    threads: '线程',
     heap: '内存占用',
     summary: '汇总',
-    suggestions: '优化建议'
+    suggestions: '优化建议',
+    notStarted: '当前还未开始进行性能检测, 请点击右下角的按钮开始'
   }
 }

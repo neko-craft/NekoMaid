@@ -112,7 +112,7 @@ const lang: Language = {
     wrongName: 'Invalid file name!',
     exists: 'File already exists!',
     compress: 'Compress',
-    uncompress: 'Decompress',
+    decompress: 'Decompress',
     compressName: 'Input name for compressed file',
     unsupportedFormat: 'File format is unsupported',
     notExists: 'File does not exist',
@@ -245,11 +245,12 @@ const lang: Language = {
   codeMirrorPhrases: { } as any,
   profiler: {
     title: 'Profiler',
-    entities: 'Entities',
-    chunks: 'Chunks',
-    heap: 'Heap',
-    summary: 'Summary',
-    suggestions: 'Suggestions'
+    entities: 'ENTITIES',
+    chunks: 'CHUNKS',
+    threads: 'THREADS',
+    heap: 'HEAP',
+    summary: 'SUMMARY',
+    suggestions: 'SUGGESTIONS'
   }
 }
 

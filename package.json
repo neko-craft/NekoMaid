@@ -44,6 +44,9 @@
     "url": "https://github.com/neko-craft/NekoMaid/issues"
   },
   "homepage": "https://github.com/neko-craft/NekoMaid#readme",
+  "alias": {
+    "@material-ui/core/Autocomplete": "./web/components/Autocomplete"
+  },
   "dependencies": {
     "@emotion/react": "^11.4.1",
     "@emotion/styled": "^11.3.0",
