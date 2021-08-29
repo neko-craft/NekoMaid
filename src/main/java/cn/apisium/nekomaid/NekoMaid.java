@@ -329,6 +329,9 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         } catch (Throwable e) {
             e.printStackTrace();
         }
+        try {
+            OshiWrapper.stop();
+        } catch (Throwable ignored) { }
     }
 
     public int getClientsCountInPage(@NotNull org.bukkit.plugin.Plugin plugin, @NotNull String page) {

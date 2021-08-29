@@ -182,49 +182,49 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
         </IconButton>
       </Toolbar>
     </AppBar>
-    <Box component='nav' sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
-      <Drawer
-        variant='temporary'
-        open={mobileOpen}
-        onClose={handleDrawerToggle}
-        ModalProps={{ keepMounted: true }}
-        sx={{
-          display: { xs: 'block', sm: 'none' },
-          '& .MuiDrawer-paper': {
-            boxSizing: 'border-box',
-            width: drawerWidth,
-            backgroundImage: theme => theme.palette.mode === 'dark'
-              ? 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))'
-              : undefined
-          }
-        }}
-      >
-        {drawer}
-      </Drawer>
-      <Drawer
-        open
-        variant='permanent'
-        sx={{
-          display: { xs: 'none', sm: 'block' },
-          '& .MuiDrawer-paper': {
-            boxSizing: 'border-box',
-            width: drawerWidth,
-            transition: 'width .3s',
-            backgroundImage: theme => theme.palette.mode === 'dark' ? 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))' : undefined
-          }
-        }}
-      >
-        {drawer}
-      </Drawer>
-    </Box>
-    <Box component='main' sx={{ flexGrow: 1, width: '100vw' }}>
-      <globalCtx.Provider value={globalData}>
+    <globalCtx.Provider value={globalData}>
+      <Box component='nav' sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
+        <Drawer
+          variant='temporary'
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: 'block', sm: 'none' },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+              backgroundImage: theme => theme.palette.mode === 'dark'
+                ? 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))'
+                : undefined
+            }
+          }}
+        >
+          {drawer}
+        </Drawer>
+        <Drawer
+          open
+          variant='permanent'
+          sx={{
+            display: { xs: 'none', sm: 'block' },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+              transition: 'width .3s',
+              backgroundImage: theme => theme.palette.mode === 'dark' ? 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))' : undefined
+            }
+          }}
+        >
+          {drawer}
+        </Drawer>
+      </Box>
+      <Box component='main' sx={{ flexGrow: 1, width: '100vw' }}>
         <drawerWidthCtx.Provider value={drawerWidth}>{routes}</drawerWidthCtx.Provider>
         {globalData.hasNBTAPI && <pluginCtx.Provider value={pluginRef.current}>
           <GlobalItems open={globalItemsOpen} onClose={() => setGlobalItemsOpen(false)} />
         </pluginCtx.Provider>}
-      </globalCtx.Provider>
-    </Box>
+      </Box>
+    </globalCtx.Provider>
   </Box>
 })
 

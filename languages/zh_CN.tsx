@@ -29,6 +29,7 @@ export default {
   world: '世界',
   data: '数据',
   info: '信息',
+  plugin: '插件',
   unsupported: '不支持的操作!',
   itemEditor: {
     title: '物品编辑器',
@@ -75,7 +76,6 @@ export default {
     virtualMachine: '虚拟机',
     cpu: '处理器',
     pid: '进程ID',
-    threads: '线程数',
     javaCount: 'Java 进程数'
   },
   terminal: {
@@ -217,7 +217,7 @@ export default {
     players: '玩家数',
     chunks: '区块数',
     entities: '实体数',
-    tiles: 'Tile数',
+    tiles: '方块实体数',
     time: '时间',
     weather: '天气',
     save: '立即保存世界',
@@ -262,6 +262,19 @@ export default {
     heap: '内存占用',
     summary: '汇总',
     suggestions: '优化建议',
-    notStarted: '当前还未开始进行性能检测, 请点击右下角的按钮开始'
+    notStarted: '当前还未开始进行性能检测, 请点击右下角的按钮开始',
+    cpu: '系统CPU使用率',
+    readsAndWrites: '硬盘读写',
+    network: '网络',
+    reads: '读取',
+    writes: '写入',
+    recv: '接收',
+    sent: '发送',
+    temperature: 'CPU温度',
+    cores: 'CPU各核心使用率',
+    count: '次数',
+    entitiesTick: '实体处理',
+    tilesTick: '方块实体处理',
+    timingsNotStarted: 'Timings 还没有开启!'
   }
 }
