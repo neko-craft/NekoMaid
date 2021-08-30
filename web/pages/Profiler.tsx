@@ -383,6 +383,67 @@ const Timings: React.FC = React.memo(() => {
   </Container>
 })
 
+const nanoSecondFormatter = ({ name, value }: { name: string, value: number }) => name + ': ' + (value / 1000 | 0) + lang.ms
+
+const getLable = (key: string, time: number, count: number) => <><Typography color='primary' component='span'>{key}</Typography>:&nbsp;
+  {lang.profiler.lagTime} <span className='bold'>{time / 1000 | 0} {lang.ms}</span>, {lang.profiler.timingsCount}:&nbsp;
+  <span className='bold'>{count}</span>, &nbsp;{lang.profiler.avgTime}: <span className='bold'>{time / 1000 / count | 0} {lang.ms}</span></>
+
+const Plugins: React.FC = React.memo(() => {
+  const plugin = usePlugin()
+  const [data, setData] = useState<[JSX.Element[], any[][]] | undefined>()
+  useEffect(() => {
+    const off = plugin.emit('profiler:fetchPlugins').on('profiler:plugins', (data: Record<string, [Record<string | number, [number, number]>]>) => {
+      const pluginsTimes: any[][] = [[], []]
+      const tree: [number, JSX.Element][] = []
+      for (const name in data) {
+        let totalTypesTime = 0
+        const subTrees: JSX.Element[] = []
+        ;['events', 'tasks'].forEach((type, i) => {
+          const curKey = name + '/' + type
+          const subTree: [number, JSX.Element][] = []
+          const cur = data[name][i]
+          let totalTime = 0
+          for (const key in cur) {
+            const [count, time] = cur[key]
+            totalTime += time
+            totalTypesTime += time
+            // eslint-disable-next-line react/jsx-key
+            subTree.push([time, <TreeItem nodeId={`${curKey}/${key}`} label={getLable(key, time, count)} />])
+          }
+          if (totalTime) pluginsTimes[i].push({ name, value: totalTime })
+          if (subTree.length) {
+            subTrees.push(<TreeItem nodeId={curKey} key={curKey} label={(lang.profiler as any)[type]}>
+              {subTree.sort((a, b) => b[0] - a[0]).map(it => it[1])}
+            </TreeItem>)
+          }
+        })
+        // eslint-disable-next-line react/jsx-key
+        if (totalTypesTime) tree.push([totalTypesTime, <TreeItem nodeId={name} label={name} key={name}>{subTrees}</TreeItem>])
+      }
+      setData([
+        tree.sort((a, b) => b[0] - a[0]).map(it => it[1]),
+        pluginsTimes.map(it => it.sort((a, b) => b.value - a.value))
+      ])
+    })
+    return () => { off() }
+  }, [])
+  return <Container maxWidth={false} sx={{ py: 3, position: 'relative' }}>
+    <CircularLoading loading={!data} />
+    {data && <Grid container spacing={3}>
+      <Grid item xs={12}>
+        <Card>
+          <CardHeader title={lang.profiler.pluginsTitle} sx={{ position: 'relative' }} />
+          <Divider />
+          <TreeView defaultCollapseIcon={<ExpandMore />} defaultExpandIcon={<ChevronRight />}>{data[0]}</TreeView>
+        </Card>
+      </Grid>
+      <Pie title={lang.profiler.pluginsEventTime} data={data[1][0]} formatter={nanoSecondFormatter} />
+      <Pie title={lang.profiler.pluginsEventTime} data={data[1][1]} formatter={nanoSecondFormatter} />
+    </Grid>}
+  </Container>
+})
+
 const entitiesColumns: GridColDef[] = [
   { field: 'world', headerName: lang.worlds.name, minWidth: 200 },
   { field: 'x', headerName: 'X', width: 100 },
@@ -566,7 +627,7 @@ const Threads: React.FC = React.memo(() => {
   </Container>
 })
 
-const components = [Summary, Timings, Entities, Heap, Threads]
+const components = [Summary, Timings, Plugins, Entities, Heap, Threads]
 
 const Profiler: React.FC = () => {
   const plugin = usePlugin()
@@ -605,6 +666,7 @@ const Profiler: React.FC = () => {
       <Tabs value={tab} onChange={(_, it) => setTab(it)} variant='scrollable' scrollButtons='auto'>
         <Tab label={lang.profiler.summary} />
         <Tab label='Timings' disabled={!globalData.isPaper} />
+        <Tab label={lang.profiler.plugins} />
         <Tab label={lang.profiler.entities} />
         <Tab label={lang.profiler.heap} />
         <Tab label={lang.profiler.threads} />
@@ -612,9 +674,9 @@ const Profiler: React.FC = () => {
       </Tabs>
     </Paper>
     <Tabs />
-    {tab === 0 && !status ? <Box sx={{ textAlign: 'center', marginTop: '50vh' }}>{lang.profiler.notStarted}</Box> : Elm && <Elm key={key} />}
-    {createFab(() => plugin.emit('profiler:status', !status), status ? <Stop /> : <PlayArrow />, tab === 0)}
-    {createFab(() => setTKey(key + 1), <Refresh />, tab > 1)}
+    {tab < 3 && !status ? <Box sx={{ textAlign: 'center', marginTop: '40vh' }}>{lang.profiler.notStarted}</Box> : Elm && <Elm key={key} />}
+    {createFab(() => plugin.emit('profiler:status', !status), status ? <Stop /> : <PlayArrow />, tab < 3)}
+    {createFab(() => setTKey(key + 1), <Refresh />, tab >= 3)}
   </Box>
 }
 

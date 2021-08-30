@@ -98,7 +98,7 @@ export default class Plugin {
 
   public emit (event: string, ack: (...data: any[]) => any, ...data: any[]): this
   // eslint-disable-next-line no-dupe-class-members
-  public emit (event: string, ...data: any[]): void
+  public emit (event: string, ...data: any[]): this
   // eslint-disable-next-line no-dupe-class-members
   public emit (event: string, ...data: any[]): this {
     if (typeof data[0] === 'function') {
