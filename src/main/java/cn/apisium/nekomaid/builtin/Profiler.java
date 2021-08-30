@@ -7,6 +7,10 @@ import cn.apisium.nekomaid.Utils;
 import co.aikar.timings.Timings;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -18,10 +22,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class Profiler {
+public final class Profiler implements Listener {
     private final NekoMaid main;
     private BukkitTask statusTimer, timingsTimer;
     private boolean started;
+    private int loaded, unloaded;
     private static boolean isTimingsV2;
     private static boolean canGetData = true;
     private static final Runtime runtime = Runtime.getRuntime();
@@ -89,19 +94,26 @@ public final class Profiler {
 
     private void checkTask() {
         if (started) {
+            unloaded = loaded = 0;
             BukkitScheduler s = main.getServer().getScheduler();
             if (canGetData) try {
                 OshiWrapper.class.getMethod("applyProfilerStatus", Status.class)
                         .invoke(null, new Status());
             } catch (Throwable ignored) { canGetData = false; }
             statusTimer = s.runTaskTimerAsynchronously(main, () -> {
-                if (main.getClientsCountInPage(main, "profiler") == 0) return;
-                main.broadcastInPage(main, "profiler", "profiler:current", getStatus());
+                if (main.getClientsCountInPage(main, "profiler") != 0) {
+                    main.broadcastInPage(main, "profiler", "profiler:current", getStatus());
+                }
+                unloaded = loaded = 0;
             }, 0, 5 * 20);
             if (isTimingsV2) {
                 timingsTimer = s.runTaskTimerAsynchronously(main, () -> main.broadcastInPage(main, "profiler",
                         "profiler:timings", lastTimingsData = TimingsV2.exportData()), 30 * 20, 30 * 20);
             }
+            main.getServer().getPluginManager().registerEvent(ChunkLoadEvent.class, this, EventPriority.MONITOR,
+                    (c, e) -> loaded++, main, true);
+            main.getServer().getPluginManager().registerEvent(ChunkUnloadEvent.class, this, EventPriority.MONITOR,
+                    (c, e) -> unloaded++, main, true);
         } else {
             statusTimer.cancel();
             statusTimer = null;
@@ -109,10 +121,12 @@ public final class Profiler {
                 timingsTimer.cancel();
                 timingsTimer = null;
             }
+            ChunkLoadEvent.getHandlerList().unregister(this);
+            ChunkUnloadEvent.getHandlerList().unregister(this);
         }
     }
 
-    private static Status getStatus() {
+    private Status getStatus() {
         Status status = new Status();
         status.tps = Utils.getTPS();
         status.mspt = Utils.getMSPT();
@@ -120,16 +134,19 @@ public final class Profiler {
         status.threads = Thread.activeCount();
         status.memory = runtime.totalMemory() - runtime.freeMemory();
         status.totalMemory = runtime.maxMemory();
+        status.chunkLoads = loaded;
+        status.chunkUnloads = unloaded;
+        List<World> worlds = Bukkit.getServer().getWorlds();
         if (canGetData) try {
             OshiWrapper.class.getMethod("applyProfilerStatus", Status.class).invoke(null, status);
         } catch (Throwable ignored) { canGetData = false; }
-        status.worlds = Utils.sync(() -> Bukkit.getServer().getWorlds().stream().map(Worlds.WorldData::new)
+        status.worlds = Utils.sync(() -> worlds.stream().map(Worlds.WorldData::new)
                 .toArray(Worlds.WorldData[]::new));
         return status;
     }
 
     public static final class Status {
-        public int threads;
+        public int threads, chunkLoads, chunkUnloads;
         public long reads, writes, recv, sent;
         public double[] processorLoad;
         public double tps, mspt, cpu, memory, totalMemory, temperature;

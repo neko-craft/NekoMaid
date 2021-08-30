@@ -45,6 +45,8 @@ interface Status {
   memory: number
   totalMemory: number
   temperature: number
+  chunkLoads: number
+  chunkUnloads: number
   worlds?: Array<{ name: string, entities: number, chunks: number, tiles: number }>
 }
 
@@ -54,9 +56,13 @@ interface TimingsData {
   groups: string[]
 }
 
+const bytesMap = (arr: { value: number, seriesName: string }[]) =>
+  arr.map(({ value, seriesName }) => seriesName + ': ' + prettyBytes(value * MB)).join('<br>')
+
 const Summary: React.FC = React.memo(() => {
   const plugin = usePlugin()
   const theme = useTheme()
+  const globalData = useGlobalData()
   const [status, setStatus] = useState<Status[]>([])
   useEffect(() => {
     const off = plugin.on('profiler:current', (it: any) => setStatus(old => {
@@ -72,6 +78,8 @@ const Summary: React.FC = React.memo(() => {
   const xAxis: any[] = []
   const tps: any[] = []
   const mspt: any[] = []
+  const chunkLoads: any[] = []
+  const chunkUnloads: any[] = []
   const cpu: any[] = []
   const temperature: any[] = []
   const memory: any[] = []
@@ -87,6 +95,8 @@ const Summary: React.FC = React.memo(() => {
     xAxis.push(it.time)
     tps.push(it.tps.toFixed(2))
     mspt.push(it.mspt.toFixed(2))
+    chunkLoads.push(it.chunkLoads)
+    chunkUnloads.push(it.chunkUnloads)
     cpu.push((it.cpu * 100).toFixed(2))
     temperature.push(it.temperature.toFixed(2))
     memory.push(it.memory / GB)
@@ -148,55 +158,55 @@ const Summary: React.FC = React.memo(() => {
     <Grid container spacing={3}>
       {createCard('TPS', [tps])}
       {createCard(lang.dashboard.mspt, [mspt], '{c} ms')}
-      {createCard(lang.profiler.threads, [threads])}
-      {createCard(lang.profiler.cpu, [cpu], '{c} %', { }, 100)}
-      {createCard(lang.dashboard.memory, [memory], ([{ value }]: [{ value: number }]) => prettyBytes(value * GB),
-        { }, totalMemory ? Math.round(totalMemory / GB) : undefined)}
-      {createCard(lang.profiler.readsAndWrites, [reads, writes],
-        (arr: { value: number, seriesName: string }[]) => arr.map(({ value, seriesName }) => seriesName + ': ' + prettyBytes(value * MB)).join('<br>'),
-        undefined, undefined, [lang.profiler.reads, lang.profiler.writes])}
-      {createCard(lang.profiler.network, [recv, sent],
-        (arr: { value: number, seriesName: string }[]) => arr.map(({ value, seriesName }) => seriesName + ': ' + prettyBytes(value * MB)).join('<br>'),
-        undefined, undefined, [lang.profiler.recv, lang.profiler.sent])}
       {createCard(lang.worlds.entities, entities, undefined, undefined, undefined, worlds)}
       {createCard(lang.worlds.tiles, tiles, undefined, undefined, undefined, worlds)}
       {createCard(lang.worlds.chunks, chunks, undefined, undefined, undefined, worlds)}
-      {createCard(lang.profiler.temperature, [temperature], '{c} ℃', { })}
-      <Grid item sm={6} xs={12} lg={4}>
-        <Card>
-          <CardHeader title={lang.profiler.cores} />
-          <Divider />
-          <CardContent>
-            <Grid container spacing={1} justifyContent='center'>
-              {status[status.length - 1]?.processorLoad?.map((v, i) => <Grid item key={i}><Paper sx={{
-                width: 52,
-                height: 52,
-                lineHeight: '52px',
-                textAlign: 'center',
-                color: theme.palette.primary.contrastText,
-                display: 'inline-block',
-                position: 'relative',
-                overflow: 'hidden',
-                textShadow: theme.palette.mode === 'light'
-                  ? '#000 1px 0 0, #000 0 1px 0, #000 -1px 0 0, #000 0 -1px 0'
-                  : '#fff 1px 0 0, #fff 0 1px 0, #fff -1px 0 0, #fff 0 -1px 0',
-                '& span': { position: 'relative', zIndex: 2 },
-                '&:after': {
-                  content: '" "',
-                  position: 'absolute',
-                  transition: '.6s',
-                  backgroundColor: theme.palette.primary.main,
-                  height: (v * 100) + '%',
-                  width: '100%',
-                  bottom: 0,
-                  left: 0,
-                  right: 0
-                }
-              }}><span>{(v * 100).toFixed(0)}%</span></Paper></Grid>)}
-            </Grid>
-          </CardContent>
-        </Card>
-      </Grid>
+      {createCard(lang.profiler.loadAndUnloadChunks, [chunkLoads, chunkUnloads], undefined,
+        undefined, undefined, [lang.profiler.chunkLoads, lang.profiler.chunkUnoads])}
+      {globalData.isPaper && <>
+        {createCard(lang.profiler.threads, [threads])}
+        {createCard(lang.profiler.cpu, [cpu], '{c} %', { }, 100)}
+        {createCard(lang.dashboard.memory, [memory], ([{ value }]: [{ value: number }]) => prettyBytes(value * GB),
+          { }, totalMemory ? Math.round(totalMemory / GB) : undefined)}
+        {createCard(lang.profiler.readsAndWrites, [reads, writes], bytesMap, undefined, undefined, [lang.profiler.reads, lang.profiler.writes])}
+        {createCard(lang.profiler.network, [recv, sent], bytesMap, undefined, undefined, [lang.profiler.recv, lang.profiler.sent])}
+        {createCard(lang.profiler.temperature, [temperature], '{c} ℃', { })}
+        <Grid item sm={6} xs={12} lg={4}>
+          <Card>
+            <CardHeader title={lang.profiler.cores} />
+            <Divider />
+            <CardContent>
+              <Grid container spacing={1} justifyContent='center'>
+                {status[status.length - 1]?.processorLoad?.map((v, i) => <Grid item key={i}><Paper sx={{
+                  width: 52,
+                  height: 52,
+                  lineHeight: '52px',
+                  textAlign: 'center',
+                  color: theme.palette.primary.contrastText,
+                  display: 'inline-block',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  textShadow: theme.palette.mode === 'light'
+                    ? '#000 1px 0 0, #000 0 1px 0, #000 -1px 0 0, #000 0 -1px 0'
+                    : '#fff 1px 0 0, #fff 0 1px 0, #fff -1px 0 0, #fff 0 -1px 0',
+                  '& span': { position: 'relative', zIndex: 2 },
+                  '&:after': {
+                    content: '" "',
+                    position: 'absolute',
+                    transition: '.6s',
+                    backgroundColor: theme.palette.primary.main,
+                    height: (v * 100) + '%',
+                    width: '100%',
+                    bottom: 0,
+                    left: 0,
+                    right: 0
+                  }
+                }}><span>{(v * 100).toFixed(0)}%</span></Paper></Grid>)}
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+      </>}
     </Grid>
   </Container>
 })
