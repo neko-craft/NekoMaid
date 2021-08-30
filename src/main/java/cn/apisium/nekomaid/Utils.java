@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.papermc.paper.util.StacktraceDeobfuscator;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -25,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
@@ -44,9 +46,11 @@ public final class Utils {
     private static String commitId, versionBranch = "master";
     private static final String versionInfo;
     private static CommandMap commandMap;
-    private static boolean isTuinity, hasAsyncTabComplete, canGetLastLogin, canGetAverageTickTime, canGetTPS;
+    private static boolean isTuinity, hasAsyncTabComplete, canGetLastLogin, canGetAverageTickTime, canGetTPS,
+            canDeobfuscate;
     private static Object server;
     private static Field recentTps, mspt;
+    private static Method getThread;
     private static final String JSON_OBJECT = "\ud83c\udf7a";
     public static final boolean IS_PAPER;
     protected static boolean HAS_NBT_API;
@@ -84,6 +88,10 @@ public final class Utils {
             canGetTPS = true;
         } catch (Throwable ignored) { }
         try {
+            Class.forName("io.papermc.paper.util.StacktraceDeobfuscator");
+            canDeobfuscate = true;
+        } catch (Throwable ignored) { }
+        try {
             paperVersionFetcherClass = Class.forName("com.destroystokyo.paper.PaperVersionFetcher");
         } catch (Throwable ignored) {}
         try {
@@ -102,6 +110,7 @@ public final class Utils {
                     }
                 }
             } catch (Throwable ignored) { }
+            try { getThread = nms.getMethod("getThread"); } catch (Throwable ignored) { }
             try {
                 Field field = obc.getDeclaredField("commandMap");
                 field.setAccessible(true);
@@ -380,6 +389,19 @@ public final class Utils {
             if (NekoMaid.INSTANCE.isDebug()) e.printStackTrace();
             if (willThrow) throw new RuntimeException(e);
             else return null;
+        }
+    }
+
+    public static StackTraceElement[] deobfuscateStacktrace(StackTraceElement[] traceElements) {
+        return canDeobfuscate ? StacktraceDeobfuscator.INSTANCE.deobfuscateStacktrace(traceElements) : traceElements;
+    }
+
+    public static Thread getMinecraftServerThread() {
+        try {
+            return getThread == null ? null : (Thread) getThread.invoke(server);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

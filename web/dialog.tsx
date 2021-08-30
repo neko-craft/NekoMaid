@@ -8,6 +8,7 @@ export interface DialogOptionsWithoutInput {
   content: React.ReactNode
   title?: React.ReactNode
   okButton?: ButtonProps
+  cancelButton?: boolean
 }
 
 export type DialogOptionsWithInput = DialogOptionsWithoutInput & { input: string | ValidInputProps }
@@ -62,7 +63,7 @@ export const DialogWrapper: React.FC = () => {
       {inputElm}
     </DialogContent>
     <DialogActions>
-      <Button onClick={cancel}>{minecraft['gui.cancel']}</Button>
+      {data.cancelButton !== false && <Button onClick={cancel}>{minecraft['gui.cancel']}</Button>}
       <Button {...data.okButton} disabled={canClick} onClick={() => {
         setOpen(false)
         setDate(undefined)

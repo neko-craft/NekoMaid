@@ -9,11 +9,12 @@ import { getClassName } from '../utils'
 import { useGlobalData, usePlugin } from '../Context'
 import { CircularLoading } from '../components/Loading'
 import { DataGrid, GridColDef, GridRowData, GridSortItem } from '@mui/x-data-grid'
-import { PlayArrow, Stop, Equalizer, ExpandMore, ChevronRight } from '@material-ui/icons'
+import { PlayArrow, Stop, Equalizer, ExpandMore, ChevronRight, ViewList } from '@material-ui/icons'
 import { TreeView, TreeItem } from '@material-ui/lab'
-import { Box, Tabs, Tab, Toolbar, Paper, Fab, Badge, Container, Grid, Card, CardHeader,
-  Divider, CardContent, Switch, FormControlLabel, Typography } from '@material-ui/core'
+import { Box, Tabs, Tab, Toolbar, Paper, Fab, Badge, Container, Grid, Card, CardHeader, IconButton,
+  Divider, CardContent, Switch, FormControlLabel, Typography, Link } from '@material-ui/core'
 import { cardActionStyles } from '../theme'
+import dialog from '../dialog'
 
 const MB = 1024 * 1024
 const GB = MB * 1024
@@ -362,7 +363,7 @@ const Timings: React.FC = React.memo(() => {
   </Container>
 })
 
-const columns: GridColDef[] = [
+const heapColumns: GridColDef[] = [
   { field: 'id', headerName: lang.profiler.className, minWidth: 200, flex: 1 },
   { field: 'count', headerName: lang.profiler.count, width: 100 },
   { field: 'size', headerName: lang.size, width: 100, valueFormatter: ({ row: { display } }) => display }
@@ -391,10 +392,71 @@ const Heap: React.FC = React.memo(() => {
               disableColumnMenu
               disableSelectionOnClick
               rows={heap}
-              columns={columns}
+              columns={heapColumns}
               sortingOrder={['desc', 'asc']}
               sortModel={sortModel}
               onSortModelChange={setSortModel}
+            />
+          </div>
+        </Card>
+      </Grid>
+    </Grid>
+  </Container>
+})
+
+const Threads: React.FC = React.memo(() => {
+  const plugin = usePlugin()
+  const [id, setId] = useState(-1)
+  const [threads, setThreads] = useState<GridRowData[]>([])
+  useEffect(() => {
+    plugin.emit('profiler:threads', (threads: any, id: number) => {
+      setThreads(threads)
+      setId(id)
+    })
+  }, [])
+
+  const threadsColumns: GridColDef[] = [
+    { field: 'id', headerName: 'PID', minWidth: 80 },
+    {
+      field: 'name',
+      headerName: lang.profiler.threadName,
+      minWidth: 200,
+      flex: 1,
+      renderCell: ({ value, row: { id: cid } }) => cid === id ? <Typography color='primary'>{lang.profiler.serverThread}</Typography> : value
+    },
+    {
+      field: 'state',
+      headerName: lang.profiler.state,
+      width: 150,
+      renderCell: ({ value, row: { lock } }) => {
+        const text = (lang.profiler.threadState as any)[value as string]
+        return lock ? <Link onClick={() => dialog({ content: lock, title: lang.profiler.lock, cancelButton: false })} underline='hover'>{text}</Link> : text
+      }
+    },
+    {
+      field: 'stack',
+      headerName: lang.profiler.stack,
+      width: 100,
+      renderCell: ({ value: content }) => content && <IconButton
+        size='small'
+        onClick={() => dialog({ content, cancelButton: false, title: lang.profiler.stack })}
+      ><ViewList /></IconButton>
+    }
+  ]
+
+  return <Container maxWidth={false} sx={{ py: 3, '& .MuiDataGrid-root': { border: 'none' } }}>
+    <Grid container spacing={3}>
+      <Grid item xs={12}>
+        <Card>
+          <CardHeader title={lang.profiler.threads} />
+          <Divider />
+          <div style={{ height: '70vh', position: 'relative' }}>
+            <CircularLoading loading={!threads.length} />
+            <DataGrid
+              disableColumnMenu
+              disableSelectionOnClick
+              rows={threads}
+              columns={threadsColumns}
             />
           </div>
         </Card>
@@ -418,6 +480,7 @@ const Profiler: React.FC = () => {
       case 0: Elm = Summary; break
       case 1: Elm = Timings; break
       case 4: Elm = Heap; break
+      case 5: Elm = Threads; break
     }
   }
   return <Box sx={{ minHeight: status ? '100%' : undefined }}>
@@ -427,7 +490,7 @@ const Profiler: React.FC = () => {
         <Paper square variant='outlined' sx={{ margin: '0 -1px', position: 'fixed', width: 'calc(100% + 1px)', zIndex: 3 }}>
           <Tabs value={tab} onChange={(_, it) => setTab(it)} variant='scrollable' scrollButtons='auto'>
             <Tab label={lang.profiler.summary} />
-            <Tab label='Timings' />
+            <Tab label='Timings' disabled={!globalData.isPaper} />
             <Tab label={lang.profiler.entities} />
             <Tab label={lang.profiler.chunks} />
             <Tab label={lang.profiler.heap} />

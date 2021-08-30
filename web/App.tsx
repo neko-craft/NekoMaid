@@ -82,7 +82,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       if (process.env.NODE_ENV !== 'development' && data.pluginVersion !== version) toast(lang.pluginUpdate, 'warning')
     }).on('!', () => {
       io.close()
-      dialog(lang.wrongToken + ': ' + version).then(() => (location.href = '//maid.neko-craft.com'))
+      dialog({ content: lang.wrongToken + ': ' + version, cancelButton: false }).then(() => (location.href = '//maid.neko-craft.com'))
     }).on('reconnect', () => {
       toast(lang.reconnect)
       setTimeout(() => location.reload(), 5000)

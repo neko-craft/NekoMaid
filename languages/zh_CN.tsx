@@ -282,6 +282,19 @@ export default {
     entitiesTick: '实体处理',
     tilesTick: '方块实体处理',
     timingsNotStarted: 'Timings 还没有开启!',
-    className: '类名'
+    className: '类名',
+    threadName: '线程名',
+    state: '状态',
+    stack: '堆栈',
+    lock: '锁',
+    serverThread: '服务器线程',
+    threadState: {
+      NEW: '新创建',
+      RUNNABLE: '运行中',
+      BLOCKED: '阻塞',
+      WAITING: '待唤醒',
+      TIMED_WAITING: '待特定时间唤醒',
+      TERMINATED: '已杀死'
+    }
   }
 }

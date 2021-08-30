@@ -5,6 +5,8 @@ import cn.apisium.nekomaid.OshiWrapper;
 import cn.apisium.nekomaid.TimingsV2;
 import cn.apisium.nekomaid.Utils;
 import co.aikar.timings.Timings;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.EventPriority;
@@ -16,7 +18,9 @@ import org.bukkit.scheduler.BukkitTask;
 
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
+import java.lang.management.MonitorInfo;
 import java.lang.management.OperatingSystemMXBean;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -80,6 +84,29 @@ public final class Profiler implements Listener {
                     e.printStackTrace();
                     return null;
                 }
+            }).onWithMultiArgsAck("profiler:threads", args -> {
+                Thread t = Utils.getMinecraftServerThread();
+                return new Object[] {
+                        Arrays.stream(ManagementFactory.getThreadMXBean()
+                                .dumpAllThreads(true, true)).map(it -> {
+                            JSONObject obj = new JSONObject();
+                            obj.put("name", it.getThreadName());
+                            obj.put("id", it.getThreadId());
+                            obj.put("state", it.getThreadState().toString());
+                            MonitorInfo[] info = it.getLockedMonitors();
+                            if (info.length != 0) {
+                                JSONArray arr = new JSONArray(info.length);
+                                for (MonitorInfo monitor : info) arr.add(monitor.getLockedStackFrame().toString());
+                                obj.put("lock", arr);
+                            }
+                            StringBuilder sb = new StringBuilder();
+                            for (StackTraceElement stack : Utils.deobfuscateStacktrace(it.getStackTrace()))
+                                sb.append(stack.toString()).append('\n');
+                            obj.put("stack", sb.toString());
+                            return obj;
+                        }).toArray(),
+                        t == null ? -1 : t.getId()
+                };
             });
             if (isTimingsV2) client.onWithAck("profiler:timingsStatus", args -> {
                 if (args.length == 2) {
