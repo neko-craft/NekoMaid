@@ -22,15 +22,49 @@ import java.util.Arrays;
 import java.util.UUID;
 
 final class Worlds {
-    private boolean hasWorldGameRuleChangeEvent = false, canSetViewDistance, hasSeparateViewDistance;
+    private boolean hasWorldGameRuleChangeEvent, canSetViewDistance, hasSeparateViewDistance;
     private final Plugin mv;
     private final NekoMaid main;
-    private final static class World {
+    private static boolean hasPaperMethod;
+
+    static {
+        try {
+            org.bukkit.World.class.getMethod("getTickableTileEntityCount");
+            org.bukkit.World.class.getMethod("getPlayers");
+            org.bukkit.World.class.getMethod("getEntityCount");
+            org.bukkit.World.class.getMethod("getChunkCount");
+            hasPaperMethod = true;
+        } catch (Throwable ignored) { }
+    }
+
+    public static class WorldData {
+        public final String name;
+        public final int entities, chunks, tiles;
+
+        public WorldData(org.bukkit.World world) {
+            name = world.getName();
+            if (hasPaperMethod) {
+                tiles = world.getTickableTileEntityCount();
+                entities = world.getEntityCount();
+                chunks = world.getChunkCount();
+            } else {
+                Chunk[] chunks = world.getLoadedChunks();
+                this.chunks = chunks.length;
+                entities = world.getEntities().size();
+                int count = 0;
+                for (Chunk ch : chunks) count += ch.getTileEntities().length;
+                tiles = count;
+            }
+        }
+    }
+
+    private final static class World extends WorldData {
         public String[][] rules;
-        public String name, id, difficulty, alias;
-        public int entities, chunks, tiles, players, weather, viewDistance;
+        public String id, difficulty, alias;
+        public int players, weather, viewDistance;
         public long time, seed;
         public boolean allowMonsters, allowAnimals, pvp, allowFlight, autoHeal, hunger;
+        public World(org.bukkit.World world) { super(world); }
     }
     @SuppressWarnings({"unchecked", "deprecation"})
     public Worlds(NekoMaid main) {
@@ -162,13 +196,9 @@ final class Worlds {
     @SuppressWarnings("deprecation")
     private Object[] getWorlds() {
         return Utils.sync(() -> main.getServer().getWorlds().stream().map(it -> {
-            Chunk[] chunks = it.getLoadedChunks();
-            World w = new World();
+            World w = new World(it);
             w.id = it.getUID().toString();
-            w.name = it.getName();
-            w.entities = it.getEntities().size();
-            w.players = it.getPlayers().size();
-            w.chunks = chunks.length;
+            w.players = hasPaperMethod ? it.getPlayerCount() : it.getPlayers().size();
             w.weather = it.isThundering() ? 2 : it.hasStorm() ? 1 : 0;
             w.viewDistance = hasSeparateViewDistance ? it.getViewDistance() : main.getServer().getViewDistance();
             w.allowMonsters = it.getAllowMonsters();
@@ -179,7 +209,6 @@ final class Worlds {
             w.seed = it.getSeed();
             w.rules = Arrays.stream(it.getGameRules()).map(r -> new String[] { r, it.getGameRuleValue(r) })
                     .toArray(String[][]::new);
-            for (Chunk ch : chunks) w.tiles += ch.getTileEntities().length;
             if (mv != null) {
                 MultiverseWorld mw = ((MultiverseCore) mv).getMVWorldManager().getMVWorld(it);
                 w.alias = mw.getAlias();

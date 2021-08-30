@@ -6,7 +6,7 @@ import { Close, List as ListIcon, Groups as GroupsIcon, Check, Search } from '@m
 import { Box, Toolbar, Container, Card, CardHeader, Grid, DialogContent, DialogContentText, Button, Autocomplete,
   CircularProgress, Dialog, ListItemText, IconButton, ListItem, Tooltip, DialogActions, DialogTitle, TextField,
   List, ListItemIcon, Checkbox, Divider, Avatar } from '@material-ui/core'
-import { DataGrid, GridCellParams, GridSortItem } from '@material-ui/data-grid'
+import { DataGrid, GridCellParams, GridSortItem } from '@mui/x-data-grid'
 import { useHistory } from 'react-router-dom'
 import { action, success } from '../toast'
 import lang, { minecraft } from '../../languages'

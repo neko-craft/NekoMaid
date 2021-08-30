@@ -220,3 +220,23 @@ export const stringifyTextComponent = (arr: string | TextComponent | Array<strin
     } else str = it
     return p + str
   }, '')
+
+const classesNameMap: Record<string, string> = {
+  Z: 'boolean',
+  B: 'byte',
+  C: 'char',
+  L: '',
+  D: 'double',
+  F: 'float',
+  I: 'int',
+  J: 'long',
+  S: 'short'
+}
+
+export const getClassName = (it: string) => {
+  if (it === 'others') return language.others
+  let i = 0
+  while (it[i] === '[' && i < it.length) i++
+  const name = it.slice(i)
+  return (classesNameMap[name] || (name.startsWith('L') ? name.slice(1) : name)) + '[]'.repeat(i)
+}

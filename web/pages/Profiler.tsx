@@ -5,8 +5,10 @@ import prettyBytes from 'pretty-bytes'
 import Empty from '../components/Empty'
 import decamelize from 'decamelize'
 import { useTheme } from '@material-ui/core/styles'
+import { getClassName } from '../utils'
 import { useGlobalData, usePlugin } from '../Context'
 import { CircularLoading } from '../components/Loading'
+import { DataGrid, GridColDef, GridRowData, GridSortItem } from '@mui/x-data-grid'
 import { PlayArrow, Stop, Equalizer, ExpandMore, ChevronRight } from '@material-ui/icons'
 import { TreeView, TreeItem } from '@material-ui/lab'
 import { Box, Tabs, Tab, Toolbar, Paper, Fab, Badge, Container, Grid, Card, CardHeader,
@@ -43,6 +45,7 @@ interface Status {
   memory: number
   totalMemory: number
   temperature: number
+  worlds?: Array<{ name: string, entities: number, chunks: number, tiles: number }>
 }
 
 interface TimingsData {
@@ -57,7 +60,7 @@ const Summary: React.FC = React.memo(() => {
   const [status, setStatus] = useState<Status[]>([])
   useEffect(() => {
     const off = plugin.on('profiler:current', (it: any) => setStatus(old => {
-      if (old.length > 20) old.shift()
+      if (old.length > 25) old.shift()
       const time = new Date()
       it.time = time.getHours().toString().padStart(2, '0') + ':' + time.getMinutes().toString().padStart(2, '0') +
         ':' + time.getSeconds().toString().padStart(2, '0')
@@ -77,6 +80,9 @@ const Summary: React.FC = React.memo(() => {
   const writes: any[] = []
   const sent: any[] = []
   const recv: any[] = []
+  const entities: any[][] = []
+  const tiles: any[][] = []
+  const chunks: any[][] = []
   status.forEach(it => {
     xAxis.push(it.time)
     tps.push(it.tps.toFixed(2))
@@ -89,7 +95,13 @@ const Summary: React.FC = React.memo(() => {
     writes.push(it.writes / MB)
     sent.push(it.sent / MB)
     recv.push(it.recv / MB)
+    it.worlds?.forEach((w, i) => {
+      (entities[i] || (entities[i] = [])).push(w.entities)
+      ;(tiles[i] || (tiles[i] = [])).push(w.tiles)
+      ;(chunks[i] || (chunks[i] = [])).push(w.chunks)
+    })
   })
+  const worlds = status[status.length - 1]?.worlds?.map(it => it.name) || []
   const totalMemory = status[status.length - 1]?.totalMemory
 
   const createCard = (
@@ -146,6 +158,9 @@ const Summary: React.FC = React.memo(() => {
       {createCard(lang.profiler.network, [recv, sent],
         (arr: { value: number, seriesName: string }[]) => arr.map(({ value, seriesName }) => seriesName + ': ' + prettyBytes(value * MB)).join('<br>'),
         undefined, undefined, [lang.profiler.recv, lang.profiler.sent])}
+      {createCard(lang.worlds.entities, entities, undefined, undefined, undefined, worlds)}
+      {createCard(lang.worlds.tiles, tiles, undefined, undefined, undefined, worlds)}
+      {createCard(lang.worlds.chunks, chunks, undefined, undefined, undefined, worlds)}
       {createCard(lang.profiler.temperature, [temperature], '{c} ℃', { })}
       <Grid item sm={6} xs={12} lg={4}>
         <Card>
@@ -202,11 +217,12 @@ const Timings: React.FC = React.memo(() => {
     if (!data) return []
     const entitiesTickMap: Record<string, { value: number, name: string, count: number }> = {}
     const tilesTickMap: Record<string, { value: number, name: string, count: number }> = {}
-    const map: Record<number, [number, number, number, [number, number, number][] | undefined]> = { }
+    const map: Record<number, [number, number, number, [number, number, number][] | undefined] | undefined> = { }
     data.data.forEach(it => (map[it[0]] = it))
     const createNode = (id: number, percent: number) => {
       const cur = map[id]
       if (!cur) return
+      map[id] = undefined
       const [, count, time] = cur
       const handler = data.handlers[id] || [0, lang.unknown]
       const handlerName = data.groups[handler[0]] || lang.unknown
@@ -256,7 +272,7 @@ const Timings: React.FC = React.memo(() => {
           }}>
             {handlerName !== 'Minecraft' && <><Typography color='primary' component='span'>{lang.plugin}:{handlerName}</Typography>::</>}
             {name}&nbsp;
-            <Typography variant='caption' className='count'>({lang.profiler.count}: {count})</Typography>
+            <Typography variant='caption' className='count'>({lang.profiler.timingsCount}: {count})</Typography>
           </Box>
           <Box className='info' sx={{
             position: 'absolute',
@@ -336,6 +352,47 @@ const Timings: React.FC = React.memo(() => {
   </Container>
 })
 
+const columns: GridColDef[] = [
+  { field: 'id', headerName: lang.profiler.className, minWidth: 200, flex: 1 },
+  { field: 'count', headerName: lang.profiler.count, width: 100 },
+  { field: 'size', headerName: lang.size, width: 100, valueFormatter: ({ row: { display } }) => display }
+]
+
+const Heap: React.FC = React.memo(() => {
+  const plugin = usePlugin()
+  const [sortModel, setSortModel] = React.useState<GridSortItem[]>([{ field: 'size', sort: 'desc' }])
+  const [heap, setHeap] = useState<GridRowData[]>([])
+  useEffect(() => {
+    plugin.emit('profiler:heap', (heap: any) => {
+      const arr: GridRowData[] = []
+      for (const id in heap) arr.push({ id: getClassName(id), count: heap[id][0], size: heap[id][1], display: prettyBytes(heap[id][1]) })
+      setHeap(arr)
+    })
+  }, [])
+  return <Container maxWidth={false} sx={{ py: 3, '& .MuiDataGrid-root': { border: 'none' } }}>
+    <Grid container spacing={3}>
+      <Grid item xs={12}>
+        <Card>
+          <CardHeader title={lang.profiler.heap} />
+          <Divider />
+          <div style={{ height: '70vh', position: 'relative' }}>
+            <CircularLoading loading={!heap.length} />
+            <DataGrid
+              disableColumnMenu
+              disableSelectionOnClick
+              rows={heap}
+              columns={columns}
+              sortingOrder={['desc', 'asc']}
+              sortModel={sortModel}
+              onSortModelChange={setSortModel}
+            />
+          </div>
+        </Card>
+      </Grid>
+    </Grid>
+  </Container>
+})
+
 const Profiler: React.FC = () => {
   const plugin = usePlugin()
   const globalData = useGlobalData()
@@ -345,11 +402,12 @@ const Profiler: React.FC = () => {
     const off = plugin.on('profiler:status', setStatus)
     return () => { off() }
   }, [])
-  let elm: JSX.Element | null = null
+  let Elm: React.FC | null = null
   if (status) {
     switch (tab) {
-      case 0: elm = <Summary />; break
-      case 1: elm = <Timings />; break
+      case 0: Elm = Summary; break
+      case 1: Elm = Timings; break
+      case 4: Elm = Heap; break
     }
   }
   return <Box sx={{ minHeight: status ? '100%' : undefined }}>
@@ -368,7 +426,7 @@ const Profiler: React.FC = () => {
           </Tabs>
         </Paper>
         {status && <Tabs />}
-        {elm}
+        {Elm && <Elm />}
       </>
       : <Box sx={{ textAlign: 'center', marginTop: '50vh' }}>{lang.profiler.notStarted}</Box>}
     <Fab color='primary' sx={{ position: 'fixed', bottom: { xs: 16, sm: 40 }, right: { xs: 16, sm: 40 }, zIndex: 3 }} onClick={() => {

@@ -30,6 +30,8 @@ export default {
   data: '数据',
   info: '信息',
   plugin: '插件',
+  others: '其他',
+  size: '大小',
   unsupported: '不支持的操作!',
   itemEditor: {
     title: '物品编辑器',
@@ -272,9 +274,11 @@ export default {
     sent: '发送',
     temperature: 'CPU温度',
     cores: 'CPU各核心使用率',
-    count: '次数',
+    timingsCount: '次数',
+    count: '个数',
     entitiesTick: '实体处理',
     tilesTick: '方块实体处理',
-    timingsNotStarted: 'Timings 还没有开启!'
+    timingsNotStarted: 'Timings 还没有开启!',
+    className: '类名'
   }
 }

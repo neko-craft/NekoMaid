@@ -35,6 +35,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
 @SuppressWarnings("deprecation")
@@ -49,6 +50,7 @@ public final class Utils {
     private static final String JSON_OBJECT = "\ud83c\udf7a";
     public static final boolean IS_PAPER;
     protected static boolean HAS_NBT_API;
+
     static {
         try {
             Class.forName("com.tuinity.tuinity.config.TuinityConfig");
@@ -77,7 +79,13 @@ public final class Utils {
             Bukkit.class.getMethod("getTPS");
             canGetTPS = true;
         } catch (Throwable ignored) { }
-        try {paperVersionFetcherClass = Class.forName("com.destroystokyo.paper.PaperVersionFetcher");} catch (Throwable ignored) {}
+        try {
+            Bukkit.class.getMethod("getTPS");
+            canGetTPS = true;
+        } catch (Throwable ignored) { }
+        try {
+            paperVersionFetcherClass = Class.forName("com.destroystokyo.paper.PaperVersionFetcher");
+        } catch (Throwable ignored) {}
         try {
             Server obcServer = Bukkit.getServer();
             Class<?> obc = Bukkit.getServer().getClass();
@@ -360,13 +368,18 @@ public final class Utils {
     }
 
     public static <T> T sync(Callable<T> fn) {
+        return sync(fn, true);
+    }
+
+    public static <T> T sync(Callable<T> fn, boolean willThrow) {
         FutureTask<T> future = new FutureTask<>(fn);
         Bukkit.getScheduler().runTask(NekoMaid.INSTANCE, future);
         try {
-            return future.get();
+            return future.get(5L, TimeUnit.SECONDS);
         } catch (Throwable e) {
             if (NekoMaid.INSTANCE.isDebug()) e.printStackTrace();
-            throw new RuntimeException(e);
+            if (willThrow) throw new RuntimeException(e);
+            else return null;
         }
     }
 }
