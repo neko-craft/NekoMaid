@@ -32,6 +32,7 @@ export default {
   plugin: '插件',
   others: '其他',
   size: '大小',
+  ms: '毫秒',
   unsupported: '不支持的操作!',
   itemEditor: {
     title: '物品编辑器',
@@ -287,7 +288,9 @@ export default {
     state: '状态',
     stack: '堆栈',
     lock: '锁',
-    serverThread: '服务器线程',
+    serverThread: '服务器主线程',
+    gcTime: '垃圾回收耗时',
+    gcCount: '垃圾回收次数',
     threadState: {
       NEW: '新创建',
       RUNNABLE: '运行中',

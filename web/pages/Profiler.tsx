@@ -9,10 +9,10 @@ import { getClassName } from '../utils'
 import { useGlobalData, usePlugin } from '../Context'
 import { CircularLoading } from '../components/Loading'
 import { DataGrid, GridColDef, GridRowData, GridSortItem } from '@mui/x-data-grid'
-import { PlayArrow, Stop, Equalizer, ExpandMore, ChevronRight, ViewList } from '@material-ui/icons'
+import { PlayArrow, Stop, Equalizer, ExpandMore, ChevronRight, ViewList, Refresh } from '@material-ui/icons'
 import { TreeView, TreeItem } from '@material-ui/lab'
 import { Box, Tabs, Tab, Toolbar, Paper, Fab, Badge, Container, Grid, Card, CardHeader, IconButton,
-  Divider, CardContent, Switch, FormControlLabel, Typography, Link } from '@material-ui/core'
+  Divider, CardContent, Switch, FormControlLabel, Typography, Link, Zoom } from '@material-ui/core'
 import { cardActionStyles } from '../theme'
 import dialog from '../dialog'
 
@@ -48,6 +48,7 @@ interface Status {
   temperature: number
   chunkLoads: number
   chunkUnloads: number
+  gc: Record<string, [number, number]>
   worlds?: Array<{ name: string, entities: number, chunks: number, tiles: number }>
 }
 
@@ -92,6 +93,8 @@ const Summary: React.FC = React.memo(() => {
   const entities: any[][] = []
   const tiles: any[][] = []
   const chunks: any[][] = []
+  const gcTime: any[][] = []
+  const gcCount: any[][] = []
   status.forEach(it => {
     xAxis.push(it.time)
     tps.push(it.tps.toFixed(2))
@@ -106,12 +109,20 @@ const Summary: React.FC = React.memo(() => {
     writes.push(it.writes / MB)
     sent.push(it.sent / MB)
     recv.push(it.recv / MB)
+    let i = 0
+    for (const key in it.gc) {
+      const [time, count] = it.gc[key]
+      ;(gcTime[i] || (gcTime[i] = [])).push(time)
+      ;(gcCount[i] || (gcCount[i] = [])).push(count)
+      i++
+    }
     it.worlds?.forEach((w, i) => {
       (entities[i] || (entities[i] = [])).push(w.entities)
       ;(tiles[i] || (tiles[i] = [])).push(w.tiles)
       ;(chunks[i] || (chunks[i] = [])).push(w.chunks)
     })
   })
+  const gcNames = Object.keys(status[status.length - 1]?.gc || { })
   const worlds = status[status.length - 1]?.worlds?.map(it => it.name) || []
   const totalMemory = status[status.length - 1]?.totalMemory
 
@@ -154,16 +165,19 @@ const Summary: React.FC = React.memo(() => {
       }} />
     </Card>
   </Grid>
-  return <Container maxWidth={false} sx={{ py: 3 }}>
+  return <Container maxWidth={false} sx={{ py: 3, position: 'relative' }}>
     <CircularLoading loading={!status.length} />
     <Grid container spacing={3}>
       {createCard('TPS', [tps])}
-      {createCard(lang.dashboard.mspt, [mspt], '{c} ms')}
+      {createCard(lang.dashboard.mspt, [mspt], '{c} ' + lang.ms)}
       {createCard(lang.worlds.entities, entities, undefined, undefined, undefined, worlds)}
       {createCard(lang.worlds.tiles, tiles, undefined, undefined, undefined, worlds)}
       {createCard(lang.worlds.chunks, chunks, undefined, undefined, undefined, worlds)}
       {createCard(lang.profiler.loadAndUnloadChunks, [chunkLoads, chunkUnloads], undefined,
         undefined, undefined, [lang.profiler.chunkLoads, lang.profiler.chunkUnoads])}
+      {createCard(lang.profiler.gcTime, gcTime, (arr: { value: number, seriesName: string }[]) =>
+        arr.map(({ value, seriesName }) => `${seriesName}: ${value} ${lang.ms}`).join('<br>'), undefined, undefined, gcNames)}
+      {createCard(lang.profiler.gcCount, gcCount, undefined, undefined, undefined, gcNames)}
       {globalData.isPaper && <>
         {createCard(lang.profiler.threads, [threads])}
         {createCard(lang.profiler.cpu, [cpu], '{c} %', { }, 100)}
@@ -213,6 +227,39 @@ const Summary: React.FC = React.memo(() => {
 })
 
 const ENTITY_TYPE = /- (.+?) -/
+
+const countFormatter = ({ data }: { data: { count: number } }) => lang.profiler.count + ': ' + data.count
+
+const Pie: React.FC<{ title: string, data: any[], formatter?: any }> = React.memo(({ title, data, formatter }) => <Grid item sm={6} xs={12}>
+  <Card>
+    <CardHeader title={title} />
+    <Divider />
+    <ReactECharts style={{ height: 300 }} theme={useTheme().palette.mode === 'dark' ? 'dark' : undefined} option={{
+      backgroundColor: 'rgba(0, 0, 0, 0)',
+      itemStyle: {
+        borderRadius: 5,
+        borderColor: 'rgba(0, 0, 0, 0)',
+        borderWidth: 4
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter
+      },
+      series: [{
+        type: 'pie',
+        radius: '50%',
+        data,
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }]
+    }} />
+  </Card>
+</Grid>)
 
 const Timings: React.FC = React.memo(() => {
   const plugin = usePlugin()
@@ -297,7 +344,7 @@ const Timings: React.FC = React.memo(() => {
             alignItems: 'center'
           }}>
             <Typography variant='caption' sx={{ position: 'absolute' }}>({Math.round(100 * percent)}%)</Typography>
-            <div style={{ width: 100 * percent + 'px', backgroundColor: theme.palette.primary.main, height: 10, marginLeft: 'auto' }} />
+            <div style={{ width: 100 * percent + 'px' }} className='bar' />
           </Box>
         </Box>}
       >{Array.isArray(children) && children.sort((a, b) => b[2] - a[2]).map(it => createNode(it[0], percent * (it[2] / time)))}</TreeItem>
@@ -307,37 +354,6 @@ const Timings: React.FC = React.memo(() => {
       {createNode(1, 1)}
     </TreeView>, Object.values(entitiesTickMap), Object.values(tilesTickMap)]
   }, [data])
-
-  const createPie = (title: string, data: any) => <Grid item sm={6} xs={12}>
-    <Card>
-      <CardHeader title={title} />
-      <Divider />
-      <ReactECharts style={{ height: 300 }} theme={theme.palette.mode === 'dark' ? 'dark' : undefined} option={{
-        backgroundColor: 'rgba(0, 0, 0, 0)',
-        itemStyle: {
-          borderRadius: 5,
-          borderColor: 'rgba(0, 0, 0, 0)',
-          borderWidth: 4
-        },
-        tooltip: {
-          trigger: 'item',
-          formatter: ({ data }: { data: { count: number } }) => lang.profiler.count + ': ' + data.count
-        },
-        series: [{
-          type: 'pie',
-          radius: '50%',
-          data,
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
-            }
-          }
-        }]
-      }} />
-    </Card>
-  </Grid>
 
   return <Container maxWidth={false} sx={{ py: 3 }}>
     <Grid container spacing={3}>
@@ -350,16 +366,41 @@ const Timings: React.FC = React.memo(() => {
           />} />
           <Divider />
           {status
-            ? <Box sx={{ position: 'relative', minHeight: data ? undefined : 300 }}>
+            ? <Box sx={{
+              position: 'relative',
+              minHeight: data ? undefined : 300,
+              '& .bar': { backgroundColor: theme.palette.primary.main, height: 10, marginLeft: 'auto', borderRadius: 2 }
+            }}>
               <CircularLoading loading={!data} />
               {tree}
             </Box>
-            : <Empty title={lang.profiler.timingsNotStarted} />}
+            : <CardContent><Empty title={lang.profiler.timingsNotStarted} /></CardContent>}
         </Card>
       </Grid>
-      {data && createPie(lang.profiler.entitiesTick, entitiesTick)}
-      {data && createPie(lang.profiler.tilesTick, tilesTick)}
+      {data && <Pie title={lang.profiler.entitiesTick} data={entitiesTick!} formatter={countFormatter} />}
+      {data && <Pie title={lang.profiler.tilesTick} data={tilesTick!} formatter={countFormatter} />}
     </Grid>
+  </Container>
+})
+
+const Entities: React.FC = React.memo(() => {
+  const plugin = usePlugin()
+  const [data, setData] = useState<[any[], any[]] | undefined>()
+  useEffect(() => {
+    plugin.emit('profiler:entities', (data: [Record<string, number>, Record<string, number>]) => {
+      console.log(data)
+      setData([
+        Object.entries(data[0]).map(([id, value]) => ({ value, name: minecraft['entity.minecraft.' + id.toLowerCase()] || id })),
+        Object.entries(data[1]).map(([id, value]) => ({ value, name: minecraft['block.minecraft.' + id.toLowerCase()] || id }))
+      ])
+    })
+  }, [])
+  return <Container maxWidth={false} sx={{ py: 3, '& .MuiDataGrid-root': { border: 'none' }, position: 'relative' }}>
+    <CircularLoading loading={!data} />
+    {data && <Grid container spacing={3}>
+      <Pie title={lang.worlds.entities} data={data[0]} />
+      <Pie title={lang.worlds.tiles} data={data[1]} />
+    </Grid>}
   </Container>
 })
 
@@ -465,48 +506,56 @@ const Threads: React.FC = React.memo(() => {
   </Container>
 })
 
+const components = [Summary, Timings, Entities, null, Heap, Threads]
+
 const Profiler: React.FC = () => {
   const plugin = usePlugin()
+  const theme = useTheme()
   const globalData = useGlobalData()
   const [tab, setTab] = useState(0)
+  const [key, setTKey] = useState(0)
   const [status, setStatus] = useState(!!globalData.profilerStarted)
   useEffect(() => {
     const off = plugin.on('profiler:status', setStatus)
     return () => { off() }
   }, [])
-  let Elm: React.FC | null = null
-  if (status) {
-    switch (tab) {
-      case 0: Elm = Summary; break
-      case 1: Elm = Timings; break
-      case 4: Elm = Heap; break
-      case 5: Elm = Threads; break
-    }
+
+  const transitionDuration = {
+    enter: theme.transitions.duration.enteringScreen,
+    exit: theme.transitions.duration.leavingScreen
   }
-  return <Box sx={{ minHeight: status ? '100%' : undefined }}>
-    {status
-      ? <>
-        <Toolbar />
-        <Paper square variant='outlined' sx={{ margin: '0 -1px', position: 'fixed', width: 'calc(100% + 1px)', zIndex: 3 }}>
-          <Tabs value={tab} onChange={(_, it) => setTab(it)} variant='scrollable' scrollButtons='auto'>
-            <Tab label={lang.profiler.summary} />
-            <Tab label='Timings' disabled={!globalData.isPaper} />
-            <Tab label={lang.profiler.entities} />
-            <Tab label={lang.profiler.chunks} />
-            <Tab label={lang.profiler.heap} />
-            <Tab label={lang.profiler.threads} />
-            <Tab label={lang.profiler.suggestions} />
-          </Tabs>
-        </Paper>
-        {status && <Tabs />}
-        {Elm && <Elm />}
-      </>
-      : <Box sx={{ textAlign: 'center', marginTop: '50vh' }}>{lang.profiler.notStarted}</Box>}
-    <Fab color='primary' sx={{ position: 'fixed', bottom: { xs: 16, sm: 40 }, right: { xs: 16, sm: 40 }, zIndex: 3 }} onClick={() => {
-      plugin.emit('profiler:status', !status)
-    }}>
-      {status ? <Stop /> : <PlayArrow />}
-    </Fab>
+  const Elm = components[tab]
+
+  const createFab = (onClick: any, children: any, show: boolean) => <Zoom
+    in={show}
+    timeout={transitionDuration}
+    style={{ transitionDelay: (show ? transitionDuration.exit : 0) + 'ms' }}
+    unmountOnExit
+  >
+    <Fab
+      color='primary'
+      sx={{ position: 'fixed', bottom: { xs: 16, sm: 40 }, right: { xs: 16, sm: 40 }, zIndex: 3 }}
+      onClick={onClick}
+    >{children}</Fab>
+  </Zoom>
+
+  return <Box sx={{ minHeight: status || !tab ? '100%' : undefined }}>
+    <Toolbar />
+    <Paper square variant='outlined' sx={{ margin: '0 -1px', position: 'fixed', width: 'calc(100% + 1px)', zIndex: 3 }}>
+      <Tabs value={tab} onChange={(_, it) => setTab(it)} variant='scrollable' scrollButtons='auto'>
+        <Tab label={lang.profiler.summary} />
+        <Tab label='Timings' disabled={!globalData.isPaper} />
+        <Tab label={lang.profiler.entities} />
+        <Tab label={lang.profiler.chunks} />
+        <Tab label={lang.profiler.heap} />
+        <Tab label={lang.profiler.threads} />
+        <Tab label={lang.profiler.suggestions} />
+      </Tabs>
+    </Paper>
+    <Tabs />
+    {tab === 0 && !status ? <Box sx={{ textAlign: 'center', marginTop: '50vh' }}>{lang.profiler.notStarted}</Box> : Elm && <Elm key={key} />}
+    {createFab(() => plugin.emit('profiler:status', !status), status ? <Stop /> : <PlayArrow />, tab === 0)}
+    {createFab(() => setTKey(key + 1), <Refresh />, tab > 0)}
   </Box>
 }
 

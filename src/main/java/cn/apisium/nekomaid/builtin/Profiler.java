@@ -8,7 +8,12 @@ import co.aikar.timings.Timings;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.BlockState;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
@@ -20,24 +25,24 @@ import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.OperatingSystemMXBean;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class Profiler implements Listener {
     private final NekoMaid main;
     private BukkitTask statusTimer, timingsTimer;
-    private boolean started;
+    private boolean started, hasData;
     private int loaded, unloaded;
+    private Object lastTimingsData;
     private static boolean isTimingsV2;
     private static boolean canGetData = true;
     private static final Runtime runtime = Runtime.getRuntime();
     private static final OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
     private static final Pattern HEAP_REGEXP = Pattern.compile(": +(\\d+) +(\\d+) +([^\\s]+).*"),
             HEAP_NUMBER_NAME_REGEXP = Pattern.compile("\\$\\d");
-    private Object lastTimingsData;
+    private final HashMap<String, long[]> lastGc = new HashMap<>();
 
     static {
         try {
@@ -107,7 +112,33 @@ public final class Profiler implements Listener {
                         }).toArray(),
                         t == null ? -1 : t.getId()
                 };
-            });
+            }).onWithAck("profiler:entities", (Function<Object[], Object>)
+                    args -> Utils.sync(() -> {
+                        HashMap<EntityType, Integer> entities = new HashMap<>();
+                        HashMap<Material, Integer> tiles = new HashMap<>();
+                        ArrayList<Object[]> arr = new ArrayList<>();
+                        for (World it : main.getServer().getWorlds()) {
+                            Chunk[] chunks = it.getLoadedChunks();
+                            for (Chunk chunk : chunks) {
+                                Entity[] entitiesArr = chunk.getEntities();
+                                BlockState[] stateArr = chunk.getTileEntities();
+                                for (Entity entity : entitiesArr)
+                                    entities.put(entity.getType(), entities.getOrDefault(entity.getType(), 0) + 1);
+                                for (BlockState state : stateArr)
+                                    tiles.put(state.getType(), tiles.getOrDefault(state.getType(), 0) + 1);
+                                arr.add(new Object[] { chunk, entitiesArr.length, stateArr.length });
+                            }
+                        }
+                        return new Object[] { entities, tiles,
+                                arr.stream().sorted((a, b) -> (int) b[1] - (int) a[1]).limit(20).map(it -> {
+                                    Chunk ch = (Chunk) it[0];
+                                    ChunkData data = new ChunkData(ch);
+                                    for (Entity entity : ch.getEntities())
+                                        data.data.put(entity.getType().name(), entities.getOrDefault(entity.getType(), 0) + 1);
+                                    return data;
+                                }).toArray() };
+                    })
+            );
             if (isTimingsV2) client.onWithAck("profiler:timingsStatus", args -> {
                 if (args.length == 2) {
                     Timings.setTimingsEnabled((boolean) args[0]);
@@ -122,16 +153,18 @@ public final class Profiler implements Listener {
     private void checkTask() {
         if (started) {
             unloaded = loaded = 0;
+            hasData = false;
+            lastGc.clear();
             BukkitScheduler s = main.getServer().getScheduler();
-            if (canGetData) try {
-                OshiWrapper.class.getMethod("applyProfilerStatus", Status.class)
-                        .invoke(null, new Status());
-            } catch (Throwable ignored) { canGetData = false; }
             statusTimer = s.runTaskTimerAsynchronously(main, () -> {
-                if (main.getClientsCountInPage(main, "profiler") != 0) {
-                    main.broadcastInPage(main, "profiler", "profiler:current", getStatus());
+                if (hasData) {
+                    if (main.getClientsCountInPage(main, "profiler") != 0) {
+                        main.broadcastInPage(main, "profiler", "profiler:current", getStatus());
+                    }
+                } else {
+                    hasData = true;
+                    getStatus();
                 }
-                unloaded = loaded = 0;
             }, 0, 5 * 20);
             if (isTimingsV2) {
                 timingsTimer = s.runTaskTimerAsynchronously(main, () -> main.broadcastInPage(main, "profiler",
@@ -163,7 +196,16 @@ public final class Profiler implements Listener {
         status.totalMemory = runtime.maxMemory();
         status.chunkLoads = loaded;
         status.chunkUnloads = unloaded;
+        unloaded = loaded = 0;
         List<World> worlds = Bukkit.getServer().getWorlds();
+        ManagementFactory.getGarbageCollectorMXBeans().forEach(it -> {
+            String name = it.getName();
+            long time = it.getCollectionTime(), count = it.getCollectionCount();
+            long[] arr = lastGc.computeIfAbsent(name, a -> new long[2]);
+            status.gc.put(name, new long[] { time - arr[0], count - arr[1] });
+            arr[0] = time;
+            arr[1] = count;
+        });
         if (canGetData) try {
             OshiWrapper.class.getMethod("applyProfilerStatus", Status.class).invoke(null, status);
         } catch (Throwable ignored) { canGetData = false; }
@@ -178,5 +220,15 @@ public final class Profiler implements Listener {
         public double[] processorLoad;
         public double tps, mspt, cpu, memory, totalMemory, temperature;
         public Worlds.WorldData[] worlds;
+        public HashMap<String, long[]> gc = new HashMap<>();
+    }
+
+    private static final class ChunkData {
+        public int x, z;
+        public HashMap<String, Integer> data = new HashMap<>();
+        public ChunkData(Chunk ch) {
+            x = ch.getX();
+            z = ch.getZ();
+        }
     }
 }
