@@ -260,7 +260,6 @@ export default {
   profiler: {
     title: '性能',
     entities: '密集实体',
-    chunks: '区块加载',
     threads: '线程',
     heap: '内存占用',
     summary: '汇总',
@@ -291,6 +290,10 @@ export default {
     serverThread: '服务器主线程',
     gcTime: '垃圾回收耗时',
     gcCount: '垃圾回收次数',
+    crowdEntities: '密集实体的区块',
+    crowdTiles: '密集方块实体的区块',
+    globalEntities: '全服实体',
+    globalTiles: '全服方块实体',
     threadState: {
       NEW: '新创建',
       RUNNABLE: '运行中',

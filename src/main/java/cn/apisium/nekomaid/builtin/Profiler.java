@@ -130,13 +130,24 @@ public final class Profiler implements Listener {
                             }
                         }
                         return new Object[] { entities, tiles,
-                                arr.stream().sorted((a, b) -> (int) b[1] - (int) a[1]).limit(20).map(it -> {
+                                arr.stream().sorted((a, b) -> (int) b[1] - (int) a[1]).limit(25).map(it -> {
                                     Chunk ch = (Chunk) it[0];
-                                    ChunkData data = new ChunkData(ch);
-                                    for (Entity entity : ch.getEntities())
-                                        data.data.put(entity.getType().name(), entities.getOrDefault(entity.getType(), 0) + 1);
+                                    ChunkData data = new ChunkData(ch, (int) it[1]);
+                                    for (Entity entity : ch.getEntities()) {
+                                        String name = entity.getType().name();
+                                        data.data.put(name, data.data.getOrDefault(name, 0) + 1);
+                                    }
                                     return data;
-                                }).toArray() };
+                                }).toArray(),
+                                arr.stream().sorted((a, b) -> (int) b[2] - (int) a[2]).limit(25).map(it -> {
+                                    Chunk ch = (Chunk) it[0];
+                                    ChunkData data = new ChunkData(ch, (int) it[2]);
+                                    for (BlockState state : ch.getTileEntities()) {
+                                        String name = state.getType().name();
+                                        data.data.put(name, data.data.getOrDefault(name, 0) + 1);
+                                    }
+                                    return data;
+                                }).toArray()};
                     })
             );
             if (isTimingsV2) client.onWithAck("profiler:timingsStatus", args -> {
@@ -224,11 +235,14 @@ public final class Profiler implements Listener {
     }
 
     private static final class ChunkData {
-        public int x, z;
-        public HashMap<String, Integer> data = new HashMap<>();
-        public ChunkData(Chunk ch) {
+        public final String world;
+        public final int x, z, count;
+        public final HashMap<String, Integer> data = new HashMap<>();
+        public ChunkData(Chunk ch, int count) {
+            world = ch.getWorld().getName();
             x = ch.getX();
             z = ch.getZ();
+            this.count = count;
         }
     }
 }

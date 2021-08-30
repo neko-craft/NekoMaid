@@ -8,7 +8,7 @@ import { useTheme } from '@material-ui/core/styles'
 import { getClassName } from '../utils'
 import { useGlobalData, usePlugin } from '../Context'
 import { CircularLoading } from '../components/Loading'
-import { DataGrid, GridColDef, GridRowData, GridSortItem } from '@mui/x-data-grid'
+import { DataGrid, GridColDef, GridRowData, GridRowId, GridSortItem } from '@mui/x-data-grid'
 import { PlayArrow, Stop, Equalizer, ExpandMore, ChevronRight, ViewList, Refresh } from '@material-ui/icons'
 import { TreeView, TreeItem } from '@material-ui/lab'
 import { Box, Tabs, Tab, Toolbar, Paper, Fab, Badge, Container, Grid, Card, CardHeader, IconButton,
@@ -383,23 +383,83 @@ const Timings: React.FC = React.memo(() => {
   </Container>
 })
 
+const entitiesColumns: GridColDef[] = [
+  { field: 'world', headerName: lang.worlds.name, minWidth: 200 },
+  { field: 'x', headerName: 'X', width: 100 },
+  { field: 'z', headerName: 'Z', width: 100 },
+  { field: 'count', headerName: lang.profiler.count, width: 100 }
+]
+
+interface EntityData {
+  id: number
+  world: string
+  x: number
+  z: number
+  data: Record<string, number>
+}
+
 const Entities: React.FC = React.memo(() => {
   const plugin = usePlugin()
-  const [data, setData] = useState<[any[], any[]] | undefined>()
+  const [selectedEntityChunk, setSelectedEntityChunk] = React.useState<GridRowId | undefined>()
+  const [selectedTileChunk, setSelectedTileChunk] = React.useState<GridRowId | undefined>()
+  const [data, setData] = useState<[any[], any[], EntityData[], EntityData[]] | undefined>()
   useEffect(() => {
-    plugin.emit('profiler:entities', (data: [Record<string, number>, Record<string, number>]) => {
-      console.log(data)
+    plugin.emit('profiler:entities', (data: [Record<string, number>, Record<string, number>, EntityData[], EntityData[]]) => {
+      data[2].forEach((it, i) => (it.id = i))
+      data[3].forEach((it, i) => (it.id = i))
       setData([
-        Object.entries(data[0]).map(([id, value]) => ({ value, name: minecraft['entity.minecraft.' + id.toLowerCase()] || id })),
+        Object.entries(data[0]).map(([id, value]) => ({ value, name: minecraft['entity.minecraft.' + id.toLowerCase()] || id }))
+          .sort((a, b) => b.value - a.value),
         Object.entries(data[1]).map(([id, value]) => ({ value, name: minecraft['block.minecraft.' + id.toLowerCase()] || id }))
+          .sort((a, b) => b.value - a.value),
+        data[2], data[3]
       ])
     })
   }, [])
+
+  const selectedEntityChunkData = useMemo(() => {
+    const id = selectedEntityChunk as (number | undefined)
+    if (id == null || !data) return null
+    return Object.entries(data[2][id].data).map(([id, value]) => ({ value, name: minecraft['entity.minecraft.' + id.toLowerCase()] || id }))
+      .sort((a, b) => b.value - a.value)
+  }, [selectedEntityChunk, data])
+
+  const selectedTileChunkData = useMemo(() => {
+    const id = selectedTileChunk as (number | undefined)
+    if (id == null || !data) return null
+    return Object.entries(data[3][id].data).map(([id, value]) => ({ value, name: minecraft['block.minecraft.' + id.toLowerCase()] || id }))
+      .sort((a, b) => b.value - a.value)
+  }, [selectedTileChunk, data])
+
+  const createGrid = (data: any, title: any, selection: GridRowId | undefined, onChange: (it: GridRowId | undefined) => void) =>
+    <Grid item sm={6} xs={12}>
+      <Card>
+        <CardHeader title={title} />
+        <Divider />
+        <div style={{ height: '70vh', position: 'relative' }}>
+          <DataGrid
+            checkboxSelection
+            disableColumnMenu
+            disableSelectionOnClick
+            disableDensitySelector
+            rows={data}
+            columns={entitiesColumns}
+            onSelectionModelChange={it => onChange(it.find(a => a !== selection))}
+            selectionModel={selection == null ? [] : [selection]}
+          />
+        </div>
+      </Card>
+    </Grid>
+
   return <Container maxWidth={false} sx={{ py: 3, '& .MuiDataGrid-root': { border: 'none' }, position: 'relative' }}>
     <CircularLoading loading={!data} />
     {data && <Grid container spacing={3}>
-      <Pie title={lang.worlds.entities} data={data[0]} />
-      <Pie title={lang.worlds.tiles} data={data[1]} />
+      {createGrid(data[2], lang.profiler.crowdEntities, selectedEntityChunk, setSelectedEntityChunk)}
+      {createGrid(data[3], lang.profiler.crowdTiles, selectedTileChunk, setSelectedTileChunk)}
+      {selectedEntityChunkData && <Pie title={lang.worlds.entities} data={selectedEntityChunkData} />}
+      {selectedTileChunkData && <Pie title={lang.worlds.tiles} data={selectedTileChunkData} />}
+      <Pie title={lang.profiler.globalEntities} data={data[0]} />
+      <Pie title={lang.profiler.globalTiles} data={data[1]} />
     </Grid>}
   </Container>
 })
@@ -506,7 +566,7 @@ const Threads: React.FC = React.memo(() => {
   </Container>
 })
 
-const components = [Summary, Timings, Entities, null, Heap, Threads]
+const components = [Summary, Timings, Entities, Heap, Threads]
 
 const Profiler: React.FC = () => {
   const plugin = usePlugin()
@@ -546,7 +606,6 @@ const Profiler: React.FC = () => {
         <Tab label={lang.profiler.summary} />
         <Tab label='Timings' disabled={!globalData.isPaper} />
         <Tab label={lang.profiler.entities} />
-        <Tab label={lang.profiler.chunks} />
         <Tab label={lang.profiler.heap} />
         <Tab label={lang.profiler.threads} />
         <Tab label={lang.profiler.suggestions} />
@@ -555,7 +614,7 @@ const Profiler: React.FC = () => {
     <Tabs />
     {tab === 0 && !status ? <Box sx={{ textAlign: 'center', marginTop: '50vh' }}>{lang.profiler.notStarted}</Box> : Elm && <Elm key={key} />}
     {createFab(() => plugin.emit('profiler:status', !status), status ? <Stop /> : <PlayArrow />, tab === 0)}
-    {createFab(() => setTKey(key + 1), <Refresh />, tab > 0)}
+    {createFab(() => setTKey(key + 1), <Refresh />, tab > 1)}
   </Box>
 }
 
