@@ -228,7 +228,7 @@ const Summary: React.FC = React.memo(() => {
 
 const ENTITY_TYPE = /- (.+?) -/
 
-const countFormatter = ({ data }: { data: { count: number } }) => lang.profiler.count + ': ' + data.count
+const countFormatter = ({ data }: { data: { count: number } }) => lang.profiler.timingsCount + ': ' + data.count
 
 const Pie: React.FC<{ title: string, data: any[], formatter?: any }> = React.memo(({ title, data, formatter }) => <Grid item sm={6} xs={12}>
   <Card>
