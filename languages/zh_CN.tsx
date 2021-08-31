@@ -289,6 +289,7 @@ export default {
     tilesTick: '方块实体处理',
     timingsNotStarted: 'Timings 还没有开启!',
     className: '类名',
+    classLoader: '类加载器',
     threadName: '线程名',
     state: '状态',
     stack: '堆栈',

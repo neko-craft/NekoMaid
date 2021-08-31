@@ -79,7 +79,7 @@ public final class Profiler implements Listener, NotificationListener {
                 else main.GLOBAL_DATA.remove("profilerStarted");
                 main.broadcast(main, "profiler:status", started);
                 checkTask();
-            }).onWithAck("profiler:heap", args -> {
+            }).onWithMultiArgsAck("profiler:heap", args -> {
                 try {
                     Matcher m = HEAP_REGEXP.matcher((String) ManagementFactory.getPlatformMBeanServer()
                             .invoke(ObjectName.getInstance("com.sun.management:type=DiagnosticCommand"),
@@ -98,14 +98,28 @@ public final class Profiler implements Listener, NotificationListener {
                             if (m2.find() && (i = m2.start()) > 1) name = name.substring(0, i - 1);
                             if (name.endsWith(";")) name = name.substring(0, name.length() - 1);
                         } else name = "others";
-                        long[] it = map.computeIfAbsent(name, k -> new long[2]);
+                        long[] it = map.computeIfAbsent(name, k -> new long[3]);
                         it[0] += Long.parseLong(m.group(1));
                         it[1] += memory;
                     }
-                    return map;
+                    HashMap<String, String> fileMap;
+                    if (Utils.classLoaderGetName == null) fileMap = null;
+                    else {
+                        fileMap = new HashMap<>();
+                        map.forEach((k, v) -> {
+                            int i = 0;
+                            while (k.charAt(i) == '[') i++;
+                            String name = k.substring(i);
+                            if (name.startsWith("L")) name = name.substring(1);
+                            try {
+                                fileMap.put(k, (String) Utils.classLoaderGetName.invoke(Class.forName(name).getClassLoader()));
+                            } catch (Throwable ignored) { }
+                        });
+                    }
+                    return new Object[] { map, fileMap };
                 } catch (Throwable e) {
                     e.printStackTrace();
-                    return null;
+                    return new Object[] { null, null };
                 }
             }).onWithMultiArgsAck("profiler:threads", args -> {
                 Thread t = Utils.getMinecraftServerThread();

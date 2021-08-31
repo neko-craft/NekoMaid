@@ -649,23 +649,39 @@ const GarbageCollection: React.FC = React.memo(() => {
   </Container>
 })
 
-const heapColumns: GridColDef[] = [
-  { field: 'id', headerName: lang.profiler.className, minWidth: 200, flex: 1 },
-  { field: 'count', headerName: lang.profiler.count, width: 100 },
-  { field: 'size', headerName: lang.size, width: 100, valueFormatter: ({ row: { display } }) => display }
-]
-
 const Heap: React.FC = React.memo(() => {
   const plugin = usePlugin()
   const [sortModel, setSortModel] = React.useState<GridSortItem[]>([{ field: 'size', sort: 'desc' }])
   const [heap, setHeap] = useState<GridRowData[]>([])
+  const [fileMap, setFileMap] = useState<Record<string, string> | null>(null)
   useEffect(() => {
-    plugin.emit('profiler:heap', (heap: any) => {
+    plugin.emit('profiler:heap', (heap: any, map: any) => {
       const arr: GridRowData[] = []
       for (const id in heap) arr.push({ id: getClassName(id), count: heap[id][0], size: heap[id][1], display: prettyBytes(heap[id][1]) })
       setHeap(arr)
+      console.log(map)
+      setFileMap(map)
     })
   }, [])
+
+  const heapColumns = useMemo(() => {
+    const heapColumns: GridColDef[] = [
+      { field: 'id', headerName: lang.profiler.className, minWidth: 250, flex: 0.6 },
+      { field: 'count', headerName: lang.profiler.count, width: 100 },
+      { field: 'size', headerName: lang.size, width: 100, valueFormatter: ({ row: { display } }) => display }
+    ]
+    if (fileMap) {
+      heapColumns.splice(1, 0, {
+        field: '_',
+        headerName: lang.profiler.classLoader,
+        minWidth: 150,
+        flex: 0.4,
+        valueFormatter: ({ row: { id } }) => fileMap[id as string] || ''
+      })
+    }
+    return heapColumns
+  }, [fileMap])
+
   return <Container maxWidth={false} sx={{ py: 3, '& .MuiDataGrid-root': { border: 'none' } }}>
     <Grid container spacing={3}>
       <Grid item xs={12}>

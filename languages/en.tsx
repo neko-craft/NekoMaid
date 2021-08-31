@@ -278,6 +278,7 @@ const lang: Language = {
     tilesTick: 'Block Tile Handled',
     timingsNotStarted: 'Timings has not been enabled',
     className: 'Class Name',
+    classLoader: 'Class Loader',
     threadName: 'Thread Name',
     state: 'State',
     stack: 'Stack',

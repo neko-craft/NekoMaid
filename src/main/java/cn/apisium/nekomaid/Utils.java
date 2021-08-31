@@ -26,7 +26,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
@@ -46,13 +45,14 @@ public final class Utils {
     private static String commitId, versionBranch = "master";
     private static final String versionInfo;
     private static CommandMap commandMap;
-    private static boolean isTuinity, hasAsyncTabComplete, canGetLastLogin, canGetAverageTickTime, canGetTPS,
-            canDeobfuscate;
+    private static boolean isTuinity, hasAsyncTabComplete, canGetLastLogin, canGetAverageTickTime,
+            canGetTPS, canDeobfuscate;
     private static Object server;
     private static Field recentTps, mspt;
     private static Method getThread;
     private static final String JSON_OBJECT = "\ud83c\udf7a";
     public static final boolean IS_PAPER;
+    public static final Method classLoaderGetName;
     protected static boolean HAS_NBT_API;
 
     static {
@@ -94,6 +94,12 @@ public final class Utils {
         try {
             paperVersionFetcherClass = Class.forName("com.destroystokyo.paper.PaperVersionFetcher");
         } catch (Throwable ignored) {}
+        Method classLoaderGetName1 = null;
+        try {
+            // noinspection JavaReflectionMemberAccess
+            classLoaderGetName1 = ClassLoader.class.getMethod("getName");
+        } catch (Throwable ignored) { }
+        classLoaderGetName = classLoaderGetName1;
         try {
             Server obcServer = Bukkit.getServer();
             Class<?> obc = Bukkit.getServer().getClass();
