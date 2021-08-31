@@ -198,7 +198,8 @@ const lang: Language = {
     content: 'Commands or Messages',
     notSelected: 'Select a task from left first!',
     timer: 'Timer',
-    name: 'Name'
+    name: 'Name',
+    whenIdle: 'When idle (NO PLAYER)'
   },
   vault: {
     title: 'Vault',

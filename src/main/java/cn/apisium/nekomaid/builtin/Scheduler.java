@@ -64,10 +64,12 @@ final class Scheduler {
     @SuppressWarnings("deprecation")
     private void runTask(Task task) {
         for (String value : task.values) {
-            if (value.startsWith("/")) main.getServer().getScheduler().runTask(main,
-                    () -> main.getServer().dispatchCommand(main.getServer().getConsoleSender(),
-                            setPlaceholders(value.substring(1))));
-            else main.getServer().broadcastMessage(setPlaceholders(value));
+            if (value.startsWith("/")) {
+                if (task.whenIdle && !main.getServer().getOnlinePlayers().isEmpty()) continue;
+                main.getServer().getScheduler().runTask(main,
+                        () -> main.getServer().dispatchCommand(main.getServer().getConsoleSender(),
+                                setPlaceholders(value.substring(1))));
+            } else main.getServer().broadcastMessage(setPlaceholders(value));
         }
     }
 
@@ -91,7 +93,7 @@ final class Scheduler {
 
     @SuppressWarnings("unused")
     private static final class Task {
-        public boolean enabled;
+        public boolean enabled, whenIdle;
         public String name, cron;
         public String[] values;
     }

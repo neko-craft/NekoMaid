@@ -385,19 +385,17 @@ const Timings: React.FC = React.memo(() => {
 
 const nanoSecondFormatter = ({ name, value }: { name: string, value: number }) => name + ': ' + formatMS(value / 1000)
 
-const getLabel = (key: string, time: number, count: number, theme: any) => {
+const getLabel = (key: string, time: number, count: number) => {
   const ofTick = time / NS
-  const color = ofTick >= 100 ? 'error' : ofTick >= 50 ? 'warning' : undefined
   return <><Typography color='primary' component='span'>{key}</Typography>:&nbsp;
     {lang.profiler.lagTime} <span className='bold'>{formatMS(time / 1000)}</span>, {lang.profiler.timingsCount}:&nbsp;
     <span className='bold'>{count}</span>, &nbsp;{lang.profiler.avgTime}: <span className='bold'>{formatMS(time / 1000 / count)}</span>,
-    &nbsp;<span className='bold' style={color && { color: theme.palette[color].main }}>
-      {ofTick.toFixed(2)}%</span> {lang.profiler.ofTick}</>
+    &nbsp;<Typography sx={{ fontWeight: 'bold', color: ofTick >= 100 ? 'error.main' : ofTick >= 50 ? 'warning.main' : undefined }} component='span'>
+      {ofTick.toFixed(2)}%</Typography> {lang.profiler.ofTick}</>
 }
 
 const Plugins: React.FC = React.memo(() => {
   const plugin = usePlugin()
-  const theme = useTheme()
   const [data, setData] = useState<[JSX.Element[], any[][]] | undefined>()
   useEffect(() => {
     const off = plugin.emit('profiler:fetchPlugins').on('profiler:plugins', (data: Record<string, [Record<string | number, [number, number]>]>) => {
@@ -420,11 +418,11 @@ const Plugins: React.FC = React.memo(() => {
             totalTime += time
             totalTypesTime += time
             // eslint-disable-next-line react/jsx-key
-            subTree.push([time, <TreeItem nodeId={`${curKey}/${key}`} label={getLabel(key, time, count, theme)} />])
+            subTree.push([time, <TreeItem nodeId={`${curKey}/${key}`} label={getLabel(key, time, count)} />])
           }
           if (totalTime) pluginsTimes[i].push({ name, value: totalTime })
           if (subTree.length) {
-            subTrees.push(<TreeItem nodeId={curKey} key={curKey} label={getLabel((lang.profiler as any)[type], totalTime, totalCount, theme)}>
+            subTrees.push(<TreeItem nodeId={curKey} key={curKey} label={getLabel((lang.profiler as any)[type], totalTime, totalCount)}>
               {subTree.sort((a, b) => b[0] - a[0]).map(it => it[1])}
             </TreeItem>)
           }
@@ -432,7 +430,7 @@ const Plugins: React.FC = React.memo(() => {
         if (totalTypesTime) {
           tree.push([totalTypesTime, <TreeItem
             nodeId={name}
-            label={getLabel(name, totalTypesTime, totalTypesCount, theme)}
+            label={getLabel(name, totalTypesTime, totalTypesCount)}
             key={name}
           >{subTrees}</TreeItem>])
         }
@@ -451,7 +449,9 @@ const Plugins: React.FC = React.memo(() => {
         <Card>
           <CardHeader title={lang.profiler.pluginsTitle} sx={{ position: 'relative' }} />
           <Divider />
-          <TreeView defaultCollapseIcon={<ExpandMore />} defaultExpandIcon={<ChevronRight />}>{data[0]}</TreeView>
+          {data[0].length
+            ? <TreeView defaultCollapseIcon={<ExpandMore />} defaultExpandIcon={<ChevronRight />}>{data[0]}</TreeView>
+            : <CardContent><Empty /></CardContent>}
         </Card>
       </Grid>
       <Pie title={lang.profiler.pluginsEventTime} data={data[1][0]} formatter={nanoSecondFormatter} />

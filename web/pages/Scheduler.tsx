@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { action } from '../toast'
 import { Delete, Add, Save } from '@material-ui/icons'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItemButton, Checkbox, ListItemIcon,
-  ListItem, IconButton, ListItemText, CardContent, TextField } from '@material-ui/core'
+  ListItem, IconButton, ListItemText, CardContent, TextField, FormControlLabel, Switch } from '@material-ui/core'
 import { usePlugin } from '../Context'
 import { cardActionStyles } from '../theme'
 import Empty from '../components/Empty'
@@ -10,7 +10,7 @@ import Cron from 'material-ui-cron'
 import dialog from '../dialog'
 import lang, { currentLanguage } from '../../languages'
 
-interface Task { name: string, cron: string, values: string[], enabled: boolean }
+interface Task { name: string, cron: string, values: string[], enabled: boolean, whenIdle: boolean }
 const Scheduler: React.FC = () => {
   const plugin = usePlugin()
   const [id, setId] = useState(-1)
@@ -18,14 +18,13 @@ const Scheduler: React.FC = () => {
   const [name, setName] = useState('')
   const [cron, setCron] = useState('')
   const [values, setValues] = useState('')
+  const [whenIdle, setWhenIdle] = useState(false)
   const [cronError, setCronError] = useState('')
   const save = () => plugin.emit('scheduler:update', (res: boolean) => {
     action(res)
     plugin.emit('scheduler:fetch', setTasks)
   }, JSON.stringify(tasks))
-  useEffect(() => {
-    plugin.emit('scheduler:fetch', setTasks)
-  }, [])
+  useEffect(() => { plugin.emit('scheduler:fetch', setTasks) }, [])
 
   return <Box sx={{ minHeight: '100%', py: 3 }}>
     <Toolbar />
@@ -43,6 +42,7 @@ const Scheduler: React.FC = () => {
                     name: lang.scheduler.newTask,
                     cron: '*/1 * * * *',
                     enabled: true,
+                    whenIdle: false,
                     values: ['/say Hello, %server_tps% (PlaceholderAPI)', 'This is a chat message']
                   }
                   setTasks([...tasks, task])
@@ -51,6 +51,7 @@ const Scheduler: React.FC = () => {
                   setCron(task.cron)
                   setName(task.name)
                   setValues(task.values.join('\n'))
+                  setWhenIdle(false)
                 }}
                 sx={cardActionStyles}
               ><Add /></IconButton>}
@@ -88,6 +89,7 @@ const Scheduler: React.FC = () => {
                     setCron(tasks[i].cron)
                     setName(tasks[i].name)
                     setValues(tasks[i].values.join('\n'))
+                    setWhenIdle(!!tasks[i].whenIdle)
                   }}><ListItemText inset primary={it.name} /></ListItemButton >
                 </ListItem>)}
               </List>
@@ -105,6 +107,7 @@ const Scheduler: React.FC = () => {
                   tasks[id].values = values.split('\n')
                   tasks[id].cron = cron
                   tasks[id].name = name
+                  tasks[id].whenIdle = whenIdle
                   save()
                 }}
                 sx={cardActionStyles}
@@ -131,6 +134,11 @@ const Scheduler: React.FC = () => {
                     sx={{ marginTop: 3 }}
                     label={lang.scheduler.content}
                     onChange={e => setValues(e.target.value)}
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={whenIdle} />}
+                    label={lang.scheduler.whenIdle}
+                    onChange={(e: any) => setWhenIdle(e.target.checked)}
                   />
                 </>
                 : <Empty title={lang.scheduler.notSelected} />}

@@ -198,7 +198,8 @@ export default {
     content: '命令或文本信息',
     notSelected: '请先在左侧选择一个任务!',
     timer: '定时器',
-    name: '任务名'
+    name: '任务名',
+    whenIdle: '仅当没有玩家时执行'
   },
   vault: {
     title: '经济 权限 聊天',
