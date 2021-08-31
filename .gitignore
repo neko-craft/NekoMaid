@@ -9,6 +9,7 @@ icons/minecraft
 languages/minecraft
 minecraftIcons
 client.jar
+parcel-bundle-reports
 
 node_modules
 .parcel-cache

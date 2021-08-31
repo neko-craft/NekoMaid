@@ -21,6 +21,7 @@
     "npm": "npm run npm:clean && npm run npm:types && npm run npm:package && npm run npm:copy",
     "publish": "npm run npm && cd npm && npm publish",
     "build": "parcel build web/index.html --public-url .",
+    "analyzer": "parcel build web/index.html --reporter @parcel/reporter-bundle-analyzer",
     "copyIcons": "ncp icons dist/icons && ncp vscode-material-icon-theme/icons dist/icons/material"
   },
   "targets": {
@@ -77,6 +78,7 @@
     "valid-filename": "^4.0.0"
   },
   "devDependencies": {
+    "@parcel/reporter-bundle-analyzer": "^2.0.0-rc.0",
     "@parcel/transformer-image": "^2.0.0-rc.0",
     "@parcel/transformer-less": "^2.0.0-rc.0",
     "@types/lodash": "^4.14.172",
