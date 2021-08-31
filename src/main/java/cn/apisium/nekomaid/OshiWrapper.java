@@ -33,7 +33,8 @@ public final class OshiWrapper {
     };
 
     private final static class Info {
-        public String javaVersion, virtualMachine, operatingSystem, manufacturer, model, cpu, pid, javaCount;
+        public boolean isAikarFlags;
+        public String javaVersion, virtualMachine, operatingSystem, manufacturer, model, cpu, pid, javaCount, args;
     }
 
     static {
@@ -43,9 +44,14 @@ public final class OshiWrapper {
     public static Info getData() {
         Properties props = System.getProperties();
         Info info = new Info();
+        String vmName = System.getProperty("java.vm.name");
+        info.args = (vmName == null ? "" : vmName.contains("Server") ? "-server " : vmName.contains("Client") ? "-client " : "");
+        info.args += String.join(" ", ManagementFactory.getRuntimeMXBean().getInputArguments());
         info.javaVersion = props.getProperty("java.version") + " (build " + props.getProperty("java.vm.version") + ")";
-        info.virtualMachine = props.getProperty("java.vm.name");
+        info.virtualMachine = vmName;
         info.pid = ManagementFactory.getRuntimeMXBean().getName().split("@", 2)[0];
+        info.isAikarFlags = "https://mcflags.emc.gs".equals(props.getProperty("using.aikars.flags")) &&
+                        "true".equals(props.getProperty("aikars.new.flags"));
 
         info.operatingSystem = os.toString();
         info.manufacturer = cs.getManufacturer();

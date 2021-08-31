@@ -670,7 +670,6 @@ const Profiler: React.FC = () => {
         <Tab label={lang.profiler.entities} />
         <Tab label={lang.profiler.heap} />
         <Tab label={lang.profiler.threads} />
-        <Tab label={lang.profiler.suggestions} />
       </Tabs>
     </Paper>
     <Tabs />

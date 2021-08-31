@@ -63,6 +63,8 @@ export default {
   },
   config: {
     title: '设置',
+    args: '虚拟机参数',
+    isAikarFlags: '使用Aikar启动参数',
     serverConfig: '服务端设置',
     maxPlayers: '最大玩家数',
     spawnRadius: '出生点保护半径',
@@ -265,7 +267,6 @@ export default {
     summary: '汇总',
     plugins: '插件耗时',
     pluginsTitle: '插件耗时 (30秒内)',
-    suggestions: '优化建议',
     notStarted: '当前还未开始进行性能检测, 请点击右下角的按钮开始',
     cpu: '系统CPU使用率',
     readsAndWrites: '硬盘读写',

@@ -11,13 +11,13 @@ import { Delete, HelpOutline, Check, Brightness4, Brightness7, SettingsBrightnes
   Equalizer, ExpandLess, ExpandMore } from '@material-ui/icons'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItem, IconButton,
   ToggleButton, ListItemAvatar, Avatar, ListItemText, Tooltip, CardContent, ToggleButtonGroup,
-  Paper, ListItemButton, Switch, ListItemIcon, Collapse } from '@material-ui/core'
+  Paper, ListItemButton, Switch, ListItemIcon, Collapse, Link } from '@material-ui/core'
 
 import type { ServerRecord } from '../App'
 
 configs.push({
   title: lang.config.serverConfig,
-  component: () => {
+  component () {
     const plugin = usePlugin()
     const globalData = useGlobalData()
     const [flag, update] = useState(0)
@@ -51,8 +51,12 @@ configs.push({
 
     const infoElm: JSX.Element[] = []
     for (const key in info) {
+      const name = (lang.config as any)[key]
       infoElm.push(<ListItem key={key} sx={{ pl: 4 }}>
-        <ListItemText primary={(lang.config as any)[key]} secondary={info[key]} />
+        <ListItemText
+          primary={key === 'isAikarFlags' ? <Link href='https://mcflags.emc.gs' target='_blank' rel='noopener'>{name}</Link> : name}
+          secondary={info[key].toString()}
+        />
       </ListItem>)
     }
 
@@ -102,7 +106,7 @@ configs.push({
 },
 {
   title: lang.history,
-  component: () => {
+  component () {
     const [cur, update] = useState(0)
     const list: ServerRecord[] = JSON.parse(localStorage.getItem('NekoMaid:servers') || '[]')
     return <List>
@@ -132,7 +136,7 @@ configs.push({
 },
 {
   title: lang.config.theme,
-  component: () => {
+  component () {
     const color = localStorage.getItem('NekoMaid:color') || 'blue'
     return <CardContent sx={{ textAlign: 'center' }}>
       <Box>
