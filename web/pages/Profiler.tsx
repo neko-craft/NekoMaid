@@ -5,7 +5,7 @@ import prettyBytes from 'pretty-bytes'
 import Empty from '../components/Empty'
 import decamelize from 'decamelize'
 import { useTheme } from '@material-ui/core/styles'
-import { getClassName, getCurrentTime } from '../utils'
+import { getClassName, getCurrentTime, formatMS } from '../utils'
 import { useGlobalData, usePlugin } from '../Context'
 import { CircularLoading } from '../components/Loading'
 import { DataGrid, GridColDef, GridRowData, GridRowId, GridSortItem } from '@mui/x-data-grid'
@@ -19,6 +19,7 @@ import dialog from '../dialog'
 
 const MB = 1024 * 1024
 const GB = MB * 1024
+const NS = 1000 * 1000 * 30
 
 export const ProfilerIcon: React.FC = () => {
   const plugin = usePlugin()
@@ -65,7 +66,6 @@ const bytesMap = (arr: { value: number, seriesName: string }[]) =>
 const Summary: React.FC = React.memo(() => {
   const plugin = usePlugin()
   const theme = useTheme()
-  const globalData = useGlobalData()
   const [status, setStatus] = useState<Status[]>([])
   useEffect(() => {
     const off = plugin.on('profiler:current', (it: any) => setStatus(old => {
@@ -164,63 +164,64 @@ const Summary: React.FC = React.memo(() => {
       }} />
     </Card>
   </Grid>
+
+  const processorLoad = status[status.length - 1]?.processorLoad
+
   return <Container maxWidth={false} sx={{ py: 3, position: 'relative' }}>
     <CircularLoading loading={!status.length} />
     <Grid container spacing={3}>
       {createCard('TPS', [tps])}
-      {createCard(lang.dashboard.mspt, [mspt], '{c} ' + lang.ms)}
+      {mspt[0] !== '-1.00' && createCard(lang.dashboard.mspt, [mspt], '{c} ' + lang.ms)}
       {createCard(lang.worlds.entities, entities, undefined, undefined, undefined, worlds)}
       {createCard(lang.worlds.tiles, tiles, undefined, undefined, undefined, worlds)}
       {createCard(lang.worlds.chunks, chunks, undefined, undefined, undefined, worlds)}
       {createCard(lang.profiler.loadAndUnloadChunks, [chunkLoads, chunkUnloads], undefined,
         undefined, undefined, [lang.profiler.chunkLoads, lang.profiler.chunkUnoads])}
       {createCard(lang.profiler.gcTime, gcTime, (arr: { value: number, seriesName: string }[]) =>
-        arr.map(({ value, seriesName }) => `${seriesName}: ${value} ${lang.ms}`).join('<br>'), undefined, undefined, gcNames)}
+        arr.map(({ value, seriesName }) => `${seriesName}: ${formatMS(value)}`).join('<br>'), undefined, undefined, gcNames)}
       {createCard(lang.profiler.gcCount, gcCount, undefined, undefined, undefined, gcNames)}
-      {globalData.isPaper && <>
-        {createCard(lang.profiler.threads, [threads])}
-        {createCard(lang.profiler.cpu, [cpu], '{c} %', { }, 100)}
-        {createCard(lang.dashboard.memory, [memory], ([{ value }]: [{ value: number }]) => prettyBytes(value * GB),
-          { }, totalMemory ? Math.round(totalMemory / GB) : undefined)}
-        {createCard(lang.profiler.readsAndWrites, [reads, writes], bytesMap, undefined, undefined, [lang.profiler.reads, lang.profiler.writes])}
-        {createCard(lang.profiler.network, [recv, sent], bytesMap, undefined, undefined, [lang.profiler.recv, lang.profiler.sent])}
-        {createCard(lang.profiler.temperature, [temperature], '{c} ℃', { })}
-        <Grid item sm={6} xs={12} lg={4}>
-          <Card>
-            <CardHeader title={lang.profiler.cores} />
-            <Divider />
-            <CardContent>
-              <Grid container spacing={1} justifyContent='center'>
-                {status[status.length - 1]?.processorLoad?.map((v, i) => <Grid item key={i}><Paper sx={{
-                  width: 52,
-                  height: 52,
-                  lineHeight: '52px',
-                  textAlign: 'center',
-                  color: theme.palette.primary.contrastText,
-                  display: 'inline-block',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  textShadow: theme.palette.mode === 'light'
-                    ? '#000 1px 0 0, #000 0 1px 0, #000 -1px 0 0, #000 0 -1px 0'
-                    : '#fff 1px 0 0, #fff 0 1px 0, #fff -1px 0 0, #fff 0 -1px 0',
-                  '& span': { position: 'relative', zIndex: 2 },
-                  '&:after': {
-                    content: '" "',
-                    position: 'absolute',
-                    transition: '.6s',
-                    backgroundColor: theme.palette.primary.main,
-                    height: (v * 100) + '%',
-                    width: '100%',
-                    bottom: 0,
-                    left: 0,
-                    right: 0
-                  }
-                }}><span>{(v * 100).toFixed(0)}%</span></Paper></Grid>)}
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-      </>}
+      {createCard(lang.profiler.threads, [threads])}
+      {cpu[0] !== '-100.00' && createCard(lang.profiler.cpu, [cpu], '{c} %', { }, 100)}
+      {createCard(lang.dashboard.memory, [memory], ([{ value }]: [{ value: number }]) => prettyBytes(value * GB),
+        { }, totalMemory ? Math.round(totalMemory / GB) : undefined)}
+      {createCard(lang.profiler.readsAndWrites, [reads, writes], bytesMap, undefined, undefined, [lang.profiler.reads, lang.profiler.writes])}
+      {createCard(lang.profiler.network, [recv, sent], bytesMap, undefined, undefined, [lang.profiler.recv, lang.profiler.sent])}
+      {temperature[0] !== '0.00' && createCard(lang.profiler.temperature, [temperature], '{c} ℃', { })}
+      {processorLoad?.length > 0 && <Grid item sm={6} xs={12} lg={4}>
+        <Card>
+          <CardHeader title={lang.profiler.cores} />
+          <Divider />
+          <CardContent>
+            <Grid container spacing={1} justifyContent='center'>
+              {processorLoad.map((v, i) => <Grid item key={i}><Paper sx={{
+                width: 52,
+                height: 52,
+                lineHeight: '52px',
+                textAlign: 'center',
+                color: theme.palette.primary.contrastText,
+                display: 'inline-block',
+                position: 'relative',
+                overflow: 'hidden',
+                textShadow: theme.palette.mode === 'light'
+                  ? '#000 1px 0 0, #000 0 1px 0, #000 -1px 0 0, #000 0 -1px 0'
+                  : '#fff 1px 0 0, #fff 0 1px 0, #fff -1px 0 0, #fff 0 -1px 0',
+                '& span': { position: 'relative', zIndex: 2 },
+                '&:after': {
+                  content: '" "',
+                  position: 'absolute',
+                  transition: '.6s',
+                  backgroundColor: theme.palette.primary.main,
+                  height: (v * 100) + '%',
+                  width: '100%',
+                  bottom: 0,
+                  left: 0,
+                  right: 0
+                }
+              }}><span>{(v * 100).toFixed(0)}%</span></Paper></Grid>)}
+            </Grid>
+          </CardContent>
+        </Card>
+      </Grid>}
     </Grid>
   </Container>
 })
@@ -382,11 +383,12 @@ const Timings: React.FC = React.memo(() => {
   </Container>
 })
 
-const nanoSecondFormatter = ({ name, value }: { name: string, value: number }) => name + ': ' + (value / 1000 | 0) + lang.ms
+const nanoSecondFormatter = ({ name, value }: { name: string, value: number }) => name + ': ' + formatMS(value / 1000)
 
-const getLable = (key: string, time: number, count: number) => <><Typography color='primary' component='span'>{key}</Typography>:&nbsp;
-  {lang.profiler.lagTime} <span className='bold'>{time / 1000 | 0} {lang.ms}</span>, {lang.profiler.timingsCount}:&nbsp;
-  <span className='bold'>{count}</span>, &nbsp;{lang.profiler.avgTime}: <span className='bold'>{time / 1000 / count | 0} {lang.ms}</span></>
+const getLabel = (key: string, time: number, count: number) => <><Typography color='primary' component='span'>{key}</Typography>:&nbsp;
+  {lang.profiler.lagTime} <span className='bold'>{formatMS(time / 1000)}</span>, {lang.profiler.timingsCount}:&nbsp;
+  <span className='bold'>{count}</span>, &nbsp;{lang.profiler.avgTime}: <span className='bold'>{formatMS(time / 1000 / count)}</span>,
+  &nbsp;<span className='bold'>{(time / NS).toFixed(2)}%</span> {lang.profiler.ofTick}</>
 
 const Plugins: React.FC = React.memo(() => {
   const plugin = usePlugin()
@@ -397,28 +399,37 @@ const Plugins: React.FC = React.memo(() => {
       const tree: [number, JSX.Element][] = []
       for (const name in data) {
         let totalTypesTime = 0
+        let totalTypesCount = 0
         const subTrees: JSX.Element[] = []
         ;['events', 'tasks'].forEach((type, i) => {
           const curKey = name + '/' + type
           const subTree: [number, JSX.Element][] = []
           const cur = data[name][i]
           let totalTime = 0
+          let totalCount = 0
           for (const key in cur) {
             const [count, time] = cur[key]
+            totalCount += count
+            totalTypesCount += count
             totalTime += time
             totalTypesTime += time
             // eslint-disable-next-line react/jsx-key
-            subTree.push([time, <TreeItem nodeId={`${curKey}/${key}`} label={getLable(key, time, count)} />])
+            subTree.push([time, <TreeItem nodeId={`${curKey}/${key}`} label={getLabel(key, time, count)} />])
           }
           if (totalTime) pluginsTimes[i].push({ name, value: totalTime })
           if (subTree.length) {
-            subTrees.push(<TreeItem nodeId={curKey} key={curKey} label={(lang.profiler as any)[type]}>
+            subTrees.push(<TreeItem nodeId={curKey} key={curKey} label={getLabel((lang.profiler as any)[type], totalTime, totalCount)}>
               {subTree.sort((a, b) => b[0] - a[0]).map(it => it[1])}
             </TreeItem>)
           }
         })
-        // eslint-disable-next-line react/jsx-key
-        if (totalTypesTime) tree.push([totalTypesTime, <TreeItem nodeId={name} label={name} key={name}>{subTrees}</TreeItem>])
+        if (totalTypesTime) {
+          tree.push([totalTypesTime, <TreeItem
+            nodeId={name}
+            label={getLabel(name, totalTypesTime, totalTypesCount)}
+            key={name}
+          >{subTrees}</TreeItem>])
+        }
       }
       setData([
         tree.sort((a, b) => b[0] - a[0]).map(it => it[1]),
@@ -511,8 +522,11 @@ const Entities: React.FC = React.memo(() => {
       </Card>
     </Grid>
 
-  return <Container maxWidth={false} sx={{ py: 3, '& .MuiDataGrid-root': { border: 'none' }, position: 'relative' }}>
-    <CircularLoading loading={!data} />
+  return <Container
+    maxWidth={false}
+    sx={{ py: 3, '& .MuiDataGrid-root': { border: 'none' }, position: 'relative', height: data ? undefined : '80vh' }}
+  >
+    <CircularLoading loading={!data} background={false} />
     {data && <Grid container spacing={3}>
       {createGrid(data[2], lang.profiler.crowdEntities, selectedEntityChunk, setSelectedEntityChunk)}
       {createGrid(data[3], lang.profiler.crowdTiles, selectedTileChunk, setSelectedTileChunk)}
@@ -570,7 +584,7 @@ const GarbageCollection: React.FC = React.memo(() => {
                 <ListItemText
                   primary={<>[{it.start}] <span className='bold'>{it.name}</span></>}
                   secondary={<>
-                    <Typography component='span' variant='body2' color='text.primary'>{lang.profiler.costTime}: </Typography>{it.duration} {lang.ms}
+                    <Typography component='span' variant='body2' color='text.primary'>{lang.profiler.costTime}: </Typography>{formatMS(it.duration)}
                     <br /><Typography component='span' variant='body2' color='text.primary'>{lang.cause}: </Typography>{it.cause}<br />
                     <Typography component='span' variant='body2' color='text.primary'>{lang.profiler.action}: </Typography>{it.action}
                   </>}

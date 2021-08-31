@@ -34,6 +34,7 @@ const lang: Language = {
   others: 'Others',
   size: 'Size',
   ms: 'ms',
+  secound: 's',
   cause: 'Cause',
   itemEditor: {
     title: 'Item Editor',
@@ -282,6 +283,7 @@ const lang: Language = {
     lock: 'Lock',
     action: 'Action',
     costTime: 'Time Consumed',
+    ofTick: 'of Tick',
     carbageCollection: 'GC',
     memoryUsage: 'Memory Usage',
     memoryUsageTypes: ['After', 'Before'],

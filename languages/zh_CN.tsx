@@ -33,6 +33,7 @@ export default {
   others: '其他',
   size: '大小',
   ms: '毫秒',
+  secound: '秒',
   cause: '原因',
   unsupported: '不支持的操作!',
   itemEditor: {
@@ -293,6 +294,7 @@ export default {
     lock: '锁',
     action: '行为',
     costTime: '耗时',
+    ofTick: '每刻',
     carbageCollection: '垃圾回收',
     memoryUsage: '内存使用状况',
     memoryUsageTypes: ['新', '旧'],

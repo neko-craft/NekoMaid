@@ -7,22 +7,23 @@ export const LoadingList: React.FC<{ count?: number }> = ({ count = 3 }) => <>{A
   <ListItemText primary={<Skeleton animation='wave' />} />
 </ListItem>)}</>
 
-export const CircularLoading: React.FC<CircularProgressProps & { loading?: boolean }> = ({ loading, ...props }) => <Box sx={{
-  position: 'absolute',
-  left: 0,
-  right: 0,
-  top: 0,
-  bottom: 0,
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: loading ? 2 : -1,
-  backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.65)' : 'rgba(255, 255, 255, 0.4)',
-  backdropFilter: loading ? 'blur(1px)' : undefined,
-  transition: '.5s',
-  opacity: loading ? '1' : '0',
-  userSelect: 'none',
-  pointerEvents: loading ? undefined : 'none'
-}}>
-  <CircularProgress {...props} />
-</Box>
+export const CircularLoading: React.FC<CircularProgressProps & { loading?: boolean, background?: boolean }> =
+  ({ loading, background = true, ...props }) => <Box sx={{
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: loading ? 2 : -1,
+    backgroundColor: background ? theme => theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.65)' : 'rgba(255, 255, 255, 0.4)' : undefined,
+    backdropFilter: background && loading ? 'blur(1px)' : undefined,
+    transition: '.5s',
+    opacity: loading ? '1' : '0',
+    userSelect: 'none',
+    pointerEvents: loading ? undefined : 'none'
+  }}>
+    <CircularProgress {...props} />
+  </Box>

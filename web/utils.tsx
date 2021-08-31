@@ -246,3 +246,11 @@ export const getCurrentTime = () => {
   return time.getHours().toString().padStart(2, '0') + ':' + time.getMinutes().toString().padStart(2, '0') +
     ':' + time.getSeconds().toString().padStart(2, '0')
 }
+
+export const formatMS = (time: number) => {
+  if (time < 10) return time.toFixed(2) + ' ' + language.ms
+  if (time < 100) return time.toFixed(1) + ' ' + language.ms
+  if (time < 5000) return (time | 0) + ' ' + language.ms
+  if (time <= 60000) return (time / 1000).toFixed(2) + language.secound
+  return (time / 1000 | 0) + ' ' + language.secound
+}
