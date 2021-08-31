@@ -5,14 +5,15 @@ import prettyBytes from 'pretty-bytes'
 import Empty from '../components/Empty'
 import decamelize from 'decamelize'
 import { useTheme } from '@material-ui/core/styles'
-import { getClassName } from '../utils'
+import { getClassName, getCurrentTime } from '../utils'
 import { useGlobalData, usePlugin } from '../Context'
 import { CircularLoading } from '../components/Loading'
 import { DataGrid, GridColDef, GridRowData, GridRowId, GridSortItem } from '@mui/x-data-grid'
 import { PlayArrow, Stop, Equalizer, ExpandMore, ChevronRight, ViewList, Refresh } from '@material-ui/icons'
 import { TreeView, TreeItem } from '@material-ui/lab'
-import { Box, Tabs, Tab, Toolbar, Paper, Fab, Badge, Container, Grid, Card, CardHeader, IconButton,
-  Divider, CardContent, Switch, FormControlLabel, Typography, Link, Zoom } from '@material-ui/core'
+import { Box, Tabs, Tab, Toolbar, Paper, Fab, Badge, Container, Grid, Card, CardHeader,
+  IconButton, Divider, CardContent, Switch, FormControlLabel, Typography, Link, Zoom,
+  List, ListItem, ListItemText, Checkbox } from '@material-ui/core'
 import { cardActionStyles } from '../theme'
 import dialog from '../dialog'
 
@@ -69,9 +70,7 @@ const Summary: React.FC = React.memo(() => {
   useEffect(() => {
     const off = plugin.on('profiler:current', (it: any) => setStatus(old => {
       if (old.length > 25) old.shift()
-      const time = new Date()
-      it.time = time.getHours().toString().padStart(2, '0') + ':' + time.getMinutes().toString().padStart(2, '0') +
-        ':' + time.getSeconds().toString().padStart(2, '0')
+      it.time = getCurrentTime()
       return [...old, it]
     }))
     return () => { off() }
@@ -525,6 +524,111 @@ const Entities: React.FC = React.memo(() => {
   </Container>
 })
 
+interface GCInfo {
+  name: string
+  action: string
+  cause: string
+  id: number
+  start: string
+  duration: number
+  before: Record<string, number>
+  after: Record<string, number>
+}
+
+const GarbageCollection: React.FC = React.memo(() => {
+  const plugin = usePlugin()
+  const theme = useTheme()
+  const [data, setData] = useState<GCInfo[]>([])
+  const [id, setId] = useState(0)
+  useEffect(() => {
+    const off = plugin.on('profiler:gc', (it: GCInfo) => {
+      setData(old => {
+        let len = old.length
+        if (len > 15) old.shift()
+        else len++
+        it.start = getCurrentTime()
+        return [it, ...old]
+      })
+    })
+    return () => { off() }
+  }, [])
+
+  return <Container maxWidth={false} sx={{ py: 3 }}>
+    <Grid container spacing={3}>
+      <Grid item xs={12} lg={4}>
+        <Card>
+          <CardHeader title={lang.profiler.carbageCollection} />
+          <Divider />
+          {data.length
+            ? <List dense>
+              {data.map((it, i) => <ListItem key={it.id} secondaryAction={<Checkbox
+                edge='start'
+                checked={i === id}
+                tabIndex={-1}
+                onClick={() => setId(i)}
+              />}>
+                <ListItemText
+                  primary={<>[{it.start}] <span className='bold'>{it.name}</span></>}
+                  secondary={<>
+                    <Typography component='span' variant='body2' color='text.primary'>{lang.profiler.costTime}: </Typography>{it.duration} {lang.ms}
+                    <br /><Typography component='span' variant='body2' color='text.primary'>{lang.cause}: </Typography>{it.cause}<br />
+                    <Typography component='span' variant='body2' color='text.primary'>{lang.profiler.action}: </Typography>{it.action}
+                  </>}
+                />
+              </ListItem>)}
+            </List>
+            : <CardContent><Empty /></CardContent>}
+        </Card>
+      </Grid>
+      {data[id] && <Grid item xs={12} lg={8}>
+        <Card>
+          <CardHeader title={lang.profiler.memoryUsage} sx={{ position: 'relative' }} />
+          <Divider />
+          <ReactECharts style={{ height: '80vh' }} theme={theme.palette.mode === 'dark' ? 'dark' : undefined} option={{
+            backgroundColor: 'rgba(0, 0, 0, 0)',
+            legend: { data: lang.profiler.memoryUsageTypes },
+            itemStyle: {
+              borderRadius: 5,
+              borderColor: 'rgba(0, 0, 0, 0)',
+              borderWidth: 4
+            },
+            tooltip: {
+              trigger: 'axis',
+              formatter: bytesMap
+            },
+            xAxis: {
+              type: 'value',
+              boundaryGap: [0, 0.01]
+            },
+            yAxis: {
+              type: 'category',
+              data: Object.keys(data[id].after)
+            },
+            grid: {
+              left: '3%',
+              right: '4%',
+              bottom: '3%',
+              containLabel: true
+            },
+            series: [
+              {
+                name: lang.profiler.memoryUsageTypes[0],
+                type: 'bar',
+                data: Object.values(data[id].after).map(origin => ({ origin, value: (origin / MB).toFixed(2) }))
+              },
+              {
+                name: lang.profiler.memoryUsageTypes[1],
+                type: 'bar',
+                data: Object.values(data[id].before).map(origin => ({ origin, value: (origin / MB).toFixed(2) }))
+              }
+            ]
+          }} />
+        </Card>
+      </Grid>}
+    </Grid>
+  </Container>
+})
+
 const heapColumns: GridColDef[] = [
   { field: 'id', headerName: lang.profiler.className, minWidth: 200, flex: 1 },
   { field: 'count', headerName: lang.profiler.count, width: 100 },
@@ -591,7 +695,7 @@ const Threads: React.FC = React.memo(() => {
       headerName: lang.profiler.state,
       width: 150,
       renderCell: ({ value, row: { lock } }) => {
-        const text = (lang.profiler.threadState as any)[value as string]
+        const text = (lang.profiler.threadState as any)[value as string] || value
         return lock ? <Link onClick={() => dialog({ content: lock, title: lang.profiler.lock, cancelButton: false })} underline='hover'>{text}</Link> : text
       }
     },
@@ -627,7 +731,7 @@ const Threads: React.FC = React.memo(() => {
   </Container>
 })
 
-const components = [Summary, Timings, Plugins, Entities, Heap, Threads]
+const components = [Summary, Timings, Plugins, GarbageCollection, Entities, Heap, Threads]
 
 const Profiler: React.FC = () => {
   const plugin = usePlugin()
@@ -667,15 +771,16 @@ const Profiler: React.FC = () => {
         <Tab label={lang.profiler.summary} />
         <Tab label='Timings' disabled={!globalData.isPaper} />
         <Tab label={lang.profiler.plugins} />
+        <Tab label={lang.profiler.carbageCollection} />
         <Tab label={lang.profiler.entities} />
         <Tab label={lang.profiler.heap} />
         <Tab label={lang.profiler.threads} />
       </Tabs>
     </Paper>
     <Tabs />
-    {tab < 3 && !status ? <Box sx={{ textAlign: 'center', marginTop: '40vh' }}>{lang.profiler.notStarted}</Box> : Elm && <Elm key={key} />}
-    {createFab(() => plugin.emit('profiler:status', !status), status ? <Stop /> : <PlayArrow />, tab < 3)}
-    {createFab(() => setTKey(key + 1), <Refresh />, tab >= 3)}
+    {tab < 4 && !status ? <Box sx={{ textAlign: 'center', marginTop: '40vh' }}>{lang.profiler.notStarted}</Box> : Elm && <Elm key={key} />}
+    {createFab(() => plugin.emit('profiler:status', !status), status ? <Stop /> : <PlayArrow />, tab < 4)}
+    {createFab(() => setTKey(key + 1), <Refresh />, tab >= 4)}
   </Box>
 }
 

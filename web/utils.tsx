@@ -240,3 +240,9 @@ export const getClassName = (it: string) => {
   const name = it.slice(i)
   return (classesNameMap[name] || (name.startsWith('L') ? name.slice(1) : name)) + '[]'.repeat(i)
 }
+
+export const getCurrentTime = () => {
+  const time = new Date()
+  return time.getHours().toString().padStart(2, '0') + ':' + time.getMinutes().toString().padStart(2, '0') +
+    ':' + time.getSeconds().toString().padStart(2, '0')
+}

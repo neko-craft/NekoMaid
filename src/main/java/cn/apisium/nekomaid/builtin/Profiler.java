@@ -7,6 +7,8 @@ import cn.apisium.nekomaid.Utils;
 import co.aikar.timings.Timings;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.sun.management.GarbageCollectionNotificationInfo;
+import com.sun.management.GcInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
@@ -24,17 +26,19 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
+import javax.management.Notification;
+import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
 import javax.management.ObjectName;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MonitorInfo;
-import java.lang.management.OperatingSystemMXBean;
+import javax.management.openmbean.CompositeData;
+import java.lang.management.*;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class Profiler implements Listener {
+public final class Profiler implements Listener, NotificationListener {
     private final NekoMaid main;
     private BukkitTask statusTimer, timingsTimer, pluginsTimer;
     private boolean started, hasData;
@@ -50,6 +54,7 @@ public final class Profiler implements Listener {
             HEAP_NUMBER_NAME_REGEXP = Pattern.compile("\\$\\d");
     private final HashMap<String, long[]> lastGc = new HashMap<>();
     private final HashMap<String, HashMap<String, long[]>[]> plugins = new HashMap<>();
+    private final ArrayList<NotificationEmitter> emitters = new ArrayList<>();
 
     static {
         try {
@@ -287,10 +292,25 @@ public final class Profiler implements Listener {
                 }
             });
         }
+        for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
+            if (bean instanceof NotificationEmitter) {
+                NotificationEmitter notificationEmitter = (NotificationEmitter) bean;
+                notificationEmitter.addNotificationListener(this, null, null);
+                emitters.add(notificationEmitter);
+            }
+        }
     }
 
     @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
     private void uninject() {
+        emitters.forEach(it -> {
+            try {
+                it.removeNotificationListener(this);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        });
+        emitters.clear();
         for (Plugin plugin : main.getServer().getPluginManager().getPlugins()) {
             HandlerList.getRegisteredListeners(plugin).forEach(it -> {
                 try {
@@ -315,6 +335,14 @@ public final class Profiler implements Listener {
                 e.printStackTrace();
             }
         });
+    }
+
+    @Override
+    public void handleNotification(Notification notification, Object obj) {
+        if (notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
+            main.broadcastInPage(main, "profiler", "profiler:gc", new GCInfo(GarbageCollectionNotificationInfo
+                    .from((CompositeData) notification.getUserData())));
+        }
     }
 
     private static class ProxiedEventExecutor implements EventExecutor {
@@ -390,6 +418,22 @@ public final class Profiler implements Listener {
             x = ch.getX();
             z = ch.getZ();
             this.count = count;
+        }
+    }
+
+    private static final class GCInfo {
+        public final String name, action, cause;
+        public final long id, duration;
+        public final HashMap<String, Long> before = new HashMap<>(), after = new HashMap<>();
+        public GCInfo(GarbageCollectionNotificationInfo info) {
+            name = info.getGcName();
+            action = info.getGcAction();
+            cause = info.getGcCause();
+            GcInfo i = info.getGcInfo();
+            id = i.getId();
+            duration = i.getDuration();
+            i.getMemoryUsageBeforeGc().forEach((k, v) -> before.put(k, v.getUsed()));
+            i.getMemoryUsageAfterGc().forEach((k, v) -> after.put(k, v.getUsed()));
         }
     }
 }
