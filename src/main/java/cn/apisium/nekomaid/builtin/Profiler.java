@@ -295,8 +295,8 @@ public final class Profiler implements Listener, NotificationListener {
                     if (rTaskField == null) {
                         try { rTaskField = it.getClass().getField("rTask"); } catch (Throwable ignored) {
                             rTaskField = it.getClass().getDeclaredField("task");
-                            rTaskField.setAccessible(true);
                         }
+                        rTaskField.setAccessible(true);
                     }
                     Runnable delegate = (Runnable) rTaskField.get(it);
                     synchronized (delegate) {
