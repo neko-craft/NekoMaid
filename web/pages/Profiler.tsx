@@ -226,7 +226,7 @@ const Summary: React.FC = React.memo(() => {
   </Container>
 })
 
-const ENTITY_TYPE = /- (.+?) -/
+const ENTITY_TYPE = /- (\w+)/
 
 const countFormatter = ({ data }: { data: { count: number } }) => lang.profiler.timingsCount + ': ' + data.count
 
@@ -234,36 +234,39 @@ const Pie: React.FC<{ title: string, data: any[], formatter?: any }> = React.mem
   <Card>
     <CardHeader title={title} />
     <Divider />
-    <ReactECharts style={{ height: 300 }} theme={useTheme().palette.mode === 'dark' ? 'dark' : undefined} option={{
-      backgroundColor: 'rgba(0, 0, 0, 0)',
-      itemStyle: {
-        borderRadius: 5,
-        borderColor: 'rgba(0, 0, 0, 0)',
-        borderWidth: 4
-      },
-      tooltip: {
-        trigger: 'item',
-        formatter
-      },
-      series: [{
-        type: 'pie',
-        radius: '50%',
-        data,
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.5)'
+    {data.length
+      ? <ReactECharts style={{ height: 300 }} theme={useTheme().palette.mode === 'dark' ? 'dark' : undefined} option={{
+        backgroundColor: 'rgba(0, 0, 0, 0)',
+        itemStyle: {
+          borderRadius: 5,
+          borderColor: 'rgba(0, 0, 0, 0)',
+          borderWidth: 4
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter
+        },
+        series: [{
+          type: 'pie',
+          radius: '50%',
+          data,
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
+            }
           }
-        }
-      }]
-    }} />
+        }]
+      }} />
+      : <CardContent><Empty /></CardContent>}
   </Card>
 </Grid>)
 
 const Timings: React.FC = React.memo(() => {
   const plugin = usePlugin()
   const theme = useTheme()
+  const { isTimingsV1 } = useGlobalData()
   const [status, setStatus] = useState(false)
   const [data, setData] = useState<TimingsData | null>(null)
   useEffect(() => {
@@ -287,26 +290,44 @@ const Timings: React.FC = React.memo(() => {
       const name = handler[1]
       const children = cur[cur.length - 1]
 
-      if (name.startsWith('tickEntity') && name.endsWith('ick')) {
-        const res = ENTITY_TYPE.exec(name)
-        if (res) {
-          const node = entitiesTickMap[res[1]]
+      if (isTimingsV1) {
+        if (name.startsWith('tickEntity - ')) {
+          const came = name.slice(13).replace(/^Entity(Mob)?/, '')
+          const entity = decamelize(came)
+          const node = entitiesTickMap[entity]
           if (node) {
             node.count += count
             node.value += time
-          } else entitiesTickMap[res[1]] = { count, value: time, name: minecraft['entity.minecraft.' + res[1]] || res[1] }
+          } else entitiesTickMap[entity] = { count, value: time, name: minecraft['entity.minecraft.' + entity] || came }
+        } else if (name.startsWith('tickTileEntity - ')) {
+          const came = name.slice(17).replace(/^TileEntity(Mob)?/, '')
+          const entity = decamelize(came)
+          const node = tilesTickMap[entity]
+          if (node) {
+            node.count += count
+            node.value += time
+          } else tilesTickMap[entity] = { count, value: time, name: minecraft['block.minecraft.' + entity] || came }
         }
-      }
-
-      if (name.startsWith('tickTileEntity - ')) {
-        const arr = name.split('.')
-        const came = arr[arr.length - 1].replace(/^TileEntity(Mob)?/, '')
-        const tile = decamelize(came)
-        const node = tilesTickMap[tile]
-        if (node) {
-          node.count += count
-          node.value += time
-        } else tilesTickMap[tile] = { count, value: time, name: minecraft['block.minecraft.' + tile] || came }
+      } else {
+        if (name.startsWith('tickEntity - ') && name.endsWith('ick')) {
+          const res = ENTITY_TYPE.exec(name)
+          if (res) {
+            const node = entitiesTickMap[res[1]]
+            if (node) {
+              node.count += count
+              node.value += time
+            } else entitiesTickMap[res[1]] = { count, value: time, name: minecraft['entity.minecraft.' + res[1]] || res[1] }
+          }
+        } else if (name.startsWith('tickTileEntity - ')) {
+          const arr = name.split('.')
+          const came = arr[arr.length - 1].replace(/^TileEntity(Mob)?/, '')
+          const tile = decamelize(came)
+          const node = tilesTickMap[tile]
+          if (node) {
+            node.count += count
+            node.value += time
+          } else tilesTickMap[tile] = { count, value: time, name: minecraft['block.minecraft.' + tile] || came }
+        }
       }
 
       return <TreeItem
@@ -328,7 +349,8 @@ const Timings: React.FC = React.memo(() => {
             display: 'flex',
             alignItems: 'center'
           }}>
-            {handlerName !== 'Minecraft' && <><Typography color='primary' component='span'>{lang.plugin}:{handlerName}</Typography>::</>}
+            {handlerName !== 'Minecraft' && <><Typography color='primary' component='span'>
+              {isTimingsV1 ? 'Bukkit' : lang.plugin + ':' + handlerName}</Typography>::</>}
             {name}&nbsp;
             <Typography variant='caption' className='count'>({lang.profiler.timingsCount}: {count})</Typography>
           </Box>
@@ -387,11 +409,12 @@ const nanoSecondFormatter = ({ name, value }: { name: string, value: number }) =
 
 const getLabel = (key: string, time: number, count: number) => {
   const ofTick = time / NS
+  const ofTickText = ofTick.toFixed(2)
   return <><Typography color='primary' component='span'>{key}</Typography>:&nbsp;
     {lang.profiler.lagTime} <span className='bold'>{formatMS(time / 1000)}</span>, {lang.profiler.timingsCount}:&nbsp;
     <span className='bold'>{count}</span>, &nbsp;{lang.profiler.avgTime}: <span className='bold'>{formatMS(time / 1000 / count)}</span>,
     &nbsp;<Typography sx={{ fontWeight: 'bold', color: ofTick >= 100 ? 'error.main' : ofTick >= 50 ? 'warning.main' : undefined }} component='span'>
-      {ofTick.toFixed(2)}%</Typography> {lang.profiler.ofTick}</>
+      {ofTickText === '0.00' ? 0 : ofTickText}%</Typography> {lang.profiler.ofTick}</>
 }
 
 const Plugins: React.FC = React.memo(() => {
@@ -399,13 +422,13 @@ const Plugins: React.FC = React.memo(() => {
   const [data, setData] = useState<[JSX.Element[], any[][]] | undefined>()
   useEffect(() => {
     const off = plugin.emit('profiler:fetchPlugins').on('profiler:plugins', (data: Record<string, [Record<string | number, [number, number]>]>) => {
-      const pluginsTimes: any[][] = [[], []]
+      const pluginsTimes: any[][] = [[], [], []]
       const tree: [number, JSX.Element][] = []
       for (const name in data) {
         let totalTypesTime = 0
         let totalTypesCount = 0
         const subTrees: JSX.Element[] = []
-        ;['events', 'tasks'].forEach((type, i) => {
+        ;['events', 'tasks', 'commands'].forEach((type, i) => {
           const curKey = name + '/' + type
           const subTree: [number, JSX.Element][] = []
           const cur = data[name][i]
@@ -417,8 +440,8 @@ const Plugins: React.FC = React.memo(() => {
             totalTypesCount += count
             totalTime += time
             totalTypesTime += time
-            // eslint-disable-next-line react/jsx-key
-            subTree.push([time, <TreeItem nodeId={`${curKey}/${key}`} label={getLabel(key, time, count)} />])
+            const key2 = `${curKey}/${key}`
+            subTree.push([time, <TreeItem nodeId={key2} key={key2} label={getLabel(key, time, count)} />])
           }
           if (totalTime) pluginsTimes[i].push({ name, value: totalTime })
           if (subTree.length) {
@@ -454,8 +477,9 @@ const Plugins: React.FC = React.memo(() => {
             : <CardContent><Empty /></CardContent>}
         </Card>
       </Grid>
-      <Pie title={lang.profiler.pluginsEventTime} data={data[1][0]} formatter={nanoSecondFormatter} />
-      <Pie title={lang.profiler.pluginsEventTime} data={data[1][1]} formatter={nanoSecondFormatter} />
+      <Pie title={lang.profiler.pluginsEventsTime} data={data[1][0]} formatter={nanoSecondFormatter} />
+      <Pie title={lang.profiler.pluginsTasksTime} data={data[1][1]} formatter={nanoSecondFormatter} />
+      <Pie title={lang.profiler.pluginsCommandsTime} data={data[1][2]} formatter={nanoSecondFormatter} />
     </Grid>}
   </Container>
 })
@@ -805,7 +829,7 @@ const Profiler: React.FC = () => {
     <Paper square variant='outlined' sx={{ margin: '0 -1px', position: 'fixed', width: 'calc(100% + 1px)', zIndex: 3 }}>
       <Tabs value={tab} onChange={(_, it) => setTab(it)} variant='scrollable' scrollButtons='auto'>
         <Tab label={lang.profiler.summary} />
-        <Tab label='Timings' disabled={!globalData.isPaper} />
+        <Tab label='Timings' disabled={!globalData.hasTimings} />
         <Tab label={lang.profiler.plugins} />
         <Tab label={lang.profiler.carbageCollection} />
         <Tab label={lang.profiler.entities} />

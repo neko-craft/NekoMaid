@@ -1,5 +1,6 @@
-package cn.apisium.nekomaid;
+package cn.apisium.nekomaid.utils;
 
+import cn.apisium.nekomaid.NekoMaid;
 import com.alibaba.fastjson.JSON;
 import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
 import com.google.common.collect.ImmutableList;
@@ -53,7 +54,6 @@ public final class Utils {
     private static final String JSON_OBJECT = "\ud83c\udf7a";
     public static final boolean IS_PAPER;
     public static final Method classLoaderGetName;
-    protected static boolean HAS_NBT_API;
 
     static {
         try {
@@ -135,7 +135,7 @@ public final class Utils {
         } catch (Throwable ignored) { }
     }
 
-    public static boolean hasNBTAPI() { return HAS_NBT_API; }
+    public static boolean hasNBTAPI() { return Bukkit.getPluginManager().getPlugin("NBTAPI") != null; }
 
     public static double getTPS() {
         try {
@@ -409,5 +409,16 @@ public final class Utils {
             e.printStackTrace();
             return null;
         }
+    }
+
+    protected static Timings initTimings() {
+        try {
+            return new TimingsV2();
+        } catch (Throwable ignored) {
+            try {
+                return new TimingsV1();
+            } catch (Throwable ignored1) {  }
+        }
+        return null;
     }
 }

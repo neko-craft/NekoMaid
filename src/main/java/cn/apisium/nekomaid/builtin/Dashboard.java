@@ -1,7 +1,7 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
-import cn.apisium.nekomaid.Utils;
+import cn.apisium.nekomaid.utils.Utils;
 import com.google.common.collect.EvictingQueue;
 import com.google.gson.Gson;
 import com.maxmind.geoip2.model.CityResponse;

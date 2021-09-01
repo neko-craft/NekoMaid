@@ -1,8 +1,8 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
-import cn.apisium.nekomaid.OshiWrapper;
-import cn.apisium.nekomaid.Utils;
+import cn.apisium.nekomaid.utils.OshiWrapper;
+import cn.apisium.nekomaid.utils.Utils;
 import org.bukkit.Server;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.server.ServerListPingEvent;

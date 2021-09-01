@@ -1,4 +1,4 @@
-package cn.apisium.nekomaid;
+package cn.apisium.nekomaid.utils;
 
 import co.aikar.timings.TimingHistory;
 import co.aikar.timings.Timings;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unchecked")
-public class TimingsV2 {
+public final class TimingsV2 implements cn.apisium.nekomaid.utils.Timings {
     private static final Map<String, Object> GROUP_MAP;
     private static final Field groupHandlers, identifier, identifierName, handlerId, groupName, groupId;
     private static final Method isTimed, isSpecial, export;
@@ -49,11 +49,13 @@ public class TimingsV2 {
             throw new RuntimeException(e);
         }
     }
+    @Override
+    public void setEnable(boolean flag) { Timings.setTimingsEnabled(flag); }
 
-    public static boolean isStarted() { return Timings.isTimingsEnabled(); }
+    public boolean isStarted() { return Timings.isTimingsEnabled(); }
 
     @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-    public static JSONObject exportData() {
+    public JSONObject exportData() {
         JSONObject handlers = new JSONObject(), groups = new JSONObject();
         try {
             synchronized (GROUP_MAP) {

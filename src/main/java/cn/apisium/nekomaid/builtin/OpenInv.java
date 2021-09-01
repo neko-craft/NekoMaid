@@ -1,6 +1,6 @@
 package cn.apisium.nekomaid.builtin;
 
-import cn.apisium.nekomaid.ItemData;
+import cn.apisium.nekomaid.utils.ItemData;
 import cn.apisium.nekomaid.NekoMaid;
 import com.lishid.openinv.IOpenInv;
 import org.bukkit.Bukkit;

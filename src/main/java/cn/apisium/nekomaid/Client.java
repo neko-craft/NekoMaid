@@ -1,5 +1,6 @@
 package cn.apisium.nekomaid;
 
+import cn.apisium.nekomaid.utils.Utils;
 import io.socket.socketio.server.SocketIoSocket;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Contract;
@@ -10,8 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.*;
-
-import static cn.apisium.nekomaid.Utils.serialize;
 
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public final class Client {
@@ -31,7 +30,7 @@ public final class Client {
     @NotNull
     public <T> Client emit(@NotNull String name, @NotNull Runnable ackCallback, @Nullable Object... data) {
         events.add(name = plugin + name);
-        serialize(data);
+        Utils.serialize(data);
         client.send(name, data, args -> ackCallback.run());
         return this;
     }
@@ -39,7 +38,7 @@ public final class Client {
     @NotNull
     public Client emit(@NotNull String name, @NotNull Consumer<Object[]> ackCallback, @Nullable Object... data) {
         events.add(name = plugin + name);
-        serialize(data);
+        Utils.serialize(data);
         client.send(name, data, ackCallback::accept);
         return this;
     }
@@ -47,7 +46,7 @@ public final class Client {
     @NotNull
     public Client emit(@NotNull String name, @Nullable Object... data) {
         events.add(name = plugin + name);
-        serialize(data);
+        Utils.serialize(data);
         client.send(name, data);
         return this;
     }
@@ -79,7 +78,7 @@ public final class Client {
     public <T> Client onWithAck(@NotNull String name, @NotNull Function<Object[], T> listener) {
         events.add(name = plugin + name);
         client.on(name, args -> ((SocketIoSocket.ReceivedByLocalAcknowledgementCallback) args[args.length - 1])
-                .sendAcknowledgement(serialize((Object) listener.apply(args))));
+                .sendAcknowledgement(Utils.serialize((Object) listener.apply(args))));
         return this;
     }
 
@@ -89,7 +88,7 @@ public final class Client {
         events.add(name = plugin + name);
         client.on(name, args -> {
             Object[] data = listener.apply(args);
-            serialize(data);
+            Utils.serialize(data);
             ((SocketIoSocket.ReceivedByLocalAcknowledgementCallback) args[args.length - 1]).sendAcknowledgement(data);
         });
         return this;
@@ -123,7 +122,7 @@ public final class Client {
     public <T> Client onWithAck(@NotNull String name, @NotNull Supplier<T> listener) {
         events.add(name = plugin + name);
         client.on(name, args -> ((SocketIoSocket.ReceivedByLocalAcknowledgementCallback) args[args.length - 1])
-                .sendAcknowledgement(serialize((Object) listener.get())));
+                .sendAcknowledgement(Utils.serialize((Object) listener.get())));
         return this;
     }
 
@@ -133,7 +132,7 @@ public final class Client {
         events.add(name = plugin + name);
         client.on(name, args -> {
             Object[] data = listener.get();
-            serialize(data);
+            Utils.serialize(data);
             ((SocketIoSocket.ReceivedByLocalAcknowledgementCallback) args[args.length - 1]).sendAcknowledgement(data);
         });
         return this;

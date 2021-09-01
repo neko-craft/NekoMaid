@@ -1,4 +1,4 @@
-package cn.apisium.nekomaid;
+package cn.apisium.nekomaid.utils;
 
 import de.tr7zw.nbtapi.NBTCompound;
 import de.tr7zw.nbtapi.NBTContainer;

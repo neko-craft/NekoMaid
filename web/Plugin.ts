@@ -14,7 +14,7 @@ export interface Page {
   sensitive?: boolean
 }
 
-export interface GlobalInfo {
+export interface GlobalInfo extends Record<string, any> {
   onlineMode: boolean
   version: string
   hasWhitelist: boolean
@@ -34,6 +34,8 @@ export interface GlobalInfo {
   profilerStarted?: boolean
   canSetMaxPlayers?: boolean
   canSetViewDistance?: boolean
+  hasTimings?: boolean
+  isTimingsV1?: boolean
   maxPlayers: number
   spawnRadius: number
   plugins: Record<string, string[]>

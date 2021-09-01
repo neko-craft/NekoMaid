@@ -1,6 +1,9 @@
 package cn.apisium.nekomaid;
 
 import cn.apisium.nekomaid.builtin.BuiltinPlugins;
+import cn.apisium.nekomaid.utils.GeoIP;
+import cn.apisium.nekomaid.utils.OshiWrapper;
+import cn.apisium.nekomaid.utils.Utils;
 import cn.apisium.netty.engineio.EngineIoHandler;
 import cn.apisium.uniporter.Uniporter;
 import cn.apisium.uniporter.router.api.Route;
@@ -99,10 +102,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        if (getServer().getPluginManager().getPlugin("NBTAPI") != null) {
-            Utils.HAS_NBT_API = true;
-            GLOBAL_DATA.put("hasNBTAPI", true);
-        }
+        if (Utils.hasNBTAPI()) { GLOBAL_DATA.put("hasNBTAPI", true); }
         GLOBAL_DATA
                 .put("plugins", pluginScripts)
                 .put("version", getServer().getVersion())

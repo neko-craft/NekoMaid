@@ -1,7 +1,7 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
-import cn.apisium.nekomaid.Utils;
+import cn.apisium.nekomaid.utils.Utils;
 import com.google.common.collect.EvictingQueue;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;

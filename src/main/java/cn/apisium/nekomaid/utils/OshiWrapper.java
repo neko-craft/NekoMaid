@@ -1,4 +1,4 @@
-package cn.apisium.nekomaid;
+package cn.apisium.nekomaid.utils;
 
 import cn.apisium.nekomaid.builtin.Profiler;
 import org.apache.logging.log4j.LogManager;

@@ -1,10 +1,10 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
-import cn.apisium.nekomaid.OshiWrapper;
-import cn.apisium.nekomaid.TimingsV2;
-import cn.apisium.nekomaid.Utils;
-import co.aikar.timings.Timings;
+import cn.apisium.nekomaid.utils.OshiWrapper;
+import cn.apisium.nekomaid.utils.Timings;
+import cn.apisium.nekomaid.utils.TimingsV1;
+import cn.apisium.nekomaid.utils.Utils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sun.management.GarbageCollectionNotificationInfo;
@@ -14,6 +14,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
+import org.bukkit.command.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.*;
@@ -22,9 +23,11 @@ import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredListener;
+import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
@@ -44,10 +47,11 @@ public final class Profiler implements Listener, NotificationListener {
     private boolean started, hasData;
     private int loaded, unloaded;
     private Object lastTimingsData;
-    private static boolean isTimingsV2;
     private static boolean canGetData = true;
     private static final Field executorField;
     private static Field rTaskField;
+    private static final Field commandCompleter, commandExecutor;
+    private static final SimpleCommandMap commandMap;
     private static final Runtime runtime = Runtime.getRuntime();
     private static final OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
     private static final Pattern HEAP_REGEXP = Pattern.compile(": +(\\d+) +(\\d+) +([^\\s]+).*"),
@@ -58,13 +62,15 @@ public final class Profiler implements Listener, NotificationListener {
 
     static {
         try {
-            // noinspection ResultOfMethodCallIgnored
-            TimingsV2.isStarted();
-            isTimingsV2 = true;
-        } catch (Throwable ignored) { }
-        try {
             executorField = RegisteredListener.class.getDeclaredField("executor");
             executorField.setAccessible(true);
+            Field f = SimplePluginManager.class.getDeclaredField("commandMap");
+            f.setAccessible(true);
+            commandMap = (SimpleCommandMap) f.get(Bukkit.getPluginManager());
+            commandExecutor = PluginCommand.class.getDeclaredField("executor");
+            commandExecutor.setAccessible(true);
+            commandCompleter = PluginCommand.class.getDeclaredField("completer");
+            commandCompleter.setAccessible(true);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
@@ -72,7 +78,10 @@ public final class Profiler implements Listener, NotificationListener {
 
     public Profiler(NekoMaid main) {
         this.main = main;
-        if (isTimingsV2) main.GLOBAL_DATA.put("isTimingsV2", true);
+        if (Timings.INSTANCE != null) {
+            main.GLOBAL_DATA.put("hasTimings", true);
+            if (Timings.INSTANCE.getClass() == TimingsV1.class) main.GLOBAL_DATA.put("isTimingsV1", true);
+        }
         main.onConnected(main, client -> {
             client.on("profiler:status", args -> {
                 if (started = (boolean) args[0]) main.GLOBAL_DATA.put("profilerStarted", true);
@@ -182,66 +191,69 @@ public final class Profiler implements Listener, NotificationListener {
                                 }).toArray()};
                     })
             ).on("profiler:fetchPlugins", () -> client.emit("profiler:plugins", plugins));
-            if (isTimingsV2) client.onWithAck("profiler:timingsStatus", args -> {
+            if (Timings.INSTANCE != null) client.onWithAck("profiler:timingsStatus", args -> {
                 if (args.length == 2) {
-                    Timings.setTimingsEnabled((boolean) args[0]);
+                    Timings.INSTANCE.setEnable((boolean) args[0]);
                     if (!(boolean) args[0]) lastTimingsData = null;
                 }
                 if (lastTimingsData != null) client.emit("profiler:timings", lastTimingsData);
-                return TimingsV2.isStarted();
+                return Timings.INSTANCE.isStarted();
             });
         });
     }
 
     private void checkTask() {
-        if (started) {
-            unloaded = loaded = 0;
-            hasData = false;
-            lastGc.clear();
-            BukkitScheduler s = main.getServer().getScheduler();
-            statusTimer = s.runTaskTimerAsynchronously(main, () -> {
-                if (hasData) {
-                    if (main.getClientsCountInPage(main, "profiler") != 0) {
-                        main.broadcastInPage(main, "profiler", "profiler:current", getStatus());
+        try {
+            if (started) {
+                unloaded = loaded = 0;
+                hasData = false;
+                lastGc.clear();
+                BukkitScheduler s = main.getServer().getScheduler();
+                statusTimer = s.runTaskTimerAsynchronously(main, () -> {
+                    if (hasData) {
+                        if (main.getClientsCountInPage(main, "profiler") != 0) {
+                            main.broadcastInPage(main, "profiler", "profiler:current", getStatus());
+                        }
+                    } else {
+                        hasData = true;
+                        getStatus();
                     }
-                } else {
-                    hasData = true;
-                    getStatus();
-                }
-            }, 0, 5 * 20);
-            pluginsTimer = s.runTaskTimerAsynchronously(main, () -> {
-                if (main.getClientsCountInPage(main, "profiler") != 0) {
-                    main.broadcastInPage(main, "profiler", "profiler:plugins", plugins);
-                }
-                plugins.forEach((k, v) -> {
-                    for (int i = 0; i < 1; i++) v[i].clear();
-                });
-            }, 30 * 20, 30 * 20);
-            if (isTimingsV2) {
-                timingsTimer = s.runTaskTimerAsynchronously(main, () -> {
+                    injectTasks();
+                }, 0, 5 * 20);
+                pluginsTimer = s.runTaskTimerAsynchronously(main, () -> {
                     if (main.getClientsCountInPage(main, "profiler") != 0) {
-                        main.broadcastInPage(main, "profiler",
-                                "profiler:timings", lastTimingsData = TimingsV2.exportData());
+                        main.broadcastInPage(main, "profiler", "profiler:plugins", plugins);
                     }
+                    plugins.forEach((k, v) -> { for (int i = 0; i < 3; i++) v[i].clear(); });
                 }, 30 * 20, 30 * 20);
+                if (Timings.INSTANCE != null) {
+                    timingsTimer = s.runTaskTimerAsynchronously(main, () -> {
+                        if (main.getClientsCountInPage(main, "profiler") != 0) {
+                            main.broadcastInPage(main, "profiler",
+                                    "profiler:timings", lastTimingsData = Timings.INSTANCE.exportData());
+                        }
+                    }, Timings.INSTANCE.isStarted() ? 0 : 30 * 20, 30 * 20);
+                }
+                main.getServer().getPluginManager().registerEvent(ChunkLoadEvent.class, this, EventPriority.MONITOR,
+                        (c, e) -> loaded++, main, true);
+                main.getServer().getPluginManager().registerEvent(ChunkUnloadEvent.class, this, EventPriority.MONITOR,
+                        (c, e) -> unloaded++, main, true);
+                inject();
+            } else {
+                plugins.clear();
+                statusTimer.cancel();
+                pluginsTimer.cancel();
+                statusTimer = null;
+                if (Timings.INSTANCE != null) {
+                    timingsTimer.cancel();
+                    timingsTimer = null;
+                }
+                ChunkLoadEvent.getHandlerList().unregister(this);
+                ChunkUnloadEvent.getHandlerList().unregister(this);
+                uninject();
             }
-            main.getServer().getPluginManager().registerEvent(ChunkLoadEvent.class, this, EventPriority.MONITOR,
-                    (c, e) -> loaded++, main, true);
-            main.getServer().getPluginManager().registerEvent(ChunkUnloadEvent.class, this, EventPriority.MONITOR,
-                    (c, e) -> unloaded++, main, true);
-            inject();
-        } else {
-            plugins.clear();
-            statusTimer.cancel();
-            pluginsTimer.cancel();
-            statusTimer = null;
-            if (isTimingsV2) {
-                timingsTimer.cancel();
-                timingsTimer = null;
-            }
-            ChunkLoadEvent.getHandlerList().unregister(this);
-            ChunkUnloadEvent.getHandlerList().unregister(this);
-            uninject();
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
     }
 
@@ -273,11 +285,34 @@ public final class Profiler implements Listener, NotificationListener {
         return status;
     }
 
+    @SuppressWarnings("unchecked")
+    private void injectTasks() {
+        main.getServer().getScheduler().getPendingTasks().forEach(it -> {
+            try {
+                if (it.isCancelled() || !it.isSync()) return;
+                if (rTaskField == null) {
+                    try { rTaskField = it.getClass().getDeclaredField("rTask"); } catch (Throwable ignored) {
+                        rTaskField = it.getClass().getDeclaredField("task");
+                    }
+                    rTaskField.setAccessible(true);
+                }
+                Runnable delegate = (Runnable) rTaskField.get(it);
+                if (!(delegate instanceof ProxiedRunnable)) {
+                    rTaskField.set(it, new ProxiedRunnable(delegate, plugins.computeIfAbsent(it.getOwner().getName(),
+                            a -> new HashMap[] { new HashMap<>(), new HashMap<>(), new HashMap<>() })[1],
+                            String.valueOf(it.getTaskId())));
+                }
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
     @SuppressWarnings({ "SynchronizationOnLocalVariableOrMethodParameter", "unchecked" })
     private void inject() {
         for (Plugin plugin : main.getServer().getPluginManager().getPlugins()) {
-            HashMap<String, long[]> eventsMap = new HashMap<>(), tasksMap = new HashMap<>();
-            plugins.put(plugin.getName(), new HashMap[] { eventsMap, tasksMap });
+            HashMap<String, long[]> eventsMap = new HashMap<>();
+            plugins.put(plugin.getName(), new HashMap[] { eventsMap, new HashMap<>(), new HashMap<>() });
             HandlerList.getRegisteredListeners(plugin).forEach(it -> {
                 try {
                     EventExecutor delegate = (EventExecutor) executorField.get(it);
@@ -289,24 +324,23 @@ public final class Profiler implements Listener, NotificationListener {
                     e.printStackTrace();
                 }
             });
-            main.getServer().getScheduler().getPendingTasks().forEach(it -> {
-                if (it.isCancelled() || !it.isSync()) return;
+        }
+        for (Command command : commandMap.getCommands()) {
+            if (!(command instanceof PluginCommand)) continue;
+            synchronized (command) {
                 try {
-                    if (rTaskField == null) {
-                        try { rTaskField = it.getClass().getField("rTask"); } catch (Throwable ignored) {
-                            rTaskField = it.getClass().getDeclaredField("task");
-                        }
-                        rTaskField.setAccessible(true);
-                    }
-                    Runnable delegate = (Runnable) rTaskField.get(it);
-                    synchronized (delegate) {
-                        if (!(delegate instanceof ProxiedRunnable))
-                            rTaskField.set(it, new ProxiedRunnable(delegate, tasksMap, String.valueOf(it.getTaskId())));
-                    }
+                    CommandExecutor executor = (CommandExecutor) commandExecutor.get(command);
+                    TabCompleter completer = (TabCompleter) commandCompleter.get(command);
+                    if (executor instanceof ProxiedTabExecutor || completer instanceof ProxiedTabExecutor) continue;
+                    ProxiedTabExecutor obj = new ProxiedTabExecutor(executor, completer,
+                            plugins.computeIfAbsent(((PluginCommand) command).getPlugin().getName(),
+                            a -> new HashMap[] { new HashMap<>(), new HashMap<>(), new HashMap<>() })[2]);
+                    commandExecutor.set(command, obj);
+                    if (completer != null) commandCompleter.set(command, obj);
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
-            });
+            }
         }
         for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
             if (bean instanceof NotificationEmitter) {
@@ -351,6 +385,21 @@ public final class Profiler implements Listener, NotificationListener {
                 e.printStackTrace();
             }
         });
+        for (Command command : commandMap.getCommands()) {
+            if (!(command instanceof PluginCommand)) continue;
+            synchronized (command) {
+                try {
+                    CommandExecutor executor = (CommandExecutor) commandExecutor.get(command);
+                    TabCompleter completer = (TabCompleter) commandCompleter.get(command);
+                    if (executor instanceof ProxiedTabExecutor)
+                        commandExecutor.set(command, ((ProxiedTabExecutor) executor).delegateExecutor);
+                    if (completer instanceof ProxiedTabExecutor)
+                        commandCompleter.set(command, ((ProxiedTabExecutor) completer).delegateCompleter);
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     @Override
@@ -403,6 +452,48 @@ public final class Profiler implements Listener, NotificationListener {
             data[0]++;
             try {
                 delegate.run();
+            } finally {
+                data[1] += System.nanoTime() - start;
+            }
+        }
+    }
+
+    private static class ProxiedTabExecutor implements TabExecutor {
+        private final CommandExecutor delegateExecutor;
+        private final TabCompleter delegateCompleter;
+        private final HashMap<String, long[]> record;
+        private final boolean isNotTabExecutor;
+        public ProxiedTabExecutor(CommandExecutor delegateExecutor, TabCompleter delegateCompleter,
+                                  HashMap<String, long[]> record) {
+            this.delegateExecutor = delegateExecutor;
+            this.delegateCompleter = delegateCompleter;
+            this.record = record;
+            isNotTabExecutor = !(delegateExecutor instanceof TabCompleter);
+        }
+
+        @Override
+        public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
+                                 @NotNull String label, @NotNull String[] args) {
+            long start = System.nanoTime();
+            long[] data = record.computeIfAbsent("/" + command.getName(), a -> new long[2]);
+            data[0]++;
+            try {
+                return delegateExecutor.onCommand(sender, command, label, args);
+            } finally {
+                data[1] += System.nanoTime() - start;
+            }
+        }
+
+        @Override
+        public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+                                                    @NotNull String alias, @NotNull String[] args) {
+            if (delegateCompleter == null && isNotTabExecutor) return null;
+            long start = System.nanoTime();
+            long[] data = record.computeIfAbsent(command.getName(), a -> new long[2]);
+            data[0]++;
+            try {
+                return (delegateCompleter == null ? (TabCompleter) delegateExecutor : delegateCompleter)
+                        .onTabComplete(sender, command, alias, args);
             } finally {
                 data[1] += System.nanoTime() - start;
             }

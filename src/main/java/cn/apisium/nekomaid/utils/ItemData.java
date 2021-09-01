@@ -1,4 +1,4 @@
-package cn.apisium.nekomaid;
+package cn.apisium.nekomaid.utils;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
@@ -32,7 +32,7 @@ public class ItemData {
         if (im.hasDisplayName()) name = im.getDisplayName();
         amount = is.getAmount();
         hasEnchants = hasEnhance(is);
-        if (Utils.HAS_NBT_API) nbt = NBTItem.convertItemtoNBT(is).toString();
+        if (Utils.hasNBTAPI()) nbt = NBTItem.convertItemtoNBT(is).toString();
     }
 
     private ItemData() { }
@@ -47,7 +47,7 @@ public class ItemData {
         if (itemStack == null) {
             Material t = Material.getMaterial(type);
             Objects.requireNonNull(t);
-            if (Utils.HAS_NBT_API && nbt != null) itemStack = NBTItem.convertNBTtoItem(NBTAPIWrapper.newNBTContainer(nbt));
+            if (Utils.hasNBTAPI() && nbt != null) itemStack = NBTItem.convertNBTtoItem(NBTAPIWrapper.newNBTContainer(nbt));
             else itemStack = new ItemStack(t, amount);
             if (itemStack.getAmount() != amount) itemStack.setAmount(amount);
         }

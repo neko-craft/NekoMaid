@@ -1,5 +1,6 @@
-package cn.apisium.nekomaid;
+package cn.apisium.nekomaid.utils;
 
+import cn.apisium.nekomaid.NekoMaid;
 import com.maxmind.db.CHMCache;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;

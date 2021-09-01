@@ -309,9 +309,12 @@ export default {
     globalTiles: '全服方块实体',
     events: '事件',
     tasks: '定时器',
+    commands: '命令',
     lagTime: '总耗时',
     avgTime: '平均每次',
-    pluginsEventTime: '插件处理事件耗时',
+    pluginsEventsTime: '插件处理事件耗时',
+    pluginsTasksTime: '插件处理定时器耗时',
+    pluginsCommandsTime: '插件处理命令耗时',
     threadState: {
       NEW: '新创建',
       RUNNABLE: '运行中',

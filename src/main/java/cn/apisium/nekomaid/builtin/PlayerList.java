@@ -1,7 +1,7 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
-import cn.apisium.nekomaid.Utils;
+import cn.apisium.nekomaid.utils.Utils;
 import org.apache.commons.lang.ObjectUtils;
 import org.bukkit.*;
 import org.bukkit.entity.Player;

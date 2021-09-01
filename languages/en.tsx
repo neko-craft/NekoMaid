@@ -253,8 +253,8 @@ const lang: Language = {
   codeMirrorPhrases: { } as any,
   profiler: {
     title: 'Profiler',
-    entities: 'ENTITIES',
-    threads: 'THREADS',
+    entities: 'Entities',
+    threads: 'Threads',
     heap: 'HEAP',
     summary: 'SUMMARY',
     plugins: 'Plugin Consumed',
@@ -298,9 +298,12 @@ const lang: Language = {
     globalTiles: 'Server-wide Block Tiles',
     events: 'Events',
     tasks: 'Tasks',
+    commands: 'Commands',
     lagTime: 'Total Time',
     avgTime: 'Average Time',
-    pluginsEventTime: 'Event Handle Duration',
+    pluginsEventsTime: 'Events Handle Duration',
+    pluginsTasksTime: 'Tasks Handle Duration',
+    pluginsCommandsTime: 'Commands Handle Duration',
     threadState: { } as any
   }
 }
