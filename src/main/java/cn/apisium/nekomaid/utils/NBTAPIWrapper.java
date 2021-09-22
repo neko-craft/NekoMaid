@@ -1,11 +1,9 @@
 package cn.apisium.nekomaid.utils;
 
-import de.tr7zw.nbtapi.NBTCompound;
-import de.tr7zw.nbtapi.NBTContainer;
-import de.tr7zw.nbtapi.NBTEntity;
-import de.tr7zw.nbtapi.NBTTileEntity;
+import de.tr7zw.nbtapi.*;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
+import org.bukkit.inventory.ItemStack;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -15,6 +13,10 @@ public final class NBTAPIWrapper {
     private static Constructor<NBTTileEntity> nbtTileEntity;
     private static Constructor<NBTEntity> nbtEntity;
     private static Method mergeCompound;
+
+    public static ItemStack convertNBTtoItem(String nbt) {
+        return NBTItem.convertNBTtoItem(NBTAPIWrapper.newNBTContainer(nbt));
+    }
 
     public static NBTContainer newNBTContainer(String value) {
         try {

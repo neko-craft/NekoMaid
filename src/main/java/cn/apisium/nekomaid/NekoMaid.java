@@ -94,6 +94,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     private GeoIP geoIP;
     private boolean debug;
     public SocketIoNamespace io;
+    @SuppressWarnings("ProtectedMemberInFinalClass")
     protected Map<String, Set<SocketIoSocket>> mRoomSockets;
 
     final public JSONObject GLOBAL_DATA = new JSONObject();
@@ -205,7 +206,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     @SuppressWarnings("deprecation")
     private static void sendUsages(CommandSender sender, String name, String[] arr) {
         String str = ChatColor.GRAY + "/nekomaid " + ChatColor.AQUA + name + " ";
-        if (arr == null) sender.sendMessage(Utils.getCommandComponent(str));
+        if (arr == null) sender.spigot().sendMessage(Utils.getCommandComponent(str));
         else for (String s : arr) {
             sender.spigot().sendMessage(Utils.getCommandComponent(str + Arrays.stream(s.split(" "))
                     .map(it -> (it.startsWith("[") ? ChatColor.GREEN : ChatColor.YELLOW) + it)
@@ -250,6 +251,8 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             sender.sendMessage(SUCCESS);
             return true;
         });
+
+        Objects.requireNonNull(getServer().getPluginCommand("nekomaid")).setTabCompleter(this);
     }
 
     @NotNull
@@ -276,21 +279,34 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     @NotNull
     public String getConnectUrl() { return getConnectUrl(getConfig().getString("token", "")); }
 
+    public int getConnectPort() {
+        return Uniporter.findPortsByHandler("NekoMaid").stream().findFirst().orElseGet(getServer()::getPort);
+    }
+
+    @NotNull
+    public String getConnectHostname() {
+        return getConnectHostname(getConnectPort());
+    }
+
+    @NotNull
+    public String getConnectHostname(int port) {
+        String url = getConfig().getString("hostname", "");
+        Optional<Route> it = Uniporter.findRoutesByHandler("NekoMaid").stream().findFirst();
+        if (!it.isPresent()) throw new RuntimeException("Handler not registered!");
+        Route route = it.get();
+        return (url.contains(":") ? url : url + ":" + port) + route.getPath();
+    }
+
     @NotNull
     public String getConnectUrl(@NotNull String token) {
         String custom = getConfig().getString("customAddress", "");
-        String url;
+        int port = getConnectPort();
+        String url = getConnectHostname(port);
         if (custom.isEmpty()) {
-            Optional<Route> it = Uniporter.findRoutesByHandler("NekoMaid").stream().findFirst();
-            if (!it.isPresent()) throw new RuntimeException("Handler not registered!");
-            Route route = it.get();
-            url = getConfig().getString("hostname", "");
-            int port = Uniporter.findPortsByHandler("NekoMaid").stream().findFirst().orElseGet(getServer()::getPort);
-            if (!url.contains(":")) url += ":" + port;
-            url = url + route.getPath() + "?" + token;
+            url += "?" + token;
             try { url = URLEncoder.encode(url, "UTF-8"); } catch (Throwable ignored) { }
             url = (Uniporter.isSSLPort(port) ? "https" : "http") + "://maid.neko-craft.com/?" + url;
-        } else url = custom.replace("{token}", token);
+        } else url = custom.replace("{token}", token).replace("{hostname}", url);
         return url;
     }
 

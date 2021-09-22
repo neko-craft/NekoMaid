@@ -123,7 +123,7 @@ configs.push({
         >
           <ListItemButton onClick={() => {
             location.hash = ''
-            location.search = '?' + it.address
+            location.search = it.address
           }} dense>
             <ListItemAvatar><Avatar src={it.icon} variant='rounded'><HelpOutline /></Avatar></ListItemAvatar>
             <ListItemText primary={<Tooltip title={it.address.slice(i + 1)}>

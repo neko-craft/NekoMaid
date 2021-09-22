@@ -186,6 +186,7 @@ const Vault: React.FC = () => {
       field: 'balance',
       headerName: lang.vault.balance,
       editable: true,
+      width: 110,
       valueFormatter: ({ value }: any) => (value === 0 || value === 1 ? vaultEconomy.singular : vaultEconomy.plural) +
         (vaultEconomy.digits === -1 ? value : value.toFixed(vaultEconomy.digits))
     })

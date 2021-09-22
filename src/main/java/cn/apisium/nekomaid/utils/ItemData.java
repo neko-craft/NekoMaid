@@ -32,7 +32,7 @@ public class ItemData {
         if (im.hasDisplayName()) name = im.getDisplayName();
         amount = is.getAmount();
         hasEnchants = hasEnhance(is);
-        if (Utils.hasNBTAPI()) nbt = NBTItem.convertItemtoNBT(is).toString();
+        if (Utils.hasNBTAPI()) nbt = ((Object) NBTItem.convertItemtoNBT(is)).toString();
     }
 
     private ItemData() { }
@@ -47,7 +47,7 @@ public class ItemData {
         if (itemStack == null) {
             Material t = Material.getMaterial(type);
             Objects.requireNonNull(t);
-            if (Utils.hasNBTAPI() && nbt != null) itemStack = NBTItem.convertNBTtoItem(NBTAPIWrapper.newNBTContainer(nbt));
+            if (Utils.hasNBTAPI() && nbt != null) itemStack = NBTAPIWrapper.convertNBTtoItem(nbt);
             else itemStack = new ItemStack(t, amount);
             if (itemStack.getAmount() != amount) itemStack.setAmount(amount);
         }

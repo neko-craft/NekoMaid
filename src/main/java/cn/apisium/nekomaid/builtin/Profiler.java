@@ -84,7 +84,8 @@ public final class Profiler implements Listener, NotificationListener {
         }
         main.onConnected(main, client -> {
             client.on("profiler:status", args -> {
-                if (started = (boolean) args[0]) main.GLOBAL_DATA.put("profilerStarted", true);
+                started = (boolean) args[0];
+                if (started) main.GLOBAL_DATA.put("profilerStarted", true);
                 else main.GLOBAL_DATA.remove("profilerStarted");
                 main.broadcast(main, "profiler:status", started);
                 checkTask();

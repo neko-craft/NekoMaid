@@ -342,7 +342,7 @@ public final class Utils {
             Path dest0 = dst.resolve(src.getFileName());
             if (Files.exists(dest0)) {
                 String[] names = src.getFileName().toString().split("\\.");
-                if (names.length == 1) dest0 = dst.resolve(src.getFileName().toString() + ".copy");
+                if (names.length == 1) dest0 = dst.resolve(src.getFileName() + ".copy");
                 else {
                     StringBuilder sb = new StringBuilder();
                     for (int i = 0; i < names.length - 1; i++) sb.append(names[i]).append('.');
@@ -411,6 +411,7 @@ public final class Utils {
         }
     }
 
+    @SuppressWarnings("ProtectedMemberInFinalClass")
     protected static Timings initTimings() {
         try {
             return new TimingsV2();

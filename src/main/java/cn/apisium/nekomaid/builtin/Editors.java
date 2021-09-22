@@ -34,7 +34,7 @@ final class Editors {
             entityCommandUsages = new String[] { "", "<uuid>" };
     private final static String[] data = new String[2];
     private final static String blocks;
-    private static boolean hasBlockData, hasTargetEntity;
+    private static boolean hasBlockData, hasTargetEntity, hasTargetBlockExact;
     static {
         Material[] arr = Material.values();
         data[0] = Utils.serializeToString(Arrays.stream(arr).map(Enum::name).toArray());
@@ -54,6 +54,10 @@ final class Editors {
         try {
             LivingEntity.class.getMethod("getTargetEntity", int.class);
             hasTargetEntity = true;
+        } catch (Throwable ignored) { }
+        try {
+            LivingEntity.class.getMethod("getTargetBlockExact", int.class);
+            hasTargetBlockExact = true;
         } catch (Throwable ignored) { }
     }
 
@@ -202,7 +206,9 @@ final class Editors {
                                      @NotNull String label, @NotNull String[] args) {
                 if (args.length == 0) {
                     if (sender instanceof Player) {
-                        Block block = ((Player) sender).getTargetBlockExact(8);
+                        Player p = (Player) sender;
+                        Block block = hasTargetBlockExact ? p.getTargetBlockExact(8)
+                                : p.getTargetBlock(null, 8);
                         if (block != null) {
                             sender.sendMessage(selectBlock(block));
                             return true;
@@ -221,8 +227,10 @@ final class Editors {
                                               @NotNull String alias, @NotNull String[] args) {
                 if (args.length < 2) return getWorldNames().collect(Collectors.toList());
                 if (!(sender instanceof Player)) return Collections.emptyList();
-                Block block = ((Player) sender).getTargetBlockExact(8);
-                Location loc = block == null ? ((Player) sender).getLocation().toBlockLocation() : block.getLocation();
+                Player p = (Player) sender;
+                Block block = hasTargetBlockExact ? p.getTargetBlockExact(8)
+                        : p.getTargetBlock(null, 8);
+                Location loc = block == null ? p.getLocation().toBlockLocation() : block.getLocation();
                 switch (args.length) {
                     case 2: return Collections.singletonList(String.valueOf((int) loc.getX()));
                     case 3: return Collections.singletonList(String.valueOf((int) loc.getY()));
