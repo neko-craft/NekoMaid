@@ -2,16 +2,16 @@ import React, { useState } from 'react'
 import dayjs from 'dayjs'
 import dialog from '../dialog'
 import lang from '../../languages'
-import * as colors from '@material-ui/core/colors'
+import * as colors from '@mui/material/colors'
 import { failed, success } from '../toast'
 import { configs } from '../Plugin'
 import { useGlobalData, usePlugin } from '../Context'
 import { CircularLoading } from '../components/Loading'
 import { Delete, HelpOutline, Check, Brightness4, Brightness7, SettingsBrightness, Edit,
-  Equalizer, ExpandLess, ExpandMore } from '@material-ui/icons'
+  Equalizer, ExpandLess, ExpandMore } from '@mui/icons-material'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItem, IconButton,
   ToggleButton, ListItemAvatar, Avatar, ListItemText, Tooltip, CardContent, ToggleButtonGroup,
-  Paper, ListItemButton, Switch, ListItemIcon, Collapse, Link } from '@material-ui/core'
+  Paper, ListItemButton, Switch, ListItemIcon, Collapse, Link } from '@mui/material'
 
 import type { ServerRecord } from '../App'
 

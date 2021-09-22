@@ -7,13 +7,13 @@ import { success } from '../toast'
 import { CircularLoading } from '../components/Loading'
 import { usePlugin, useGlobalData } from '../Context'
 import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Today, Event,
-  Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline, Search, MoreHoriz } from '@material-ui/icons'
+  Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline, Search, MoreHoriz } from '@mui/icons-material'
 import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContainer, Table, TableBody,
   CardContent, TablePagination, TableHead, TableRow, TableCell, IconButton, Tooltip, ToggleButtonGroup,
   ToggleButton, List, ListSubheader, ListItem, ListItemText, ListItemIcon, Collapse, ListItemButton,
-  CardActions, Link, Menu, Avatar } from '@material-ui/core'
+  CardActions, Link, Menu, Avatar } from '@mui/material'
 import { FXAASkinViewer, createOrbitControls, WalkingAnimation, RotatingAnimation } from 'skinview3d'
-import { useTheme } from '@material-ui/core/styles'
+import { useTheme } from '@mui/material/styles'
 import { useParams, useHistory } from 'react-router-dom'
 import lang, { minecraft } from '../../languages'
 
@@ -38,7 +38,7 @@ export const actions: ActionComponent[] = []
 
 const banPlayer = (name: string, plugin: Plugin, refresh: () => void, isBan: boolean) => {
   const span = <span className='bold'>{name}</span>
-  (isBan ? dialog(lang.playerList.confirmBan(span), lang.reason) : dialog(lang.playerList.confirmPardon(span))).then(it => {
+  ;(isBan ? dialog(lang.playerList.confirmBan(span), lang.reason) : dialog(lang.playerList.confirmPardon(span))).then(it => {
     if (it == null || it === false) return
     plugin.emit('playerList:' + (isBan ? 'ban' : 'pardon'), name, it)
     refresh()
@@ -152,6 +152,7 @@ const PlayerActions: React.FC = () => {
       width: ref.current.clientWidth,
       skin: 'https://mc-heads.net/skin/' + name
     })
+    viewer.renderer.setClearColor(theme.palette.mode === 'dark' ? 0x2c2c2c : 0xffffff)
 
     const resize = () => ref.current && (viewer.width = ref.current.clientWidth)
     window.addEventListener('resize', resize)
@@ -165,8 +166,7 @@ const PlayerActions: React.FC = () => {
       window.removeEventListener('resize', resize)
       viewer.dispose()
     }
-  }, [ref.current, name])
-  const color = theme.palette.mode === 'dark' ? 255 : 0
+  }, [ref.current, name, theme.palette.mode])
 
   return <Card>
     <CardHeader title={name ? lang.playerList.whosDetails(name) : lang.openInv.notSelected} />
@@ -176,11 +176,7 @@ const PlayerActions: React.FC = () => {
         ? <canvas
           ref={ref}
           height='400'
-          style={{
-            cursor: 'grab',
-            filter: `drop-shadow(rgba(${color}, ${color}, ${color}, 0.2) 2px 4px 4px)`,
-            display: name ? undefined : 'none'
-          }}
+          style={{ cursor: 'grab', display: name ? undefined : 'none' }}
         />
         : <CardContent><Empty title={null} /></CardContent>}
     </Box>

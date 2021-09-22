@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { action } from '../toast'
-import { Delete, Add, Save } from '@material-ui/icons'
+import { Delete, Add, Save } from '@mui/icons-material'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItemButton, Checkbox, ListItemIcon,
-  ListItem, IconButton, ListItemText, CardContent, TextField, FormControlLabel, Switch } from '@material-ui/core'
+  ListItem, IconButton, ListItemText, CardContent, TextField, FormControlLabel, Switch } from '@mui/material'
 import { usePlugin } from '../Context'
 import { cardActionStyles } from '../theme'
 import Empty from '../components/Empty'

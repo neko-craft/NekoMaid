@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { useTheme } from '@material-ui/core/styles'
+import { useTheme } from '@mui/material/styles'
 import { useGlobalData, usePlugin } from '../Context'
-import { Lock, LockOpen, DeleteForever } from '@material-ui/icons'
+import { Lock, LockOpen, DeleteForever } from '@mui/icons-material'
 import { Box, Toolbar, Container, Card, CardHeader, Divider, TableContainer, Table, TableHead, Grid,
-  TableRow, TableCell, TableBody, Checkbox, Tooltip, Link, IconButton } from '@material-ui/core'
+  TableRow, TableCell, TableBody, Checkbox, Tooltip, Link, IconButton } from '@mui/material'
 import { action } from '../toast'
 import ReactECharts from 'echarts-for-react'
 import dialog from '../dialog'

@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
-import * as colors from '@material-ui/core/colors'
-import * as muiLanguages from '@material-ui/core/locale/index'
+import * as colors from '@mui/material/colors'
+import * as muiLanguages from '@mui/material/locale/index'
 import socketIO from 'socket.io-client'
-import darkScrollbar from '@material-ui/core/darkScrollbar'
+import darkScrollbar from '@mui/material/darkScrollbar'
 import { useLocation, Route, NavLink, useHistory } from 'react-router-dom'
 import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar, MenuItem, Tooltip,
-  Typography, Drawer, Toolbar, IconButton, useMediaQuery, Menu as MenuComponent } from '@material-ui/core'
-import { Build, Menu, Brightness4, Brightness7, Translate, Backpack, ChevronLeft } from '@material-ui/icons'
-import { createTheme, ThemeProvider, alpha } from '@material-ui/core/styles'
+  Typography, Drawer, Toolbar, IconButton, useMediaQuery, Menu as MenuComponent } from '@mui/material'
+import { Build, Menu, Brightness4, Brightness7, Translate, Backpack, ChevronLeft } from '@mui/icons-material'
+import { createTheme, ThemeProvider, alpha } from '@mui/material/styles'
 
 import loadPlugin from './pluginAPI'
 import { address, origin, token, pathname } from './url'
@@ -82,7 +82,9 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
       if (process.env.NODE_ENV !== 'development' && data.pluginVersion !== version) toast(lang.pluginUpdate, 'warning')
     }).on('!', () => {
       io.close()
-      dialog({ content: lang.wrongToken, cancelButton: false }).then(() => (location.href = '//maid.neko-craft.com'))
+      dialog({ content: lang.wrongToken, cancelButton: false })
+        // eslint-disable-next-line no-return-assign
+        .then(() => (location.search = location.pathname = location.hash = ''))
     }).on('reconnect', () => {
       toast(lang.reconnect)
       setTimeout(() => location.reload(), 5000)

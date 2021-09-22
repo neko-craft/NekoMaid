@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
-import { Dialog, DialogTitle, DialogContent, DialogContentText, TextField, DialogActions, Button, Autocomplete } from '@material-ui/core'
+import { Dialog, DialogTitle, DialogContent, DialogContentText, TextField, DialogActions, Button, Autocomplete } from '@mui/material'
 
-import type { DialogProps } from '@material-ui/core/Dialog'
+import type { DialogProps } from '@mui/material/Dialog'
 import lang, { minecraft } from '../../languages'
 
 const ServerSwitch: React.FC<DialogProps> = props => {

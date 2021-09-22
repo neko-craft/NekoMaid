@@ -1,6 +1,6 @@
 import React from 'react'
 import { DoubleArrow, Dashboard as DashboardIcon, People, Description, Extension, Settings, AccountBalance,
-  Schedule, Backpack, Public, Widgets, Pets } from '@material-ui/icons'
+  Schedule, Backpack, Public, Widgets, Pets } from '@mui/icons-material'
 import Plugin, { GlobalInfo } from '../Plugin'
 import lang, { minecraft } from '../../languages'
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
-import { Tooltip } from '@material-ui/core'
+import { Tooltip } from '@mui/material'
 import language from '../languages/index'
 
 const { minecraft } = language

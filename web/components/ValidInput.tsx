@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import TextField, { TextFieldProps } from '@material-ui/core/TextField'
+import TextField, { TextFieldProps } from '@mui/material/TextField'
 
 export type ValidInputProps = TextFieldProps & {
   onStatusChange: (it: boolean) => void

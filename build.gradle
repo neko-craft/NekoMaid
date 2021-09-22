@@ -1,6 +1,7 @@
+//file:noinspection GroovyUnusedAssignment
+//file:noinspection GrUnresolvedAccess
 plugins {
     id 'java'
-    id 'idea'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
 }
 
@@ -9,9 +10,6 @@ version '1.0-SNAPSHOT'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
-
-apply plugin: 'java'
-
 
 repositories {
     mavenCentral()
@@ -47,15 +45,15 @@ repositories {
 
 dependencies {
     compileOnly 'com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT'
-    compileOnly 'io.netty:netty-all:4.1.65.Final'
-    compileOnly 'org.jetbrains:annotations:21.0.1'
+    compileOnly 'io.netty:netty-all:4.1.68.Final'
+    compileOnly 'org.jetbrains:annotations:22.0.0'
     compileOnly 'org.apache.logging.log4j:log4j-core:2.14.1'
     compileOnly 'com.rylinaux:PlugMan:2.2.3'
     compileOnly 'com.github.Apisium:Uniporter:1.3.1-SNAPSHOT'
     compileOnly 'com.github.jikoo.OpenInv:openinvapi:2f36a4d4dc'
     compileOnly 'me.clip:placeholderapi:2.10.10'
     compileOnly 'de.tr7zw:item-nbt-api-plugin:2.8.0'
-    compileOnly 'com.github.oshi:oshi-core:5.8.1'
+    compileOnly 'com.github.oshi:oshi-core:5.8.2'
     compileOnly 'com.onarandombox.multiversecore:Multiverse-Core:4.3.1-SNAPSHOT'
     compileOnly ('com.github.MilkBowl:VaultAPI:1.7') {
         exclude group: 'org.bukkit'
@@ -64,7 +62,7 @@ dependencies {
         exclude group: 'org.bukkit'
     }
 
-    implementation 'com.alibaba:fastjson:1.2.76'
+    implementation 'com.alibaba:fastjson:1.2.78'
     implementation 'org.bstats:bstats-bukkit:2.2.1'
     implementation 'com.github.Apisium:netty-engine.io:03931aef8c'
     implementation 'org.apache.commons:commons-compress:1.21'
@@ -88,16 +86,14 @@ dependencies {
 }
 
 shadowJar {
-    dependencies {
-        relocate('com.alibaba', 'cn.apisium.nekomaid.libs.com.alibaba')
-        relocate('org.json', 'cn.apisium.nekomaid.libs.org.json')
-        relocate('javax.servlet', 'cn.apisium.nekomaid.libs.javax.servlet')
-        relocate('org.bstats', 'cn.apisium.nekomaid.libs.org.bstats')
-        relocate('org.apache.commons.io', 'cn.apisium.nekomaid.libs.org.apache.commons.io')
-        relocate('org.apache.commons.compress', 'cn.apisium.nekomaid.libs.org.apache.commons.compress')
-        relocate('io.socket', 'cn.apisium.nekomaid.libs.io.socket')
-        relocate('com.maxmind', 'cn.apisium.nekomaid.libs.com.maxmind')
-    }
+    relocate('com.alibaba', 'cn.apisium.nekomaid.libs.com.alibaba')
+    relocate('org.json', 'cn.apisium.nekomaid.libs.org.json')
+    relocate('javax.servlet', 'cn.apisium.nekomaid.libs.javax.servlet')
+    relocate('org.bstats', 'cn.apisium.nekomaid.libs.org.bstats')
+    relocate('org.apache.commons.io', 'cn.apisium.nekomaid.libs.org.apache.commons.io')
+    relocate('org.apache.commons.compress', 'cn.apisium.nekomaid.libs.org.apache.commons.compress')
+    relocate('io.socket', 'cn.apisium.nekomaid.libs.io.socket')
+    relocate('com.maxmind', 'cn.apisium.nekomaid.libs.com.maxmind')
     exclude 'io/papermc/**'
 
     archiveClassifier.set('')

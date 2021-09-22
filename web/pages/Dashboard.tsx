@@ -1,15 +1,15 @@
 import 'echarts/extension/bmap/bmap'
 
 import React, { useEffect, useState, useMemo } from 'react'
-import { red, green, orange, deepPurple, blue, yellow } from '@material-ui/core/colors'
+import { red, green, orange, deepPurple, blue, yellow } from '@mui/material/colors'
 import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, SentimentDissatisfied, Refresh, ExpandMore,
-  SentimentSatisfied, AccessTime, ArrowUpward, MoreHoriz, Remove, ExitToApp, Update } from '@material-ui/icons'
+  SentimentSatisfied, AccessTime, ArrowUpward, MoreHoriz, Remove, ExitToApp, Update } from '@mui/icons-material'
 import { useHistory } from 'react-router-dom'
-import { useTheme } from '@material-ui/core/styles'
+import { useTheme } from '@mui/material/styles'
 import { usePlugin, useGlobalData } from '../Context'
 import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeader, Divider,
   Skeleton, Link, LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar,
-  Pagination, Tooltip, Avatar, Accordion, AccordionSummary } from '@material-ui/core'
+  Pagination, Tooltip, Avatar, Accordion, AccordionSummary } from '@mui/material'
 import { LoadingList } from '../components/Loading'
 import { darkMapStyles as styleJson } from '../theme'
 import toast, { action } from '../toast'

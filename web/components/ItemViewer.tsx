@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { HelpOutline } from '@material-ui/icons'
+import { HelpOutline } from '@mui/icons-material'
 import { UnControlled } from 'react-codemirror2'
-import { useTheme } from '@material-ui/core/styles'
+import { useTheme } from '@mui/material/styles'
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Paper, Tooltip, Drawer,
   Tab, Tabs, Chip, Box, useMediaQuery, Autocomplete, TextField, Grid, Checkbox, Select,
-  FormControlLabel, MenuItem, FormControl, InputLabel } from '@material-ui/core'
+  FormControlLabel, MenuItem, FormControl, InputLabel } from '@mui/material'
 import { useGlobalData, usePlugin } from '../Context'
 import { parseComponent, stringifyTextComponent } from '../utils'
-import MojangSON, { parse, stringify, Byte, Short } from 'nbt-ts'
+import MojangSON, { parse, stringify, Int, Byte, Short } from 'nbt-ts'
 import lang, { minecraft } from '../../languages'
 import set from 'lodash/set'
 import * as icons from '../../minecraftIcons.json'
 
-import type { PaperProps } from '@material-ui/core/Paper'
+import type { PaperProps } from '@mui/material/Paper'
 
 export interface Enchantment extends MojangSON.TagObject {
   id: string
@@ -382,7 +382,10 @@ const ItemEditor: React.FC = () => {
           <DialogActions>
             <Button onClick={() => setEnchantment(undefined)}>{minecraft['gui.cancel']}</Button>
             <Button disabled={!enchantment || isNaN(level)} onClick={() => {
-              nbt?.tag?.Enchantments?.push({ id: enchantment!, lvl: new Short(level) })
+              if (nbt) {
+                if (!nbt.tag) nbt.tag = { Damage: new Int(0) }
+                ;(nbt.tag.Enchantments || (nbt.tag.Enchantments = [])).push({ id: enchantment!, lvl: new Short(level) })
+              }
               setEnchantment(undefined)
               update()
             }}>{minecraft['gui.ok']}</Button>

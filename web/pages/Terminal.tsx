@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useState, useRef, createRef } from 'react'
 import { usePlugin } from '../Context'
-import { Send } from '@material-ui/icons'
-import { TextField, Toolbar, IconButton, Paper, Tooltip, Box, Autocomplete } from '@material-ui/core'
+import { Send } from '@mui/icons-material'
+import { TextField, Toolbar, IconButton, Paper, Tooltip, Box, Autocomplete } from '@mui/material'
 import { parseComponents, parseMessage, TextComponent } from '../utils'
 import { address } from '../url'
 import throttle from 'lodash/throttle'
@@ -136,7 +136,7 @@ const Terminal: React.FC = () => {
     height: '100vh',
     overflow: 'hidden',
     display: 'flex',
-    fontSize: '0.97rem',
+    fontSize: '0.91rem',
     flexDirection: 'column',
     fontFamily: '"Roboto Mono","Helvetica","Arial",sans-serif',
     '& p': {

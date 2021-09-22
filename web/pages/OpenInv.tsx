@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { action, failed, success } from '../toast'
-import { Backpack, Refresh } from '@material-ui/icons'
+import { Backpack, Refresh } from '@mui/icons-material'
 import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, IconButton,
-  ListItemIcon, MenuItem, CardContent } from '@material-ui/core'
+  ListItemIcon, MenuItem, CardContent } from '@mui/material'
 import { useGlobalData, usePlugin } from '../Context'
 import { ActionComponent } from './PlayerList'
 import { useHistory, useParams } from 'react-router-dom'

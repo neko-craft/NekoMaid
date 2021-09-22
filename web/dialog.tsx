@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { ButtonProps } from '@material-ui/core/Button'
+import { ButtonProps } from '@mui/material/Button'
 import ValidInput, { ValidInputProps } from './components/ValidInput'
-import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@material-ui/core'
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material'
 import lang, { minecraft } from '../languages'
 
 export interface DialogOptionsWithoutInput {

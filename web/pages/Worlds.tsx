@@ -4,13 +4,13 @@ import dialog from '../dialog'
 import { success } from '../toast'
 import { Countdown } from '../components/Uptime'
 import { usePlugin, useGlobalData } from '../Context'
-import { WbSunny, ExpandLess, ExpandMore, Save, Edit } from '@material-ui/icons'
+import { WbSunny, ExpandLess, ExpandMore, Save, Edit } from '@mui/icons-material'
 import { WeatherRainy, WeatherLightningRainy } from 'mdi-material-ui'
 import { cardActionStyles } from '../theme'
 import lang, { minecraft } from '../../languages'
 import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContainer, Table, TableBody,
   TableHead, TableRow, TableCell, Tooltip, IconButton, Checkbox, CardContent, List, ListItem,
-  ListItemButton, ListItemText, Collapse, Switch, ToggleButtonGroup, ToggleButton } from '@material-ui/core'
+  ListItemButton, ListItemText, Collapse, Switch, ToggleButtonGroup, ToggleButton } from '@mui/material'
 
 interface World {
   rules: Array<[string, string]>

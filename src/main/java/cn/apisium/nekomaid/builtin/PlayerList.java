@@ -80,11 +80,15 @@ final class PlayerList {
                     .contains(filter)).collect(Collectors.toList());
             return new List(copy.size(), mapPlayersToObject(page, whiteList, banList, copy.stream()));
         }).on("playerList:ban", it -> {
-            String msg = ((String) it[1]).isEmpty() ? null : (String) it[1];
-            main.getServer().getBanList(BanList.Type.NAME).addBan((String) it[0], msg, null, "NekoMaid");
-            Player p = Bukkit.getPlayerExact((String) it[0]);
-            if (p != null) p.kickPlayer(msg);
-            main.getLogger().info("Banned " + it[0] + ": " + (msg == null ? "" : msg));
+            try {
+                String msg = ((String) it[1]).isEmpty() ? null : (String) it[1];
+                main.getServer().getBanList(BanList.Type.NAME).addBan((String) it[0], msg, null, "NekoMaid").save();
+                Player p = Bukkit.getPlayerExact((String) it[0]);
+                if (p != null) p.kickPlayer(msg);
+                main.getLogger().info("Banned " + it[0] + ": " + (msg == null ? "" : msg));
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
         }).on("playerList:pardon", it -> {
             main.getServer().getBanList(BanList.Type.NAME).pardon((String) it[0]);
             main.getLogger().info("Unbanned " + it[0]);

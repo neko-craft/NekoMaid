@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
 @SoftDependency("PlaceholderAPI")
 @SoftDependency("Multiverse-Core")
 public final class NekoMaid extends JavaPlugin implements Listener {
-    private final static String UNIPORTER_VERSION = "1.3.1-SNAPSHOT";
+    private final static String UNIPORTER_VERSION = "1.3.2-SNAPSHOT";
     private final static String URL_MESSAGE = ChatColor.translateAlternateColorCodes('&',
             "&e[NekoMaid] &fOpen this url to manage your server: &7"),
             SUCCESS = ChatColor.translateAlternateColorCodes('&',
@@ -284,30 +284,28 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     }
 
     @NotNull
-    public String getConnectHostname() {
-        return getConnectHostname(getConnectPort());
+    public String getConnectHostname(@NotNull String token) {
+        return getConnectHostname(getConnectPort(), token);
     }
 
     @NotNull
-    public String getConnectHostname(int port) {
+    public String getConnectHostname(int port, @NotNull String token) {
         String url = getConfig().getString("hostname", "");
         Optional<Route> it = Uniporter.findRoutesByHandler("NekoMaid").stream().findFirst();
         if (!it.isPresent()) throw new RuntimeException("Handler not registered!");
         Route route = it.get();
-        return (url.contains(":") ? url : url + ":" + port) + route.getPath();
+        return (url.contains(":") ? url : url + ":" + port) + route.getPath() + "?" + token;
     }
 
     @NotNull
     public String getConnectUrl(@NotNull String token) {
         String custom = getConfig().getString("customAddress", "");
         int port = getConnectPort();
-        String url = getConnectHostname(port);
-        if (custom.isEmpty()) {
-            url += "?" + token;
-            try { url = URLEncoder.encode(url, "UTF-8"); } catch (Throwable ignored) { }
-            url = (Uniporter.isSSLPort(port) ? "https" : "http") + "://maid.neko-craft.com/?" + url;
-        } else url = custom.replace("{token}", token).replace("{hostname}", url);
-        return url;
+        String url = getConnectHostname(port, token);
+        try { url = URLEncoder.encode(url, "UTF-8"); } catch (Throwable ignored) { }
+        return custom.isEmpty()
+                ? (Uniporter.isSSLPort(port) ? "https" : "http") + "://maid.neko-craft.com/?" + url
+                : custom.replace("{token}", token).replace("{hostname}", url);
     }
 
     @Contract("_, _, _ -> this")

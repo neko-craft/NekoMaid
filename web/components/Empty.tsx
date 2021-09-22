@@ -1,9 +1,9 @@
 import React from 'react'
-import { Box, Typography } from '@material-ui/core'
-import { useTheme } from '@material-ui/core/styles'
+import { Box, Typography } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import lang from '../../languages'
 
-import type { BoxProps } from '@material-ui/core/Box'
+import type { BoxProps } from '@mui/material/Box'
 
 export const EmptyIcon: React.FC<React.SVGProps<SVGSVGElement>> = props => {
   return <svg
