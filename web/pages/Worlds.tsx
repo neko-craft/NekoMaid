@@ -44,7 +44,7 @@ const Worlds: React.FC = () => {
   const [open, setOpen] = useState(false)
   const update = () => plugin.emit('worlds:fetch', (data: World[]) => {
     setWorlds(data)
-    if (data.length) setSelected(data[0].id)
+    if (data.length) setSelected(old => data.some(it => it.id === old) ? old : '')
   })
   useEffect(() => {
     const offUpdate = plugin.on('worlds:update', update)
@@ -106,7 +106,7 @@ const Worlds: React.FC = () => {
                       plugin.emit('worlds:weather', it.id)
                       success()
                     }}>
-                      {React.createElement(it.weather === 1 ? WeatherRainy : it.weather === 2 ? WeatherLightningRainy : WbSunny)}
+                      {React.createElement((it.weather === 1 ? WeatherRainy : it.weather === 2 ? WeatherLightningRainy : WbSunny) as any)}
                     </IconButton></TableCell>
                   </TableRow>)}
                 </TableBody>

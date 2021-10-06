@@ -112,9 +112,13 @@ const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () 
   ({ dirs, plugin, path, loading }) => {
     const [open, setOpen] = useState(false)
     const [files, setFiles] = useState<[string[], string[]] | undefined>()
-    const load = () => new Promise<void>(resolve => plugin.emit('files:fetch', (data: any) => {
+    const load = () => new Promise<void>(resolve => plugin.emit('files:fetch', (data: [string[], string[]]) => {
       setFiles(data)
       resolve()
+      if (typeof ''.localeCompare === 'function') {
+        data[0].sort((a, b) => a.localeCompare(b))
+        data[1].sort((a, b) => a.localeCompare(b))
+      }
       data[1].forEach((it: string) => (dirs[path + '/' + it] = false))
     }, path))
     useEffect(() => {
