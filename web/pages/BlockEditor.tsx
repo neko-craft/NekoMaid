@@ -144,7 +144,10 @@ const BlockEditor: React.FC = () => {
                       action(res)
                       update()
                     }, params.world, params.x, params.y, params.z, (block.type = it))}
-                    getOptionLabel={it => getName(it.toLowerCase()) + ' ' + it}
+                    getOptionLabel={it => {
+                      const locatedName = getName(it.toLowerCase())
+                      return (locatedName ? locatedName + ' ' : '') + it
+                    }}
                     renderInput={(params) => <TextField {...params} label={lang.itemEditor.itemType} size='small' variant='standard' />}
                   />
                 </CardContent>

@@ -59,7 +59,7 @@ export interface Item {
 }
 
 export const isBlock = (name: string) => ('item.minecraft.' + name) in minecraft
-export const getName = (name: string) => minecraft['item.minecraft.' + name] || minecraft['block.minecraft.' + name]
+export const getName = (name: string) => minecraft['item.minecraft.' + name] || minecraft['block.minecraft.' + name] || ''
 export const getEnchantmentName = (it: string | Enchantment) => {
   const name = minecraft['enchantment.' + (typeof it === 'string' ? it : it.id).replace(/:/g, '.')] || lang.itemEditor.unknownEnchantment
   return typeof it === 'string' ? name : name + ' ' + it.lvl.value
@@ -267,7 +267,10 @@ const ItemEditor: React.FC = () => {
             if (nbt) nbt.id = 'minecraft:' + (it ? it.toLowerCase() : 'air')
             update()
           }}
-          getOptionLabel={it => getName(it.toLowerCase()) + ' ' + it}
+          getOptionLabel={it => {
+            const locatedName = getName(it.toLowerCase())
+            return (locatedName ? locatedName + ' ' : '') + it
+          }}
           renderInput={(params) => <TextField {...params} label={lang.itemEditor.itemType} size='small' variant='standard' />}
         />
       </Box>}
