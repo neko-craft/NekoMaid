@@ -81,11 +81,13 @@ final class Editors {
                                 b.nbt = NBTAPIWrapper.newNBTTileEntity(state).toString();
                             } catch (Throwable ignored) { }
                             if (hasBlockData) b.data = state.getBlockData().getAsString();
-                            if (state instanceof BlockInventoryHolder) {
-                                Inventory inv = ((BlockInventoryHolder) state).getInventory();
-                                b.inventory = ItemData.fromInventory(inv);
-                                b.inventoryType = inv.getType().name();
-                            }
+                            try {
+                                if (state instanceof BlockInventoryHolder) {
+                                    Inventory inv = ((BlockInventoryHolder) state).getInventory();
+                                    b.inventory = ItemData.fromInventory(inv);
+                                    b.inventoryType = inv.getType().name();
+                                }
+                            } catch (NoClassDefFoundError ignore) { }
                             return b;
                         } catch (Throwable e) {
                             e.printStackTrace();
