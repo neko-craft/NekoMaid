@@ -9,7 +9,7 @@ export default {
   tip: '提示',
   noData: '暂无数据',
   pluginUpdate: '发现插件更新! 推荐立即更新!',
-  wrongToken: '密钥错误或插件版本过旧, 最新版本为',
+  wrongToken: '密钥错误',
   reconnect: '正在尝试重新连接...',
   disconnected: '连接已断开!',
   failedToConnect: '无法连接到服务器!',

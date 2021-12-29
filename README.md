@@ -27,6 +27,9 @@ customAddress: 'https://example.com/{token}' # Your custom address
 geolite2-eula: false # Agree or not with EULA of MaxMind GeoIP2
 baidu-map-license-key: '' # If you deploy your own front-end website and turn on the GeoIP function, you should use your own Baidu map license key
 
+skin-url: '' # Custom player skin url (png), {} will be replaced with username or UUID
+head-url: '' # Custom player avatar url (png), {} will be replaced with username or UUID
+
 debug: false # Debug mode
 
 logger: # Logger configures

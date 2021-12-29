@@ -256,7 +256,7 @@ export const formatMS = (time: number) => {
   return (time / 1000 | 0) + ' ' + language.secound
 }
 
-export const getSkin = (data: Partial<GlobalInfo> | null | undefined, name: string, isHead = false) => {
+export const getSkin = (data: Partial<GlobalInfo> | null | undefined, name: any, isHead = false) => {
   const { headUrl, skinUrl } = data || { }
   return isHead
     ? headUrl ? headUrl.replace(/{}/g, name) : `https://mc-heads.net/avatar/${name}/40`
