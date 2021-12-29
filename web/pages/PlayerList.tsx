@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import Empty from '../components/Empty'
 import dialog from '../dialog'
 import { success } from '../toast'
+import { getSkin } from '../utils'
 import { CircularLoading } from '../components/Loading'
 import { usePlugin, useGlobalData } from '../Context'
 import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Today, Event,
@@ -143,6 +144,7 @@ const PlayerInfo: React.FC<{ name?: string }> = React.memo(({ name }) => {
 const PlayerActions: React.FC = () => {
   const theme = useTheme()
   const ref = useRef<HTMLCanvasElement | null>(null)
+  const globalData = useGlobalData()
   const { name } = useParams<{ name: string }>()
   useEffect(() => {
     if (!ref.current || !name) return
@@ -150,7 +152,7 @@ const PlayerActions: React.FC = () => {
       canvas: ref.current!,
       height: 350,
       width: ref.current.clientWidth,
-      skin: 'https://mc-heads.net/skin/' + name
+      skin: getSkin(globalData, name)
     })
     viewer.renderer.setClearColor(theme.palette.mode === 'dark' ? 0x2c2c2c : 0xffffff)
 
@@ -166,7 +168,7 @@ const PlayerActions: React.FC = () => {
       window.removeEventListener('resize', resize)
       viewer.dispose()
     }
-  }, [ref.current, name, theme.palette.mode])
+  }, [ref.current, name, theme.palette.mode, globalData])
 
   return <Card>
     <CardHeader title={name ? lang.playerList.whosDetails(name) : lang.openInv.notSelected} />
@@ -193,7 +195,8 @@ const Players: React.FC = () => {
   const [activedPlayer, setActivedPlayer] = useState<PlayerData | null>(null)
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
   const [data, setData] = useState<{ count: number, players: PlayerData[] }>(() => ({ count: 0, players: [] }))
-  const { hasWhitelist } = useGlobalData()
+  const globalData = useGlobalData()
+  const { hasWhitelist } = globalData
   const refresh = () => {
     setLoading(true)
     plugin.emit('playerList:fetchPage', (it: any) => {
@@ -258,7 +261,7 @@ const Players: React.FC = () => {
           <TableBody>
             {data.players.map(it => <TableRow key={it.name}>
               <TableCell sx={{ cursor: 'pointer', padding: theme => theme.spacing(1, 1, 1, 2) }} onClick={() => his.push('/NekoMaid/playerList/' + it.name)}>
-                <Avatar src={`https://mc-heads.net/avatar/${it.name}/40`} imgProps={{ crossOrigin: 'anonymous' }} variant='rounded' />
+                <Avatar src={getSkin(globalData, it.name, true)} imgProps={{ crossOrigin: 'anonymous', style: { width: 40, height: 40 } }} variant='rounded' />
               </TableCell>
               <TableCell>{it.name}</TableCell>
               <TableCell align='right'>{dayjs.duration(it.playTime / 20, 'seconds').humanize()}</TableCell>

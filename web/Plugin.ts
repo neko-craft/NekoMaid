@@ -36,6 +36,8 @@ export interface GlobalInfo extends Record<string, any> {
   canSetViewDistance?: boolean
   hasTimings?: boolean
   isTimingsV1?: boolean
+  skinUrl?: string
+  headUrl?: string
   maxPlayers: number
   spawnRadius: number
   plugins: Record<string, string[]>

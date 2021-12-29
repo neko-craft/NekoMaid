@@ -106,7 +106,8 @@ const PermissionDialog: React.FC<{ plugin: Plugin, id: string | undefined, isGro
 const Vault: React.FC = () => {
   const his = useHistory()
   const plugin = usePlugin()
-  const { hasVaultPermission, hasVaultChat, vaultEconomy, hasVaultGroups } = useGlobalData()
+  const globalData = useGlobalData()
+  const { hasVaultPermission, hasVaultChat, vaultEconomy, hasVaultGroups } = globalData
   const [players, setPlayers] = useState<PlayerInfo[]>([])
   const [count, setCount] = useState(-1)
   const [page, setPage] = useState(0)
@@ -133,8 +134,8 @@ const Vault: React.FC = () => {
       sortable: false,
       width: 60,
       renderCell: (it: GridCellParams) => <Avatar
-        src={`https://mc-heads.net/avatar/${it.id}/40`}
-        imgProps={{ crossOrigin: 'anonymous', onClick () { his.push('/NekoMaid/playerList/' + it.id) } }}
+        src={getSkin(globalData, it.id, true)}
+        imgProps={{ crossOrigin: 'anonymous', onClick () { his.push('/NekoMaid/playerList/' + it.id) }, style: { width: 40, height: 40 } }}
         variant='rounded'
         sx={{ cursor: 'pointer' }}
       />

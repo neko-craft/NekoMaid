@@ -11,6 +11,7 @@ import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeade
   Skeleton, Link, LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar,
   Pagination, Tooltip, Avatar, Accordion, AccordionSummary } from '@mui/material'
 import { LoadingList } from '../components/Loading'
+import { getSkin } from '../utils'
 import { darkMapStyles as styleJson } from '../theme'
 import toast, { action } from '../toast'
 import prettyBytes from 'pretty-bytes'
@@ -52,6 +53,7 @@ const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.R
 const Players: React.FC<{ players?: CurrentStatus['players'] }> = React.memo(({ players }) => {
   const his = useHistory()
   const plugin = usePlugin()
+  const globalData = useGlobalData()
   const [page, setPage] = useState(1)
   const [id, update] = useState(0)
   return <Card>
@@ -86,8 +88,8 @@ const Players: React.FC<{ players?: CurrentStatus['players'] }> = React.memo(({ 
                 >
                   <ListItemAvatar>
                     <Avatar
-                      src={`https://mc-heads.net/avatar/${name}/40`}
-                      imgProps={{ crossOrigin: 'anonymous', onClick () { his.push('/NekoMaid/playerList/' + name) } }}
+                      src={getSkin(globalData, name, true)}
+                      imgProps={{ crossOrigin: 'anonymous', onClick () { his.push('/NekoMaid/playerList/' + name) }, style: { width: 40, height: 40 } }}
                       sx={{ cursor: 'pointer' }}
                       variant='rounded'
                     />

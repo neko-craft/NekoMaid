@@ -3,6 +3,9 @@ token: ~
 hostname: 127.0.0.1
 customAddress: ''
 
+skin-url: ''
+head-url: ''
+
 geolite2-eula: false
 baidu-map-license-key: ''
 

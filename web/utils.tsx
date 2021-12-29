@@ -1,7 +1,8 @@
 import React from 'react'
+import language from '../languages/index'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
 import { Tooltip } from '@mui/material'
-import language from '../languages/index'
+import type { GlobalInfo } from './Plugin'
 
 const { minecraft } = language
 
@@ -253,4 +254,11 @@ export const formatMS = (time: number) => {
   if (time < 5000) return (time | 0) + ' ' + language.ms
   if (time <= 60000) return (time / 1000).toFixed(2) + language.secound
   return (time / 1000 | 0) + ' ' + language.secound
+}
+
+export const getSkin = (data: Partial<GlobalInfo> | null | undefined, name: string, isHead = false) => {
+  const { headUrl, skinUrl } = data || { }
+  return isHead
+    ? headUrl ? headUrl.replace(/{}/g, name) : `https://mc-heads.net/avatar/${name}/40`
+    : skinUrl ? skinUrl.replace(/{}/g, name) : `https://mc-heads.net/skin/${name}`
 }

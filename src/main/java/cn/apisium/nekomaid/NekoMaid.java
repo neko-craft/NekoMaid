@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
 @SoftDependency("PlaceholderAPI")
 @SoftDependency("Multiverse-Core")
 public final class NekoMaid extends JavaPlugin implements Listener {
-    private final static String UNIPORTER_VERSION = "1.3.2-SNAPSHOT";
+    private final static String UNIPORTER_VERSION = "1.3.3-SNAPSHOT";
     private final static String URL_MESSAGE = ChatColor.translateAlternateColorCodes('&',
             "&e[NekoMaid] &fOpen this url to manage your server: &7"),
             SUCCESS = ChatColor.translateAlternateColorCodes('&',
@@ -224,6 +224,12 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         String bMapKey = getConfig().getString("baidu-map-license-key", "");
         if (bMapKey.isEmpty()) GLOBAL_DATA.remove("bMapKey");
         else GLOBAL_DATA.put("bMapKey", bMapKey);
+        String skin = getConfig().getString("skin-url", "");
+        if (skin.isEmpty()) GLOBAL_DATA.remove("skinUrl");
+        else GLOBAL_DATA.put("skinUrl", skin);
+        String head = getConfig().getString("head-url", "");
+        if (skin.isEmpty()) GLOBAL_DATA.remove("headUrl");
+        else GLOBAL_DATA.put("headUrl", skin);
     }
 
     private void setupCommands() {
