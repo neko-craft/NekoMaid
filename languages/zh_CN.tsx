@@ -163,7 +163,7 @@ export default {
     whitelisted: '白名单成员',
     op: '管理员',
     firstPlay: '首次登录',
-    lastPlay: '首次登录',
+    lastPlay: '上次登录',
     tnt: 'TNT放置次数',
     nameToSearch: '请输入你要查找的游戏名:',
     clickToAddWhitelist: '点击可将该玩家移出白名单',
