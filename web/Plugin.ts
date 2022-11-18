@@ -9,9 +9,6 @@ export interface Page {
   title?: string
   url?: string
   icon?: JSX.Element | React.ElementType
-  exact?: boolean
-  strict?: boolean
-  sensitive?: boolean
 }
 
 export interface GlobalInfo extends Record<string, any> {

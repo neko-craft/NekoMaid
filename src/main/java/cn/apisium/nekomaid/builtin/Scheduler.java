@@ -1,7 +1,7 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
-import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson2.JSONArray;
 import org.apache.logging.log4j.core.config.ConfigurationScheduler;
 import org.apache.logging.log4j.core.util.CronExpression;
 
@@ -26,7 +26,7 @@ final class Scheduler {
         Path configFile = new File(main.getDataFolder(), "scheduler.json").toPath();
         try {
             if (!Files.exists(configFile)) Files.write(configFile, "[]".getBytes(StandardCharsets.UTF_8));
-            tasks = new ArrayList<>(JSONArray.parseArray(new String(Files.readAllBytes(configFile)), Task.class));
+            tasks = new ArrayList<>(JSONArray.parseArray(new String(Files.readAllBytes(configFile))).toList(Task.class));
         } catch (Throwable ignored) {
             tasks = new ArrayList<>();
         }
@@ -43,7 +43,7 @@ final class Scheduler {
                 .onWithAck("scheduler:update", args -> {
                     try {
                         String json = (String) args[0];
-                        tasks = new ArrayList<>(JSONArray.parseArray(json, Task.class));
+                        tasks = new ArrayList<>(JSONArray.parseArray(json).toList(Task.class));
                         refresh();
                         Files.write(configFile, json.getBytes(StandardCharsets.UTF_8));
                         return true;

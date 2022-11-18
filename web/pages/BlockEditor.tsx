@@ -4,11 +4,33 @@ import lang, { minecraft } from '../../languages'
 import { parse, stringify } from 'nbt-ts'
 import { UnControlled } from 'react-codemirror2'
 import { useTheme } from '@mui/material/styles'
-import { Refresh, ExpandMore, Save } from '@mui/icons-material'
-import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, IconButton, Autocomplete, Button,
-  CardContent, TextField, Select, FormControl, InputLabel, MenuItem, Accordion, AccordionSummary,
-  Typography, AccordionDetails } from '@mui/material'
-import { useHistory, useLocation } from 'react-router-dom'
+
+import Refresh from '@mui/icons-material/Refresh'
+import ExpandMore from '@mui/icons-material/ExpandMore'
+import Save from '@mui/icons-material/Save'
+
+import Box from '@mui/material/Box'
+import Toolbar from '@mui/material/Toolbar'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import Divider from '@mui/material/Divider'
+import IconButton from '@mui/material/IconButton'
+import Autocomplete from '@mui/material/Autocomplete'
+import Button from '@mui/material/Button'
+import CardContent from '@mui/material/CardContent'
+import TextField from '@mui/material/TextField'
+import Select from '@mui/material/Select'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import MenuItem from '@mui/material/MenuItem'
+import Accordion from '@mui/material/Accordion'
+import AccordionSummary from '@mui/material/AccordionSummary'
+import Typography from '@mui/material/Typography'
+import AccordionDetails from '@mui/material/AccordionDetails'
+
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useDrawerWidth, useGlobalData, usePlugin } from '../Context'
 import { cardActionStyles } from '../theme'
 import { action, failed, success } from '../toast'
@@ -26,7 +48,7 @@ const compare = (obj: any, params: any) => obj && obj.type === InvType.BLOCK && 
   obj.y === params.y && obj?.z === params.z
 
 const BlockSelector: React.FC<{ worlds: string[] }> = ({ worlds }) => {
-  const his = useHistory()
+  const navigate = useNavigate()
   const [world, setWorld] = useState(worlds[0])
   const [x, setX] = useState('0')
   const [y, setY] = useState('0')
@@ -51,7 +73,7 @@ const BlockSelector: React.FC<{ worlds: string[] }> = ({ worlds }) => {
     <Grid item xs={12} sx={{ marginTop: 3, textAlign: 'center' }}>
       <Button
         variant='contained'
-        onClick={() => his.push(`/NekoMaid/block/${world}/${parseFloat(x) | 0}/${parseFloat(y) | 0}/${parseFloat(z) | 0}`)}
+        onClick={() => navigate(`/NekoMaid/block/${world}/${parseFloat(x) | 0}/${parseFloat(y) | 0}/${parseFloat(z) | 0}`)}
       >{minecraft['gui.done']}</Button>
     </Grid>
   </Grid>
@@ -60,7 +82,7 @@ const BlockSelector: React.FC<{ worlds: string[] }> = ({ worlds }) => {
 const BlockEditor: React.FC = () => {
   const theme = useTheme()
   const plugin = usePlugin()
-  const his = useHistory()
+  const navigate = useNavigate()
   const loc = useLocation()
   const globalData = useGlobalData()
   const drawerWidth = useDrawerWidth()
@@ -75,14 +97,14 @@ const BlockEditor: React.FC = () => {
       params.x = +arr[4]
       params.y = +arr[5]
       params.z = +arr[6]
-    } else his.push('/NekoMaid/block')
+    } else navigate('/NekoMaid/block')
   }
   useEffect(() => {
     const off = plugin.emit('item:blocks', (types: string[], worlds: string[]) => {
       setTypes(types)
       setWorlds(worlds)
     })
-      .on('block:select', (world, x, y, z) => his.push(`/NekoMaid/block/${world}/${x}/${y}/${z}`))
+      .on('block:select', (world, x, y, z) => navigate(`/NekoMaid/block/${world}/${x}/${y}/${z}`))
     return () => void off()
   }, [])
   const update = () => {
@@ -90,7 +112,7 @@ const BlockEditor: React.FC = () => {
       plugin.emit('block:fetch', (block: Block) => {
         if (!block) {
           failed()
-          his.push('/NekoMaid/block')
+          navigate('/NekoMaid/block')
           return
         }
         if (globalData.hasNBTAPI && block.nbt) block.nbt = stringify(parse(block.nbt), { pretty: true })

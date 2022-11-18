@@ -19,17 +19,12 @@ import 'codemirror/addon/search/search.js'
 import React, { useEffect, useState, useRef } from 'react'
 import toast, { action, failed, success } from '../toast'
 import lang, { minecraft } from '../../languages'
-import * as icons from '../../icons.json'
+import icons from '../../icons.json'
 import { styled, alpha, useTheme } from '@mui/material/styles'
-import { TreeView, TreeItem } from '@mui/lab'
 import { iconClasses } from '@mui/material/Icon'
-import { treeItemClasses, TreeItemProps } from '@mui/lab/TreeItem'
-import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, Icon, CardContent, IconButton, Tooltip,
-  Menu, MenuItem, ListItemIcon, CircularProgress, InputAdornment, Input, Dialog, DialogTitle, DialogContent,
-  DialogContentText, DialogActions, Button, Select, TextField } from '@mui/material'
-import { ArrowDropDown, ArrowRight, Save, Undo, Redo, DeleteForever, CreateNewFolder, Refresh, MoreHoriz,
-  Description, Upload, Download, Outbox, Inbox, DriveFileRenameOutline, FileCopy, ContentPaste } from '@mui/icons-material'
-import { useHistory, useLocation } from 'react-router-dom'
+import TreeView from '@mui/lab/TreeView'
+import TreeItem, { treeItemClasses, TreeItemProps } from '@mui/lab/TreeItem'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { usePlugin, useDrawerWidth } from '../Context'
 import { UnControlled } from 'react-codemirror2'
 import { address } from '../url'
@@ -38,6 +33,50 @@ import validFilename from 'valid-filename'
 import Empty from '../components/Empty'
 import Plugin from '../Plugin'
 import dialog from '../dialog'
+
+import Box from '@mui/material/Box'
+import Toolbar from '@mui/material/Toolbar'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import Divider from '@mui/material/Divider'
+import Icon from '@mui/material/Icon'
+import CardContent from '@mui/material/CardContent'
+import IconButton from '@mui/material/IconButton'
+import Tooltip from '@mui/material/Tooltip'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import CircularProgress from '@mui/material/CircularProgress'
+import InputAdornment from '@mui/material/InputAdornment'
+import Input from '@mui/material/Input'
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogActions from '@mui/material/DialogActions'
+import Button from '@mui/material/Button'
+import Select from '@mui/material/Select'
+import TextField from '@mui/material/TextField'
+
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown'
+import ArrowRight from '@mui/icons-material/ArrowRight'
+import Save from '@mui/icons-material/Save'
+import Undo from '@mui/icons-material/Undo'
+import Redo from '@mui/icons-material/Redo'
+import DeleteForever from '@mui/icons-material/DeleteForever'
+import CreateNewFolder from '@mui/icons-material/CreateNewFolder'
+import Refresh from '@mui/icons-material/Refresh'
+import MoreHoriz from '@mui/icons-material/MoreHoriz'
+import Description from '@mui/icons-material/Description'
+import Upload from '@mui/icons-material/Upload'
+import Download from '@mui/icons-material/Download'
+import Outbox from '@mui/icons-material/Outbox'
+import Inbox from '@mui/icons-material/Inbox'
+import DriveFileRenameOutline from '@mui/icons-material/DriveFileRenameOutline'
+import FileCopy from '@mui/icons-material/FileCopy'
+import ContentPaste from '@mui/icons-material/ContentPaste'
 
 const getMode = (path: string) => {
   switch (path.slice(path.lastIndexOf('.') + 1)) {
@@ -158,7 +197,7 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
   dirs: Record<string, boolean>, refresh: () => void }> = React.memo(({ plugin, editorRef, loading, dirs, refresh }) => {
     const doc = (editorRef as any).current?.editor?.doc
     const theme = useTheme()
-    const his = useHistory()
+    const navigate = useNavigate()
     const lnText = useRef('')
     const path = useLocation().pathname.replace(/^\/NekoMaid\/files\/?/, '')
     const [text, setText] = useState<string | null>(null)
@@ -185,7 +224,7 @@ const Editor: React.FC<{ plugin: Plugin, editorRef: React.Ref<UnControlled>, loa
             setText('')
             setNotSave(true)
             break
-          case 2: return his.replace('./')
+          case 2: return navigate('./')
           case 3: return setError(lang.files.tooBig)
           default:
             if (typeof data !== 'string') return
@@ -280,7 +319,7 @@ const anchorOrigin: any = {
 const Files: React.FC = () => {
   const plugin = usePlugin()
   const theme = useTheme()
-  const his = useHistory()
+  const navigate = useNavigate()
   const loc = useLocation()
   const drawerWidth = useDrawerWidth()
   const tree = useRef<HTMLHRElement | null>(null)
@@ -346,13 +385,13 @@ const Files: React.FC = () => {
                     action(res)
                     if (!res) return
                     refresh()
-                    if (loc.pathname.replace(/^\/NekoMaid\/files\/?/, '') === curPath) his.push('/NekoMaid/files')
+                    if (loc.pathname.replace(/^\/NekoMaid\/files\/?/, '') === curPath) navigate('/NekoMaid/files')
                   }, curPath))}
                 ><DeleteForever /></IconButton>
               </span></Tooltip>
               <Tooltip title={lang.files.createFile}>
                 <IconButton size='small' onClick={() => fileNameDialog(lang.files.createFile, curPath)
-                  .then(it => it != null && his.push(`/NekoMaid/files/${dirPath ? dirPath + '/' : ''}${it}`))}>
+                  .then(it => it != null && navigate(`/NekoMaid/files/${dirPath ? dirPath + '/' : ''}${it}`))}>
               <Description /></IconButton></Tooltip>
               <Tooltip title={lang.files.createFolder}>
                 <IconButton size='small' onClick={() => fileNameDialog(lang.files.createFolder, curPath)
@@ -389,7 +428,7 @@ const Files: React.FC = () => {
                 setCurPath(it[0] === '/' ? it.slice(1) : it)
                 if (dirs.current[it] || loading.current['!#LOADING']) return
                 if (it.startsWith('/')) it = it.slice(1)
-                his.push('/NekoMaid/files/' + it)
+                navigate('/NekoMaid/files/' + it)
               }}
             >
               <Item plugin={plugin} path='' loading={loading.current} dirs={dirs.current} key={id} />

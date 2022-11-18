@@ -18,10 +18,10 @@ public final class Client {
     public final SocketIoSocket client;
     private final HashSet<String> events = new HashSet<>();
 
-    protected Client(Plugin plugin, SocketIoSocket client) {
+    private Client(Plugin plugin, SocketIoSocket client) {
         this(plugin.getName(), client);
     }
-    protected Client(String plugin, SocketIoSocket client) {
+    Client(String plugin, SocketIoSocket client) {
         this.plugin = plugin + ":";
         this.client = client;
     }

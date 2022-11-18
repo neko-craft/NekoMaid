@@ -1,7 +1,5 @@
 import React from 'react'
-import { Collapse } from '@mui/material'
-
-import type { CollapseProps } from '@mui/material/Collapse'
+import Collapse, { CollapseProps } from '@mui/material/Collapse'
 
 const C: any = Collapse
 

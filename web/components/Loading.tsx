@@ -1,5 +1,10 @@
 import React from 'react'
-import { ListItem, ListItemAvatar, ListItemText, Skeleton, CircularProgress, Box } from '@mui/material'
+import ListItem from '@mui/material/ListItem'
+import ListItemAvatar from '@mui/material/ListItemAvatar'
+import ListItemText from '@mui/material/ListItemText'
+import Skeleton from '@mui/material/Skeleton'
+import CircularProgress from '@mui/material/CircularProgress'
+import Box from '@mui/material/Box'
 import type { CircularProgressProps } from '@mui/material/CircularProgress'
 
 export const LoadingList: React.FC<{ count?: number }> = ({ count = 3 }) => <>{Array.from({ length: count }, (_, i) => <ListItem key={i}>

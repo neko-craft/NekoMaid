@@ -9,13 +9,42 @@ import { getClassName, getCurrentTime, formatMS } from '../utils'
 import { useGlobalData, usePlugin } from '../Context'
 import { CircularLoading } from '../components/Loading'
 import { DataGrid, GridColDef, GridRowData, GridRowId, GridSortItem } from '@mui/x-data-grid'
-import { PlayArrow, Stop, Equalizer, ExpandMore, ChevronRight, ViewList, Refresh } from '@mui/icons-material'
-import { TreeView, TreeItem } from '@mui/lab'
-import { Box, Tabs, Tab, Toolbar, Paper, Fab, Badge, Container, Grid, Card, CardHeader,
-  IconButton, Divider, CardContent, Switch, FormControlLabel, Typography, Link, Zoom,
-  List, ListItem, ListItemText, Checkbox } from '@mui/material'
+import TreeView from '@mui/lab/TreeView'
+import TreeItem from '@mui/lab/TreeItem'
 import { cardActionStyles } from '../theme'
 import dialog from '../dialog'
+
+import Box from '@mui/material/Box'
+import Tabs from '@mui/material/Tabs'
+import Tab from '@mui/material/Tab'
+import Toolbar from '@mui/material/Toolbar'
+import Paper from '@mui/material/Paper'
+import Fab from '@mui/material/Fab'
+import Badge from '@mui/material/Badge'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import IconButton from '@mui/material/IconButton'
+import Divider from '@mui/material/Divider'
+import CardContent from '@mui/material/CardContent'
+import Switch from '@mui/material/Switch'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Typography from '@mui/material/Typography'
+import Link from '@mui/material/Link'
+import Zoom from '@mui/material/Zoom'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemText from '@mui/material/ListItemText'
+import Checkbox from '@mui/material/Checkbox'
+
+import PlayArrow from '@mui/icons-material/PlayArrow'
+import Stop from '@mui/icons-material/Stop'
+import Equalizer from '@mui/icons-material/Equalizer'
+import ExpandMore from '@mui/icons-material/ExpandMore'
+import ChevronRight from '@mui/icons-material/ChevronRight'
+import ViewList from '@mui/icons-material/ViewList'
+import Refresh from '@mui/icons-material/Refresh'
 
 const MB = 1024 * 1024
 const GB = MB * 1024
@@ -692,7 +721,7 @@ const Heap: React.FC = React.memo(() => {
     const heapColumns: GridColDef[] = [
       { field: 'id', headerName: lang.profiler.className, minWidth: 250, flex: 0.6 },
       { field: 'count', headerName: lang.profiler.count, width: 100 },
-      { field: 'size', headerName: lang.size, width: 100, valueFormatter: ({ row: { display } }) => display }
+      { field: 'size', headerName: lang.size, width: 100, valueFormatter: ({ value: { display } }) => display }
     ]
     if (fileMap) {
       heapColumns.splice(1, 0, {
@@ -700,7 +729,7 @@ const Heap: React.FC = React.memo(() => {
         headerName: lang.profiler.classLoader,
         minWidth: 150,
         flex: 0.4,
-        valueFormatter: ({ row: { id } }) => fileMap[id as string] || ''
+        valueFormatter: ({ id }) => fileMap[id as string] || ''
       })
     }
     return heapColumns

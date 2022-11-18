@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import lang from '../languages'
-import { SnackbarProps, Snackbar, Box, Alert, AlertColor, Toolbar, Paper } from '@mui/material'
+
+import Snackbar, { SnackbarProps } from '@mui/material/Snackbar'
+import Box from '@mui/material/Box'
+import Alert, { AlertColor } from '@mui/material/Alert'
+import Toolbar from '@mui/material/Toolbar'
+import Paper from '@mui/material/Paper'
 
 let update: (it: number) => void
 

@@ -13,7 +13,13 @@ import * as url from './url'
 import * as utils from './utils'
 import language, { languages, currentLanguage } from '../languages/index'
 
-(window as any).__NekoMaidAPI = Object.freeze({
+import * as react from 'react'
+import * as reactDom from 'react-dom/client'
+import * as jsxRuntime from 'react/jsx-runtime'
+import * as emotionReact from '@emotion/react'
+import * as emotionStyled from '@emotion/styled'
+
+(window as any).__NekoMaidAPI = {
   Empty,
   ItemViewer,
   Loading,
@@ -31,17 +37,14 @@ import language, { languages, currentLanguage } from '../languages/index'
   languages,
   language,
   currentLanguage,
-  libraries: Object.freeze({
-    react: require('react'),
-    reactDom: require('react-dom'),
-    jsxRuntime: require('react/jsx-runtime'),
-    emotionReact: require('@emotion/react'),
-    emotionStyled: require('@emotion/styled'),
-    muiSystem: require('@material-ui/system'),
-    muiUtils: require('@material-ui/utils'),
-    muiUnstyled: require('@material-ui/unstyled')
-  })
-})
+  libraries: {
+    react,
+    reactDom,
+    jsxRuntime,
+    emotionReact,
+    emotionStyled
+  }
+}
 
 export default (url: string) => {
   const node = document.createElement('script')

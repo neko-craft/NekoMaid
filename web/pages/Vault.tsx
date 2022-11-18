@@ -2,17 +2,44 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useGlobalData, usePlugin } from '../Context'
 import Plugin from '../Plugin'
 import throttle from 'lodash/throttle'
-import { Close, List as ListIcon, Groups as GroupsIcon, Check, Search } from '@mui/icons-material'
-import { Box, Toolbar, Container, Card, CardHeader, Grid, DialogContent, DialogContentText, Button, Autocomplete,
-  CircularProgress, Dialog, ListItemText, IconButton, ListItem, Tooltip, DialogActions, DialogTitle, TextField,
-  List, ListItemIcon, Checkbox, Divider, Avatar } from '@mui/material'
 import { DataGrid, GridCellParams, GridSortItem } from '@mui/x-data-grid'
-import { useHistory } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { action, success } from '../toast'
 import { getSkin } from '../utils'
 import lang, { minecraft } from '../../languages'
 import dialog from '../dialog'
 import isEqual from 'lodash/isEqual'
+
+import Box from '@mui/material/Box'
+import Toolbar from '@mui/material/Toolbar'
+import Container from '@mui/material/Container'
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import Grid from '@mui/material/Grid'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import Button from '@mui/material/Button'
+import Autocomplete from '@mui/material/Autocomplete'
+import CircularProgress from '@mui/material/CircularProgress'
+import Dialog from '@mui/material/Dialog'
+import ListItemText from '@mui/material/ListItemText'
+import IconButton from '@mui/material/IconButton'
+import ListItem from '@mui/material/ListItem'
+import Tooltip from '@mui/material/Tooltip'
+import DialogActions from '@mui/material/DialogActions'
+import DialogTitle from '@mui/material/DialogTitle'
+import TextField from '@mui/material/TextField'
+import List from '@mui/material/List'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import Checkbox from '@mui/material/Checkbox'
+import Divider from '@mui/material/Divider'
+import Avatar from '@mui/material/Avatar'
+
+import Close from '@mui/icons-material/Close'
+import ListIcon from '@mui/icons-material/List'
+import GroupsIcon from '@mui/icons-material/Groups'
+import Check from '@mui/icons-material/Check'
+import Search from '@mui/icons-material/Search'
 
 interface PlayerInfo { id: string, balance?: number, group?: string, prefix?: string, suffix?: string }
 interface GroupInfo { id: string, prefix?: string, suffix?: string }
@@ -105,7 +132,7 @@ const PermissionDialog: React.FC<{ plugin: Plugin, id: string | undefined, isGro
 }
 
 const Vault: React.FC = () => {
-  const his = useHistory()
+  const navigate = useNavigate()
   const plugin = usePlugin()
   const globalData = useGlobalData()
   const { hasVaultPermission, hasVaultChat, vaultEconomy, hasVaultGroups } = globalData
@@ -136,7 +163,7 @@ const Vault: React.FC = () => {
       width: 60,
       renderCell: (it: GridCellParams) => <Avatar
         src={getSkin(globalData, it.id, true)}
-        imgProps={{ crossOrigin: 'anonymous', onClick () { his.push('/NekoMaid/playerList/' + it.id) }, style: { width: 40, height: 40 } }}
+        imgProps={{ crossOrigin: 'anonymous', onClick () { navigate('/NekoMaid/playerList/' + it.id) }, style: { width: 40, height: 40 } }}
         variant='rounded'
         sx={{ cursor: 'pointer' }}
       />

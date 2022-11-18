@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react'
-import { ButtonProps } from '@mui/material/Button'
 import ValidInput, { ValidInputProps } from './components/ValidInput'
-import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material'
 import lang, { minecraft } from '../languages'
+
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogActions from '@mui/material/DialogActions'
+import Button, { ButtonProps } from '@mui/material/Button'
 
 export interface DialogOptionsWithoutInput {
   content: React.ReactNode

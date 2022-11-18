@@ -7,16 +7,61 @@ import { success } from '../toast'
 import { getSkin } from '../utils'
 import { CircularLoading } from '../components/Loading'
 import { usePlugin, useGlobalData } from '../Context'
-import { Block, Star, StarBorder, AssignmentInd, Equalizer, ExpandLess, ExpandMore, Security, AccessTime, Today, Event,
-  Login, Sick, FaceRetouchingOff, Pets, Fireplace, ErrorOutline, Search, MoreHoriz } from '@mui/icons-material'
-import { Grid, Toolbar, Card, CardHeader, Divider, Box, Container, TableContainer, Table, TableBody,
-  CardContent, TablePagination, TableHead, TableRow, TableCell, IconButton, Tooltip, ToggleButtonGroup,
-  ToggleButton, List, ListSubheader, ListItem, ListItemText, ListItemIcon, Collapse, ListItemButton,
-  CardActions, Link, Menu, Avatar } from '@mui/material'
 import { FXAASkinViewer, createOrbitControls, WalkingAnimation, RotatingAnimation } from 'skinview3d'
 import { useTheme } from '@mui/material/styles'
-import { useParams, useHistory } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import lang, { minecraft } from '../../languages'
+
+import Grid from '@mui/material/Grid'
+import Toolbar from '@mui/material/Toolbar'
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import Divider from '@mui/material/Divider'
+import Box from '@mui/material/Box'
+import Container from '@mui/material/Container'
+import TableContainer from '@mui/material/TableContainer'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import CardContent from '@mui/material/CardContent'
+import TablePagination from '@mui/material/TablePagination'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
+import TableCell from '@mui/material/TableCell'
+import IconButton from '@mui/material/IconButton'
+import Tooltip from '@mui/material/Tooltip'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import ToggleButton from '@mui/material/ToggleButton'
+import List from '@mui/material/List'
+import ListSubheader from '@mui/material/ListSubheader'
+import ListItem from '@mui/material/ListItem'
+import ListItemText from '@mui/material/ListItemText'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import Collapse from '@mui/material/Collapse'
+import ListItemButton from '@mui/material/ListItemButton'
+import CardActions from '@mui/material/CardActions'
+import Link from '@mui/material/Link'
+import Menu from '@mui/material/Menu'
+import Avatar from '@mui/material/Avatar'
+
+import Block from '@mui/icons-material/Block'
+import Star from '@mui/icons-material/Star'
+import StarBorder from '@mui/icons-material/StarBorder'
+import AssignmentInd from '@mui/icons-material/AssignmentInd'
+import Equalizer from '@mui/icons-material/Equalizer'
+import ExpandLess from '@mui/icons-material/ExpandLess'
+import ExpandMore from '@mui/icons-material/ExpandMore'
+import Security from '@mui/icons-material/Security'
+import AccessTime from '@mui/icons-material/AccessTime'
+import Today from '@mui/icons-material/Today'
+import Event from '@mui/icons-material/Event'
+import Login from '@mui/icons-material/Login'
+import Sick from '@mui/icons-material/Sick'
+import FaceRetouchingOff from '@mui/icons-material/FaceRetouchingOff'
+import Pets from '@mui/icons-material/Pets'
+import Fireplace from '@mui/icons-material/Fireplace'
+import ErrorOutline from '@mui/icons-material/ErrorOutline'
+import Search from '@mui/icons-material/Search'
+import MoreHoriz from '@mui/icons-material/MoreHoriz'
 
 interface IPlayerInfo {
   id: string
@@ -187,7 +232,7 @@ const PlayerActions: React.FC = () => {
 }
 
 const Players: React.FC = () => {
-  const his = useHistory()
+  const navigate = useNavigate()
   const plugin = usePlugin()
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -231,7 +276,7 @@ const Players: React.FC = () => {
           <ToggleButton disabled={loading} value={3} onClick={() => state !== 3 && dialog(lang.playerList.nameToSearch, lang.username)
             .then(filter => {
               if (filter == null) return
-              his.push('/NekoMaid/playerList/' + filter)
+              navigate('/NekoMaid/playerList/' + filter)
               setState(3)
               setLoading(true)
               plugin.emit('playerList:fetchPage', (it: any) => {
@@ -260,7 +305,7 @@ const Players: React.FC = () => {
           </TableHead>
           <TableBody>
             {data.players.map(it => <TableRow key={it.name}>
-              <TableCell sx={{ cursor: 'pointer', padding: theme => theme.spacing(1, 1, 1, 2) }} onClick={() => his.push('/NekoMaid/playerList/' + it.name)}>
+              <TableCell sx={{ cursor: 'pointer', padding: theme => theme.spacing(1, 1, 1, 2) }} onClick={() => navigate('/NekoMaid/playerList/' + it.name)}>
                 <Avatar src={getSkin(globalData, it.name, true)} imgProps={{ crossOrigin: 'anonymous', style: { width: 40, height: 40 } }} variant='rounded' />
               </TableCell>
               <TableCell>{it.name}</TableCell>

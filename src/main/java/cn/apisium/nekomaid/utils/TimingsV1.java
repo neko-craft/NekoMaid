@@ -1,6 +1,6 @@
 package cn.apisium.nekomaid.utils;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.SimplePluginManager;
 import org.spigotmc.CustomTimingsHandler;

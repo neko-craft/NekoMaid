@@ -35,6 +35,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 final class FilesManager {
     private static final ArchiveStreamFactory archiveFactory = new ArchiveStreamFactory();
@@ -54,7 +55,9 @@ final class FilesManager {
                 Path p = Paths.get(".", (String) args[0]);
                 if (!p.startsWith(root) || !Files.isDirectory(p)) return null;
                 ArrayList<String> dirs = new ArrayList<>(), files = new ArrayList<>();
-                Files.list(p).forEach(it -> (Files.isDirectory(it) ? dirs : files).add(it.getFileName().toString()));
+                try (Stream<Path> stream = Files.list(p)) {
+                    stream.forEach(it -> (Files.isDirectory(it) ? dirs : files).add(it.getFileName().toString()));
+                }
                 return new ArrayList[] { dirs, files };
             } catch (Throwable e) {
                 e.printStackTrace();
@@ -199,8 +202,10 @@ final class FilesManager {
                     try {
                         if (data.getHttpDataType() == InterfaceHttpData.HttpDataType.FileUpload) {
                             final FileUpload fileUpload = (FileUpload) data;
-                            try (FileChannel inputChannel = new FileInputStream(fileUpload.getFile()).getChannel();
-                                 FileChannel outputChannel = new FileOutputStream(file).getChannel()) {
+                            try (FileInputStream fis = new FileInputStream(fileUpload.getFile());
+                                 FileOutputStream fos = new FileOutputStream(file)) {
+                                FileChannel inputChannel = fis.getChannel(),
+                                        outputChannel = fos.getChannel();
                                 outputChannel.transferFrom(inputChannel, 0, inputChannel.size());
                                 HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
                                 addHeaders(request, response);

@@ -2,7 +2,7 @@ package cn.apisium.nekomaid.utils;
 
 import co.aikar.timings.TimingHistory;
 import co.aikar.timings.Timings;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;

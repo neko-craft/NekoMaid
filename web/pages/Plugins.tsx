@@ -1,13 +1,32 @@
 import React, { useEffect, useState } from 'react'
 import { useTheme } from '@mui/material/styles'
 import { useGlobalData, usePlugin } from '../Context'
-import { Lock, LockOpen, DeleteForever } from '@mui/icons-material'
-import { Box, Toolbar, Container, Card, CardHeader, Divider, TableContainer, Table, TableHead, Grid,
-  TableRow, TableCell, TableBody, Checkbox, Tooltip, Link, IconButton } from '@mui/material'
 import { action } from '../toast'
 import ReactECharts from 'echarts-for-react'
 import dialog from '../dialog'
 import lang from '../../languages'
+
+import Box from '@mui/material/Box'
+import Toolbar from '@mui/material/Toolbar'
+import Container from '@mui/material/Container'
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import Divider from '@mui/material/Divider'
+import TableContainer from '@mui/material/TableContainer'
+import Table from '@mui/material/Table'
+import TableHead from '@mui/material/TableHead'
+import Grid from '@mui/material/Grid'
+import TableRow from '@mui/material/TableRow'
+import TableCell from '@mui/material/TableCell'
+import TableBody from '@mui/material/TableBody'
+import Checkbox from '@mui/material/Checkbox'
+import Tooltip from '@mui/material/Tooltip'
+import Link from '@mui/material/Link'
+import IconButton from '@mui/material/IconButton'
+
+import Lock from '@mui/icons-material/Lock'
+import LockOpen from '@mui/icons-material/LockOpen'
+import DeleteForever from '@mui/icons-material/DeleteForever'
 
 interface Plugin {
   name: string

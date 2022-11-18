@@ -3,10 +3,33 @@ import * as colors from '@mui/material/colors'
 import * as muiLanguages from '@mui/material/locale/index'
 import socketIO from 'socket.io-client'
 import darkScrollbar from '@mui/material/darkScrollbar'
-import { useLocation, Route, NavLink, useHistory } from 'react-router-dom'
-import { Divider, Box, List, ListItem, ListItemIcon, ListItemText, CssBaseline, AppBar, MenuItem, Tooltip,
-  Typography, Drawer, Toolbar, IconButton, useMediaQuery, Menu as MenuComponent } from '@mui/material'
-import { Build, Menu, Brightness4, Brightness7, Translate, Backpack, ChevronLeft } from '@mui/icons-material'
+import { useLocation, Route, NavLink, useNavigate } from 'react-router-dom'
+
+import Divider from '@mui/material/Divider'
+import Box from '@mui/material/Box'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import ListItemText from '@mui/material/ListItemText'
+import CssBaseline from '@mui/material/CssBaseline'
+import AppBar from '@mui/material/AppBar'
+import MenuItem from '@mui/material/MenuItem'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+import Drawer from '@mui/material/Drawer'
+import Toolbar from '@mui/material/Toolbar'
+import IconButton from '@mui/material/IconButton'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import MenuComponent from '@mui/material/Menu'
+
+import Build from '@mui/icons-material/Build'
+import Menu from '@mui/icons-material/Menu'
+import Brightness4 from '@mui/icons-material/Brightness4'
+import Brightness7 from '@mui/icons-material/Brightness7'
+import Translate from '@mui/icons-material/Translate'
+import Backpack from '@mui/icons-material/Backpack'
+import ChevronLeft from '@mui/icons-material/ChevronLeft'
+
 import { createTheme, ThemeProvider, alpha } from '@mui/material/styles'
 
 import loadPlugin from './pluginAPI'
@@ -50,7 +73,7 @@ const LanguageSwitch: React.FC = React.memo(() => {
 let sent = false
 const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = React.memo(({ darkMode, setDarkMode }) => {
   const loc = useLocation()
-  const his = useHistory()
+  const navigate = useNavigate()
   const pluginRef = useRef<Plugin | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [globalItemsOpen, setGlobalItemsOpen] = useState(false)
@@ -91,7 +114,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     }).on('disconnect', () => failed(lang.disconnected)).on('connect_error', () => failed(lang.failedToConnect))
     return fn
   }, [])
-  useEffect(() => { if (!loc.pathname || loc.pathname === '/') his.replace('/NekoMaid/dashboard') }, [loc.pathname])
+  useEffect(() => { if (!loc.pathname || loc.pathname === '/') navigate('/NekoMaid/dashboard') }, [loc.pathname])
   useEffect(() => {
     update = updateF
     return () => { update = undefined as any }
@@ -109,19 +132,16 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
     const path = Array.isArray(it.path) ? it.path[0] : it.path
     const key = '/' + name + '/' + path
     routes.push(<pluginCtx.Provider key={key} value={create(name)}>
-      <Route
-        path={Array.isArray(it.path) ? it.path.map(it => '/' + name + '/' + it) : key}
-        component={it.component}
-        strict={it.strict}
-        exact={it.exact}
-        sensitive={it.sensitive}
-      />
+      {(Array.isArray(it.path) ? it.path.map(it => '/' + name + '/' + it) : [key]).map(path => <Route
+        path={path}
+        element={<it.component />}
+      />)}
     </pluginCtx.Provider>)
     const icon = <ListItemIcon><pluginCtx.Provider value={create(name)}>
       {(typeof it.icon === 'function' ? <it.icon /> : it.icon) || <Build />}
     </pluginCtx.Provider></ListItemIcon>
     return it.title
-      ? <NavLink key={key} to={'/' + name + '/' + (it.url || path)} activeClassName='actived'>
+      ? <NavLink key={key} to={'/' + name + '/' + (it.url || path)} className={isActive => isActive ? 'active' : undefined}>
         <ListItem button>
           {isExpand ? icon : <Tooltip title={it.title} placement='right'>{icon}</Tooltip>}
           {isExpand && <ListItemText primary={it.title} />}
@@ -152,7 +172,7 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
         color: 'inherit',
         textDecoration: 'inherit'
       },
-      '& .actived > div': {
+      '& .active > div': {
         fontWeight: 'bold',
         color: theme => theme.palette.primary.main,
         backgroundColor: theme => alpha(theme.palette.primary.main, theme.palette.action.selectedOpacity) + '!important',

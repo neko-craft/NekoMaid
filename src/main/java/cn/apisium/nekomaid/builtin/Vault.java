@@ -56,7 +56,7 @@ final class Vault {
                 int page = (int) args[0];
                 return new Object[] {
                         arr.length,
-                        stream.skip(page * 10).limit(10).map(it -> {
+                        stream.skip(page * 10L).limit(10).map(it -> {
                             PlayerInfo info = new PlayerInfo();
                             info.id = it.getName();
                             if (econ != null && econ.isEnabled()) info.balance = econ.getBalance(it);

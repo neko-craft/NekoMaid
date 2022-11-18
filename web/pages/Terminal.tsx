@@ -1,14 +1,21 @@
 import React, { useMemo, useEffect, useState, useRef, createRef } from 'react'
 import { usePlugin } from '../Context'
-import { Send } from '@mui/icons-material'
-import { TextField, Toolbar, IconButton, Paper, Tooltip, Box, Autocomplete } from '@mui/material'
 import { parseComponents, parseMessage, TextComponent } from '../utils'
 import { address } from '../url'
 import throttle from 'lodash/throttle'
+import Send from '@mui/icons-material/Send'
 import toast, { action, success } from '../toast'
 import More from '../components/More'
 import dialog from '../dialog'
 import lang from '../../languages'
+
+import TextField from '@mui/material/TextField'
+import Toolbar from '@mui/material/Toolbar'
+import IconButton from '@mui/material/IconButton'
+import Paper from '@mui/material/Paper'
+import Tooltip from '@mui/material/Tooltip'
+import Box from '@mui/material/Box'
+import Autocomplete from '@mui/material/Autocomplete'
 
 type Log = { level: string, msg: string, time: number, logger: string, components?: TextComponent[] }
 

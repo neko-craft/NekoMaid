@@ -1,8 +1,16 @@
 import React, { useState } from 'react'
-import { Dialog, DialogTitle, DialogContent, DialogContentText, TextField, DialogActions, Button, Autocomplete } from '@mui/material'
 
-import type { DialogProps } from '@mui/material/Dialog'
+import Dialog, { DialogProps } from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import TextField from '@mui/material/TextField'
+import DialogActions from '@mui/material/DialogActions'
+import Button from '@mui/material/Button'
+import Autocomplete from '@mui/material/Autocomplete'
+
 import lang, { minecraft } from '../../languages'
+console.log(minecraft['addServer.enterIp'])
 
 const ServerSwitch: React.FC<DialogProps> = props => {
   const [value, setValue] = useState<string>('')

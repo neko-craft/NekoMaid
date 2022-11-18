@@ -4,14 +4,32 @@ import lang, { minecraft } from '../../languages'
 import { parse, stringify } from 'nbt-ts'
 import { UnControlled } from 'react-codemirror2'
 import { useTheme } from '@mui/material/styles'
-import { Refresh, ExpandMore, Save } from '@mui/icons-material'
-import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, IconButton, Button,
-  CardContent, TextField, Accordion, AccordionSummary, FormControlLabel, Switch,
-  Typography, AccordionDetails } from '@mui/material'
-import { useHistory, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useDrawerWidth, useGlobalData, usePlugin } from '../Context'
 import { cardActionStyles } from '../theme'
 import { action, success, failed } from '../toast'
+
+import Box from '@mui/material/Box'
+import Toolbar from '@mui/material/Toolbar'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import Divider from '@mui/material/Divider'
+import IconButton from '@mui/material/IconButton'
+import Button from '@mui/material/Button'
+import CardContent from '@mui/material/CardContent'
+import TextField from '@mui/material/TextField'
+import Accordion from '@mui/material/Accordion'
+import AccordionSummary from '@mui/material/AccordionSummary'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
+import Typography from '@mui/material/Typography'
+import AccordionDetails from '@mui/material/AccordionDetails'
+
+import Refresh from '@mui/icons-material/Refresh'
+import ExpandMore from '@mui/icons-material/ExpandMore'
+import Save from '@mui/icons-material/Save'
 
 interface Entity {
   type: string
@@ -29,7 +47,7 @@ interface Entity {
 const REGEXP = /^[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}$/i
 
 const EntitySelector: React.FC = () => {
-  const his = useHistory()
+  const navigate = useNavigate()
   const [id, setId] = useState('')
   const error = REGEXP.test(id) ? undefined : lang.invalidValue
   return <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -45,7 +63,7 @@ const EntitySelector: React.FC = () => {
       disabled={!!error}
       variant='contained'
       sx={{ height: 36 }}
-      onClick={() => his.push('/NekoMaid/entity/' + id)}
+      onClick={() => navigate('/NekoMaid/entity/' + id)}
     >{minecraft['gui.done']}</Button>
   </Box>
 }
@@ -55,7 +73,7 @@ const values = ['customNameVisible', 'glowing', 'gravity', 'invulnerable', 'sile
 const EntityEditor: React.FC = () => {
   const theme = useTheme()
   const plugin = usePlugin()
-  const his = useHistory()
+  const navigate = useNavigate()
   const loc = useLocation()
   const globalData = useGlobalData()
   const drawerWidth = useDrawerWidth()
@@ -67,7 +85,7 @@ const EntityEditor: React.FC = () => {
     if (arr.length > 3) id = arr[3]
   }
   useEffect(() => {
-    const off = plugin.on('entity:select', id => his.push('/NekoMaid/entity/' + id))
+    const off = plugin.on('entity:select', id => navigate('/NekoMaid/entity/' + id))
     return () => void off()
   }, [])
   const update = () => {
@@ -75,7 +93,7 @@ const EntityEditor: React.FC = () => {
       plugin.emit('entity:fetch', (entity: Entity) => {
         if (!entity) {
           failed()
-          his.push('/NekoMaid/entity')
+          navigate('/NekoMaid/entity')
           return
         }
         if (globalData.hasNBTAPI && entity.nbt) entity.nbt = stringify(parse(entity.nbt), { pretty: true })

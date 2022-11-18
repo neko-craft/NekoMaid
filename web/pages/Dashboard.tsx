@@ -2,14 +2,9 @@ import 'echarts/extension/bmap/bmap'
 
 import React, { useEffect, useState, useMemo } from 'react'
 import { red, green, orange, deepPurple, blue, yellow } from '@mui/material/colors'
-import { ArrowDownward, Check, Handyman, People, SentimentVerySatisfied, SentimentDissatisfied, Refresh, ExpandMore,
-  SentimentSatisfied, AccessTime, ArrowUpward, MoreHoriz, Remove, ExitToApp, Update } from '@mui/icons-material'
-import { useHistory } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useTheme } from '@mui/material/styles'
 import { usePlugin, useGlobalData } from '../Context'
-import { CardContent, Container, Grid, Box, Card, Typography, Toolbar, CardHeader, Divider,
-  Skeleton, Link, LinearProgress, List, ListItem, IconButton, ListItemText, ListItemAvatar,
-  Pagination, Tooltip, Avatar, Accordion, AccordionSummary } from '@mui/material'
 import { LoadingList } from '../components/Loading'
 import { getSkin } from '../utils'
 import { darkMapStyles as styleJson } from '../theme'
@@ -21,6 +16,45 @@ import Uptime from '../components/Uptime'
 import dialog from '../dialog'
 import lang from '../../languages'
 import isEqual from 'lodash/isEqual'
+
+import CardContent from '@mui/material/CardContent'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import Typography from '@mui/material/Typography'
+import Toolbar from '@mui/material/Toolbar'
+import CardHeader from '@mui/material/CardHeader'
+import Divider from '@mui/material/Divider'
+import Skeleton from '@mui/material/Skeleton'
+import Link from '@mui/material/Link'
+import LinearProgress from '@mui/material/LinearProgress'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import IconButton from '@mui/material/IconButton'
+import ListItemText from '@mui/material/ListItemText'
+import ListItemAvatar from '@mui/material/ListItemAvatar'
+import Pagination from '@mui/material/Pagination'
+import Tooltip from '@mui/material/Tooltip'
+import Avatar from '@mui/material/Avatar'
+import Accordion from '@mui/material/Accordion'
+import AccordionSummary from '@mui/material/AccordionSummary'
+
+import ArrowDownward from '@mui/icons-material/ArrowDownward'
+import Check from '@mui/icons-material/Check'
+import Handyman from '@mui/icons-material/Handyman'
+import People from '@mui/icons-material/People'
+import SentimentVerySatisfied from '@mui/icons-material/SentimentVerySatisfied'
+import SentimentDissatisfied from '@mui/icons-material/SentimentDissatisfied'
+import Refresh from '@mui/icons-material/Refresh'
+import ExpandMore from '@mui/icons-material/ExpandMore'
+import SentimentSatisfied from '@mui/icons-material/SentimentSatisfied'
+import AccessTime from '@mui/icons-material/AccessTime'
+import ArrowUpward from '@mui/icons-material/ArrowUpward'
+import MoreHoriz from '@mui/icons-material/MoreHoriz'
+import Remove from '@mui/icons-material/Remove'
+import ExitToApp from '@mui/icons-material/ExitToApp'
+import Update from '@mui/icons-material/Update'
 
 interface Status { time: number, players: number, tps: number, entities: number, chunks: number }
 interface Player { name: string, ip?: string, loc?: [number, number] }
@@ -34,7 +68,7 @@ interface CurrentStatus {
   behinds: number
 }
 
-const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.ReactNode, color: string }> = ({ title, content, icon, children, color }) =>
+const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.ReactNode, color: string, children: JSX.Element }> = ({ title, content, icon, children, color }) =>
   <Card sx={{ height: '100%' }}>
     <CardContent>
       <Grid container spacing={3} sx={{ justifyContent: 'space-between', flexWrap: 'nowrap' }}>
@@ -51,7 +85,7 @@ const TopCard: React.FC<{ title: string, content: React.ReactNode, icon: React.R
   </Card>
 
 const Players: React.FC<{ players?: CurrentStatus['players'] }> = React.memo(({ players }) => {
-  const his = useHistory()
+  const navigate = useNavigate()
   const plugin = usePlugin()
   const globalData = useGlobalData()
   const [page, setPage] = useState(1)
@@ -82,14 +116,14 @@ const Players: React.FC<{ players?: CurrentStatus['players'] }> = React.memo(({ 
                         }, name, it || null))
                       }
                     ><ExitToApp /></IconButton>
-                    <IconButton edge='end' onClick={() => his.push('/NekoMaid/playerList/' + name)} size='small'><MoreHoriz /></IconButton>
+                    <IconButton edge='end' onClick={() => navigate('/NekoMaid/playerList/' + name)} size='small'><MoreHoriz /></IconButton>
                   </>
                   }
                 >
                   <ListItemAvatar>
                     <Avatar
                       src={getSkin(globalData, name, true)}
-                      imgProps={{ crossOrigin: 'anonymous', onClick () { his.push('/NekoMaid/playerList/' + name) }, style: { width: 40, height: 40 } }}
+                      imgProps={{ crossOrigin: 'anonymous', onClick () { navigate('/NekoMaid/playerList/' + name) }, style: { width: 40, height: 40 } }}
                       sx={{ cursor: 'pointer' }}
                       variant='rounded'
                     />
@@ -179,7 +213,7 @@ let mapAdded = false
 let mapLoaded = false
 const WorldMap: React.FC<{ players: Player[] }> = React.memo(({ players }) => {
   const theme = useTheme()
-  const his = useHistory()
+  const navigate = useNavigate()
   const globalData = useGlobalData()
   const [, update] = useState(0)
   if (!mapAdded) {
@@ -199,7 +233,7 @@ const WorldMap: React.FC<{ players: Player[] }> = React.memo(({ players }) => {
       style={{ height: 750, maxHeight: '100vh' }}
       onEvents={{
         click ({ data: { name } }: { data: { name: string } }) {
-          if (players.some(it => it.name === name)) his.push('/NekoMaid/playerList/' + name)
+          if (players.some(it => it.name === name)) navigate('/NekoMaid/playerList/' + name)
         }
       }}
       option={{

@@ -1,22 +1,33 @@
 import React, { useState, useEffect } from 'react'
 import { action, failed, success } from '../toast'
-import { Backpack, Refresh } from '@mui/icons-material'
-import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, IconButton,
-  ListItemIcon, MenuItem, CardContent } from '@mui/material'
+import Backpack from '@mui/icons-material/Backpack'
+import Refresh from '@mui/icons-material/Refresh'
 import { useGlobalData, usePlugin } from '../Context'
 import { ActionComponent } from './PlayerList'
-import { useHistory, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { cardActionStyles } from '../theme'
 import ItemViewer, { Item, InvType } from '../components/ItemViewer'
 import Empty from '../components/Empty'
 import lang, { minecraft } from '../../languages'
 
+import Box from '@mui/material/Box'
+import Toolbar from '@mui/material/Toolbar'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import Divider from '@mui/material/Divider'
+import IconButton from '@mui/material/IconButton'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import MenuItem from '@mui/material/MenuItem'
+import CardContent from '@mui/material/CardContent'
+
 export const playerAction: ActionComponent = ({ onClose, player }) => {
-  const his = useHistory()
+  const navigate = useNavigate()
   const globalData = useGlobalData()
   return <MenuItem disabled={!player || (!globalData.hasOpenInv && !player.online)} onClick={() => {
     onClose()
-    if (player) his.push('/NekoMaid/openInv/' + player.name)
+    if (player) navigate('/NekoMaid/openInv/' + player.name)
   }}>
     <ListItemIcon><Backpack /></ListItemIcon>{lang.openInv.title}
   </MenuItem>

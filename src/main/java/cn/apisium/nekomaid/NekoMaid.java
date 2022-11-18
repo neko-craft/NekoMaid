@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
 @SoftDependency("PlaceholderAPI")
 @SoftDependency("Multiverse-Core")
 public final class NekoMaid extends JavaPlugin implements Listener {
-    private final static String UNIPORTER_VERSION = "1.3.3-SNAPSHOT";
+    private final static String UNIPORTER_VERSION = "1.3.4-SNAPSHOT";
     private final static String URL_MESSAGE = ChatColor.translateAlternateColorCodes('&',
             "&e[NekoMaid] &fOpen this url to manage your server: &7"),
             SUCCESS = ChatColor.translateAlternateColorCodes('&',

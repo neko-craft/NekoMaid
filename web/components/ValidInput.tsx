@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import TextField, { TextFieldProps } from '@mui/material/TextField'
 
 export type ValidInputProps = TextFieldProps & {
-  onStatusChange: (it: boolean) => void
+  onStatusChange?: (it: boolean) => void
   validator?: (text: string) => React.ReactNode | null | undefined | boolean
 }
 

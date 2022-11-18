@@ -1,14 +1,34 @@
 import React, { useState, useEffect } from 'react'
 import { action } from '../toast'
-import { Delete, Add, Save } from '@mui/icons-material'
-import { Box, Toolbar, Container, Grid, Card, CardHeader, Divider, List, ListItemButton, Checkbox, ListItemIcon,
-  ListItem, IconButton, ListItemText, CardContent, TextField, FormControlLabel, Switch } from '@mui/material'
 import { usePlugin } from '../Context'
 import { cardActionStyles } from '../theme'
 import Empty from '../components/Empty'
 import Cron from 'material-ui-cron'
 import dialog from '../dialog'
 import lang, { currentLanguage } from '../../languages'
+
+import Box from '@mui/material/Box'
+import Toolbar from '@mui/material/Toolbar'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import Divider from '@mui/material/Divider'
+import List from '@mui/material/List'
+import ListItemButton from '@mui/material/ListItemButton'
+import Checkbox from '@mui/material/Checkbox'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import ListItem from '@mui/material/ListItem'
+import IconButton from '@mui/material/IconButton'
+import ListItemText from '@mui/material/ListItemText'
+import CardContent from '@mui/material/CardContent'
+import TextField from '@mui/material/TextField'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
+
+import Delete from '@mui/icons-material/Delete'
+import Add from '@mui/icons-material/Add'
+import Save from '@mui/icons-material/Save'
 
 interface Task { name: string, cron: string, values: string[], enabled: boolean, whenIdle: boolean }
 const Scheduler: React.FC = () => {
