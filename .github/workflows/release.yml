@@ -83,7 +83,7 @@ jobs:
         run: version='${{ github.ref }}' && sed -i "s/[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/${version:10}/" package.json
 
       - name: Copy icons
-        run: npm run copyIcons
+        run: mkdir public && npm run copyIcons
 
       - name: Build app
         run: npm run build
