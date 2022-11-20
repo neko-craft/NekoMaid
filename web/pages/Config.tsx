@@ -46,7 +46,7 @@ import Link from '@mui/material/Link'
 import type { ServerRecord } from '../App'
 
 configs.push({
-  title: lang.config.serverConfig,
+  title: () => lang.config.serverConfig,
   component () {
     const plugin = usePlugin()
     const globalData = useGlobalData()
@@ -135,7 +135,7 @@ configs.push({
   }
 },
 {
-  title: lang.history,
+  title: () => lang.history,
   component () {
     const [cur, update] = useState(0)
     const list: ServerRecord[] = JSON.parse(localStorage.getItem('NekoMaid:servers') || '[]')
@@ -165,7 +165,7 @@ configs.push({
   }
 },
 {
-  title: lang.config.theme,
+  title: () => lang.config.theme,
   component () {
     const color = localStorage.getItem('NekoMaid:color') || 'blue'
     return <CardContent sx={{ textAlign: 'center' }}>
@@ -210,7 +210,7 @@ const Config: React.FC = () => {
       <Grid container spacing={3}>
         {configs.map((it, i) => <Grid key={i} item lg={4} md={12} xl={6} xs={12}>
           <Card>
-            <CardHeader title={it.title} />
+            <CardHeader title={it.title()} />
             <Divider />
             <it.component />
           </Card>

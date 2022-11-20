@@ -1,6 +1,6 @@
 import 'dayjs/locale/zh-cn'
 import React from 'react'
-import minecraft from './minecraft/zh_cn.json'
+import minecraft from '../minecraft/zh_cn.json'
 
 export default {
   minecraft: minecraft as typeof minecraft & Record<string, string>,

@@ -1,6 +1,6 @@
 import React from 'react'
-import * as minecraft from './minecraft/en_us.json'
-import type { Language } from './index'
+import * as minecraft from '../minecraft/en_us.json'
+import type { Language } from '../index'
 
 const lang: Language = {
   minecraft,

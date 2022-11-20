@@ -4,12 +4,16 @@
 build
 dist
 icons.json
+public
 minecraftIcons.json
 icons/minecraft
 languages/minecraft
 minecraftIcons
 client.jar
 parcel-bundle-reports
+.yarn
+*.pnp*
+/stats.html
 
 node_modules
 .parcel-cache

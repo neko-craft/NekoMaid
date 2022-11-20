@@ -8,7 +8,7 @@ import { useTheme } from '@mui/material/styles'
 import { getClassName, getCurrentTime, formatMS } from '../utils'
 import { useGlobalData, usePlugin } from '../Context'
 import { CircularLoading } from '../components/Loading'
-import { DataGrid, GridColDef, GridRowData, GridRowId, GridSortItem } from '@mui/x-data-grid'
+import { DataGrid, GridColDef, GridRowModel, GridRowId, GridSortItem } from '@mui/x-data-grid'
 import TreeView from '@mui/lab/TreeView'
 import TreeItem from '@mui/lab/TreeItem'
 import { cardActionStyles } from '../theme'
@@ -705,11 +705,11 @@ const GarbageCollection: React.FC = React.memo(() => {
 const Heap: React.FC = React.memo(() => {
   const plugin = usePlugin()
   const [sortModel, setSortModel] = React.useState<GridSortItem[]>([{ field: 'size', sort: 'desc' }])
-  const [heap, setHeap] = useState<GridRowData[]>([])
+  const [heap, setHeap] = useState<GridRowModel[]>([])
   const [fileMap, setFileMap] = useState<Record<string, string> | null>(null)
   useEffect(() => {
     plugin.emit('profiler:heap', (heap: any, map: any) => {
-      const arr: GridRowData[] = []
+      const arr: GridRowModel[] = []
       for (const id in heap) arr.push({ id: getClassName(id), count: heap[id][0], size: heap[id][1], display: prettyBytes(heap[id][1]) })
       setHeap(arr)
       console.log(map)
@@ -762,7 +762,7 @@ const Heap: React.FC = React.memo(() => {
 const Threads: React.FC = React.memo(() => {
   const plugin = usePlugin()
   const [id, setId] = useState(-1)
-  const [threads, setThreads] = useState<GridRowData[]>([])
+  const [threads, setThreads] = useState<GridRowModel[]>([])
   useEffect(() => {
     plugin.emit('profiler:threads', (threads: any, id: number) => {
       setThreads(threads)

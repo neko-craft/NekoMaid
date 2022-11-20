@@ -44,16 +44,17 @@ repositories {
 }
 
 dependencies {
+    //noinspection VulnerableLibrariesLocal
     compileOnly 'com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT'
     compileOnly 'org.jetbrains:annotations:23.0.0'
-    compileOnly 'io.netty:netty-all:4.1.82.Final'
+    compileOnly 'io.netty:netty-all:4.1.85.Final'
     compileOnly 'org.apache.logging.log4j:log4j-core:2.19.0'
     compileOnly 'com.github.Apisium:Uniporter:1.3.4-SNAPSHOT'
-    compileOnly 'com.github.jikoo.OpenInv:openinvapi:4.2.1'
+    compileOnly 'com.github.jikoo.OpenInv:openinvapi:2f36a4d4dc'
     compileOnly 'me.clip:placeholderapi:2.11.2'
     compileOnly 'de.tr7zw:item-nbt-api-plugin:2.8.0'
     compileOnly 'com.rylinaux:PlugMan:2.2.9'
-    compileOnly 'com.github.oshi:oshi-core:6.2.2'
+    compileOnly 'com.github.oshi:oshi-core:6.3.1'
     compileOnly 'com.onarandombox.multiversecore:Multiverse-Core:4.3.2-SNAPSHOT'
     compileOnly ('com.github.MilkBowl:VaultAPI:1.7') {
         exclude group: 'org.bukkit'
@@ -62,17 +63,16 @@ dependencies {
         exclude group: 'org.bukkit'
     }
 
-    implementation group: 'org.json', name: 'json', version: '20220924'
-    implementation 'io.netty:netty-codec-http:4.1.82.Final'
-    implementation 'com.alibaba.fastjson2:fastjson2:2.0.14'
+    implementation 'org.json:json:20220924'
+    implementation 'com.alibaba.fastjson2:fastjson2:2.0.19'
     implementation 'org.bstats:bstats-bukkit:3.0.0'
-    implementation 'com.github.Apisium:netty-engine.io:03931aef8c'
+    implementation 'com.github.Apisium:netty-engine.io:fdd2609085'
     implementation 'org.apache.commons:commons-compress:1.21'
     implementation 'commons-io:commons-io:2.11.0'
     implementation ('io.socket:engine.io-server:6.2.1') {
         exclude group: 'com.google.code.gson'
     }
-    implementation ('com.maxmind.geoip2:geoip2:3.0.1') {
+    implementation ('com.maxmind.geoip2:geoip2:2.15.0') {
         exclude group: 'org.apache.httpcomponents'
         exclude group: 'com.fasterxml.jackson.core'
         exclude group: 'commons-codec'
@@ -82,6 +82,9 @@ dependencies {
         exclude group: 'com.squareup.okhttp3'
         exclude group: 'io.socket', module: 'engine.io-server'
         exclude group: 'io.socket', module: 'engine.io-client'
+    }
+    implementation ('io.netty:netty-codec-http:4.1.85.Final') {
+        exclude group: 'io.netty'
     }
 
     annotationProcessor 'org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT'
@@ -96,7 +99,10 @@ shadowJar {
     relocate('org.apache.commons.compress', 'cn.apisium.nekomaid.libs.org.apache.commons.compress')
     relocate('io.socket', 'cn.apisium.nekomaid.libs.io.socket')
     relocate('com.maxmind', 'cn.apisium.nekomaid.libs.com.maxmind')
+    relocate('io.netty.handler.codec.http.websocketx', 'cn.apisium.nekomaid.libs.io.netty.handler.codec.http.websocketx')
+    relocate('io.netty.handler.codec.http.multipart', 'cn.apisium.nekomaid.libs.io.netty.handler.codec.http.multipart')
     exclude 'io/papermc/**'
+    exclude 'io/netty/handler/codec/http/*'
 
     archiveClassifier.set('')
     minimize()

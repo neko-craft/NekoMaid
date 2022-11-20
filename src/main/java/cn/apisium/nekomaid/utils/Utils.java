@@ -13,9 +13,11 @@ import io.papermc.paper.util.StacktraceDeobfuscator;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.command.CommandMap;
+import org.bukkit.command.CommandSender;
 import org.bukkit.command.defaults.VersionCommand;
 import org.bukkit.event.server.TabCompleteEvent;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +31,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -38,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @SuppressWarnings("deprecation")
@@ -421,5 +423,44 @@ public final class Utils {
             } catch (Throwable ignored1) {  }
         }
         return null;
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    public static void diagnosticConnections(String url, CommandSender sender) {
+        new Thread(() -> {
+            URL url1;
+            try {
+                url1 = new URL(url);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                if (isLoopbackAddress(InetAddress.getByName(url1.getHost()))) {
+                    sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&e[NekoMaid] &7Diagnostic: &fThe current address is a loopback address. Please see more: &7https://github.com/neko-craft/NekoMaid/wiki/loopbackAddress.md"));
+                }
+            } catch (Throwable ignored) { }
+            try (BufferedReader reader = Resources.asCharSource(url1, StandardCharsets.UTF_8).openBufferedStream()) {
+                String data = reader.lines().collect(Collectors.joining());
+                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&e[NekoMaid] &7Diagnostic Result: " +
+                        (data.contains("upgrades") && data.contains("sid") && data.contains("pingInterval")
+                            ? "&aSuccessful connection."
+                            : "&cUnable to connect.")));
+                NekoMaid.INSTANCE.getLogger().info("Diagnostic: Data:\n" + data);
+            } catch (Throwable e) {
+                NekoMaid.INSTANCE.getLogger().warning("Diagnostic: Connection failed! Please check whether the browser can access the server through the above address!");
+                e.printStackTrace();
+                sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                        "&e[NekoMaid] &7Diagnostic: &cConnection failed! Please check whether the browser can access the server through the above address!"));
+            }
+        }).start();
+    }
+
+    private static boolean isLoopbackAddress(InetAddress addr) {
+        if (addr.isAnyLocalAddress() || addr.isLoopbackAddress()) return true;
+        try {
+            return NetworkInterface.getByInetAddress(addr) != null;
+        } catch (Throwable e) {
+            return false;
+        }
     }
 }

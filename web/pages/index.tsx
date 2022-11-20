@@ -1,4 +1,5 @@
 import React from 'react'
+import loadable from '@loadable/component'
 import Plugin, { GlobalInfo } from '../Plugin'
 import lang, { minecraft } from '../../languages'
 
@@ -17,7 +18,6 @@ import Pets from '@mui/icons-material/Pets'
 
 import Dashboard from './Dashboard'
 import Terminal from './Terminal'
-import PlayerList from './PlayerList'
 import Files from './Files'
 import Plugins from './Plugins'
 import Worlds from './Worlds'
@@ -32,7 +32,7 @@ import OpenInv, { playerAction } from './OpenInv'
 export default (p: Plugin) => p.addPages(
   { component: Dashboard, path: 'dashboard', icon: <DashboardIcon />, title: lang.dashboard.title },
   { component: Terminal, path: 'terminal', icon: <DoubleArrow />, title: lang.terminal.title },
-  { component: PlayerList, path: ['playerList', 'playerList/:name'], icon: <People />, title: minecraft['entity.minecraft.player'] },
+  { component: loadable(() => import('./PlayerList')), path: ['playerList', 'playerList/:name'], icon: <People />, title: minecraft['entity.minecraft.player'] },
   { component: Files, path: 'files', icon: <Description />, title: lang.files.title },
   { component: Plugins, path: 'plugins', icon: <Extension />, title: lang.plugins.title },
   { component: Worlds, path: 'worlds', icon: <Public />, title: lang.worlds.title },

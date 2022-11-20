@@ -74,7 +74,9 @@ public final class NekoMaid extends JavaPlugin implements Listener {
             SUCCESS = ChatColor.translateAlternateColorCodes('&',
                     "&e[NekoMaid] &aSuccess!"),
             VERSION = ChatColor.translateAlternateColorCodes('&',
-                    "&e[NekoMaid] &7Version: &a");
+                    "&e[NekoMaid] &7Version: &a"),
+            DIAGNOSTIC = ChatColor.translateAlternateColorCodes('&',
+                    "&e[NekoMaid] &7Diagnosing URL: &a");
     public static NekoMaid INSTANCE;
     { INSTANCE = this; }
 
@@ -228,8 +230,8 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         if (skin.isEmpty()) GLOBAL_DATA.remove("skinUrl");
         else GLOBAL_DATA.put("skinUrl", skin);
         String head = getConfig().getString("head-url", "");
-        if (skin.isEmpty()) GLOBAL_DATA.remove("headUrl");
-        else GLOBAL_DATA.put("headUrl", skin);
+        if (head.isEmpty()) GLOBAL_DATA.remove("headUrl");
+        else GLOBAL_DATA.put("headUrl", head);
     }
 
     private void setupCommands() {
@@ -255,6 +257,14 @@ public final class NekoMaid extends JavaPlugin implements Listener {
         registerCommand(this, "invalidate", (sender, command, label, args) -> {
             tempTokens.cleanUp();
             sender.sendMessage(SUCCESS);
+            return true;
+        });
+        registerCommand(this, "diagnostic", (sender, command, label, args) -> {
+            int port = getConnectPort();
+            String hostname = (Uniporter.isSSLPort(port) ? "https://" : "http://") +
+                    getConnectHostname(port, "EIO=4&transport=polling");
+            sender.sendMessage(DIAGNOSTIC + hostname);
+            Utils.diagnosticConnections(hostname, sender);
             return true;
         });
 
@@ -295,12 +305,12 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     }
 
     @NotNull
-    public String getConnectHostname(int port, @NotNull String token) {
+    public String getConnectHostname(int port, @Nullable String token) {
         String url = getConfig().getString("hostname", "");
         Optional<Route> it = Uniporter.findRoutesByHandler("NekoMaid").stream().findFirst();
         if (!it.isPresent()) throw new RuntimeException("Handler not registered!");
         Route route = it.get();
-        return (url.contains(":") ? url : url + ":" + port) + route.getPath() + "?" + token;
+        return (url.contains(":") ? url : url + ":" + port) + route.getPath() + (token == null ? "" : "?" + token);
     }
 
     @NotNull

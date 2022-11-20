@@ -10,7 +10,6 @@ import Button from '@mui/material/Button'
 import Autocomplete from '@mui/material/Autocomplete'
 
 import lang, { minecraft } from '../../languages'
-console.log(minecraft['addServer.enterIp'])
 
 const ServerSwitch: React.FC<DialogProps> = props => {
   const [value, setValue] = useState<string>('')

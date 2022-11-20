@@ -3,7 +3,7 @@ import * as colors from '@mui/material/colors'
 import * as muiLanguages from '@mui/material/locale/index'
 import socketIO from 'socket.io-client'
 import darkScrollbar from '@mui/material/darkScrollbar'
-import { useLocation, Route, NavLink, useNavigate } from 'react-router-dom'
+import { useLocation, Route, NavLink, useNavigate, Routes } from 'react-router-dom'
 
 import Divider from '@mui/material/Divider'
 import Box from '@mui/material/Box'
@@ -65,7 +65,7 @@ const LanguageSwitch: React.FC = React.memo(() => {
             location.reload()
           }
         }}
-      >{value.minecraft['language.name']}</MenuItem>)}
+      >{value}</MenuItem>)}
     </MenuComponent>
   </>
 })
@@ -131,17 +131,18 @@ const App: React.FC<{ darkMode: boolean, setDarkMode: (a: boolean) => void }> = 
   const mapToItem = (name: string, it: Page) => {
     const path = Array.isArray(it.path) ? it.path[0] : it.path
     const key = '/' + name + '/' + path
-    routes.push(<pluginCtx.Provider key={key} value={create(name)}>
-      {(Array.isArray(it.path) ? it.path.map(it => '/' + name + '/' + it) : [key]).map(path => <Route
+    routes.push(<pluginCtx.Provider key={key} value={create(name)}><Routes>
+      {(Array.isArray(it.path) ? it.path.map(it => '/' + name + '/' + it) : [key]).map((path, i) => <Route
         path={path}
+        key={path + '-' + i}
         element={<it.component />}
       />)}
-    </pluginCtx.Provider>)
+    </Routes></pluginCtx.Provider>)
     const icon = <ListItemIcon><pluginCtx.Provider value={create(name)}>
       {(typeof it.icon === 'function' ? <it.icon /> : it.icon) || <Build />}
     </pluginCtx.Provider></ListItemIcon>
     return it.title
-      ? <NavLink key={key} to={'/' + name + '/' + (it.url || path)} className={isActive => isActive ? 'active' : undefined}>
+      ? <NavLink key={key} to={'/' + name + '/' + (it.url || path)} className={({ isActive }) => isActive ? 'active' : undefined}>
         <ListItem button>
           {isExpand ? icon : <Tooltip title={it.title} placement='right'>{icon}</Tooltip>}
           {isExpand && <ListItemText primary={it.title} />}

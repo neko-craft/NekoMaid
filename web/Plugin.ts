@@ -55,7 +55,7 @@ const mapArgs = (args: any[]) => args.map(it => typeof it === 'string'
       : it
   : it)
 
-export const configs: Array<{ title: string, component: React.ComponentType }> = []
+export const configs: Array<{ title (): string, component: React.ComponentType }> = []
 
 let flag = 0
 export default class Plugin {
@@ -72,7 +72,7 @@ export default class Plugin {
     return this
   }
 
-  public addConfig (title: string, component: React.ComponentType) {
+  public addConfig (title: () => string, component: React.ComponentType) {
     configs.push({ title, component })
     return this
   }
