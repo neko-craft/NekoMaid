@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import lang from '../languages'
+import { lang } from '../languages'
 
 import Snackbar, { SnackbarProps } from '@mui/material/Snackbar'
 import Box from '@mui/material/Box'

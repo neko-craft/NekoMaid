@@ -4,7 +4,7 @@ import { useGlobalData, usePlugin } from '../Context'
 import { action } from '../toast'
 import ReactECharts from 'echarts-for-react'
 import dialog from '../dialog'
-import lang from '../../languages'
+import { lang } from '../../languages'
 
 import Box from '@mui/material/Box'
 import Toolbar from '@mui/material/Toolbar'

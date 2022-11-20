@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import ItemViewer, { Item, InvType } from '../components/ItemViewer'
-import lang, { minecraft } from '../../languages'
+import { lang, minecraft } from '../../languages'
 import { parse, stringify } from 'nbt-ts'
 import { UnControlled } from 'react-codemirror2'
 import { useTheme } from '@mui/material/styles'

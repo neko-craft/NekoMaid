@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { lang, minecraft } from '../../languages'
 
 import Dialog, { DialogProps } from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
@@ -8,8 +9,6 @@ import TextField from '@mui/material/TextField'
 import DialogActions from '@mui/material/DialogActions'
 import Button from '@mui/material/Button'
 import Autocomplete from '@mui/material/Autocomplete'
-
-import lang, { minecraft } from '../../languages'
 
 const ServerSwitch: React.FC<DialogProps> = props => {
   const [value, setValue] = useState<string>('')

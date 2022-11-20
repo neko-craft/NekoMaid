@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import loadable from '@loadable/component'
 import Plugin, { GlobalInfo } from '../Plugin'
-import lang, { minecraft } from '../../languages'
+import { minecraft, lang } from '../../languages'
 import { useGlobalData, usePlugin } from '../Context'
 
 import Badge from '@mui/material/Badge'

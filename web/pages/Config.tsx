@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import dayjs from 'dayjs'
 import dialog from '../dialog'
-import lang from '../../languages'
+import { lang } from '../../languages'
 import * as colors from '@mui/material/colors'
 import { failed, success } from '../toast'
 import { configs } from '../Plugin'

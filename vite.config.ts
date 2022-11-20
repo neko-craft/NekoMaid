@@ -1,10 +1,9 @@
 import { defineConfig } from 'vite'
 import visualizer from 'rollup-plugin-visualizer'
-import topLevelAwait from 'vite-plugin-top-level-await'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  plugins: [react(), topLevelAwait()],
+  plugins: [react()],
   build: {
     rollupOptions: {
       plugins: [visualizer()],

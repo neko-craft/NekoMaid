@@ -6,7 +6,7 @@ import { DataGrid, GridCellParams, GridSortItem } from '@mui/x-data-grid'
 import { useNavigate } from 'react-router-dom'
 import { action, success } from '../toast'
 import { getSkin } from '../utils'
-import lang, { minecraft } from '../../languages'
+import { lang, minecraft } from '../../languages'
 import dialog from '../dialog'
 import isEqual from 'lodash/isEqual'
 

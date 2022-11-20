@@ -5,7 +5,7 @@ import { cardActionStyles } from '../theme'
 import Empty from '../components/Empty'
 import Cron from 'material-ui-cron'
 import dialog from '../dialog'
-import lang, { currentLanguage } from '../../languages'
+import { lang, currentLanguage } from '../../languages'
 
 import Box from '@mui/material/Box'
 import Toolbar from '@mui/material/Toolbar'

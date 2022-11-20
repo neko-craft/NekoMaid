@@ -14,7 +14,7 @@ import ReactECharts from 'echarts-for-react'
 import Empty from '../components/Empty'
 import Uptime from '../components/Uptime'
 import dialog from '../dialog'
-import lang from '../../languages'
+import { lang } from '../../languages'
 import isEqual from 'lodash/isEqual'
 
 import CardContent from '@mui/material/CardContent'
@@ -146,10 +146,10 @@ const Players: React.FC<{ players?: CurrentStatus['players'] }> = React.memo(({ 
   </Card>
 })
 
-const config = [[lang.worlds.players, 'bar', 0], ['TPS', 'line', 1], [lang.worlds.chunks, 'line', 2], [lang.worlds.entities, 'line', 2]]
 const Charts: React.FC<{ data: Status[] }> = React.memo(props => {
   const theme = useTheme()
   const labels: string[] = []
+  const config = [[lang.worlds.players, 'bar', 0], ['TPS', 'line', 1], [lang.worlds.chunks, 'line', 2], [lang.worlds.entities, 'line', 2]]
   const data: any = config.map(it => ({ name: it[0], data: [] as number[], type: it[1], smooth: true, yAxisIndex: it[2] }))
   props.data.forEach(it => {
     const time = new Date(it.time)

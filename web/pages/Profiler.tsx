@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import lang, { minecraft } from '../../languages'
+import { minecraft, lang } from '../../languages'
 import ReactECharts from 'echarts-for-react'
 import prettyBytes from 'pretty-bytes'
 import snakeCase from 'lodash/snakeCase'

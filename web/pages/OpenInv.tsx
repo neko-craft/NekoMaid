@@ -7,7 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { cardActionStyles } from '../theme'
 import ItemViewer, { Item, InvType } from '../components/ItemViewer'
 import Empty from '../components/Empty'
-import lang, { minecraft } from '../../languages'
+import { minecraft, lang } from '../../languages'
 import type { PlayerListActionComponent } from '../Plugin'
 
 import Box from '@mui/material/Box'

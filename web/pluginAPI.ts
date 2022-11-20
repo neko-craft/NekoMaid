@@ -11,7 +11,7 @@ import * as dialog from './dialog'
 import * as toast from './toast'
 import * as url from './url'
 import * as utils from './utils'
-import language, { languages, currentLanguage } from '../languages/index'
+import { lang, languages, currentLanguage } from '../languages/index'
 
 import * as react from 'react'
 import * as reactDom from 'react-dom/client'
@@ -35,7 +35,6 @@ import * as emotionStyled from '@emotion/styled'
   url,
   utils,
   languages,
-  language,
   currentLanguage,
   libraries: {
     react,
@@ -43,7 +42,8 @@ import * as emotionStyled from '@emotion/styled'
     jsxRuntime,
     emotionReact,
     emotionStyled
-  }
+  },
+  get language () { return lang }
 }
 
 export default (url: string) => {

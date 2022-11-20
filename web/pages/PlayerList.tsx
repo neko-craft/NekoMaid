@@ -10,7 +10,7 @@ import { usePlugin, useGlobalData } from '../Context'
 import { FXAASkinViewer, createOrbitControls, WalkingAnimation, RotatingAnimation } from 'skinview3d'
 import { useTheme } from '@mui/material/styles'
 import { useParams, useNavigate } from 'react-router-dom'
-import lang, { minecraft } from '../../languages'
+import { minecraft, lang } from '../../languages'
 
 import Grid from '@mui/material/Grid'
 import Toolbar from '@mui/material/Toolbar'

@@ -15,7 +15,7 @@ import duration from 'dayjs/plugin/duration'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import ServerSwitch from './components/ServerSwitch'
 import createCache from '@emotion/cache'
-import lang from '../languages'
+import { lang, promise } from '../languages'
 
 import { createRoot } from 'react-dom/client'
 import { CacheProvider } from '@emotion/react'
@@ -24,10 +24,12 @@ import { HashRouter } from 'react-router-dom'
 import url from './url'
 import App from './App'
 
-dayjs.locale(lang.underlineName)
 dayjs.extend(duration)
 dayjs.extend(relativeTime)
 
-createRoot(document.getElementById('app')!).render(<CacheProvider value={createCache({ key: 'nm', stylisPlugins: [] })}>
-  {url ? <HashRouter><App /></HashRouter> : <ServerSwitch open />}
-</CacheProvider>)
+promise.then(() => {
+  dayjs.locale(lang.underlineName)
+  createRoot(document.getElementById('app')!).render(<CacheProvider value={createCache({ key: 'nm', stylisPlugins: [] })}>
+    {url ? <HashRouter><App /></HashRouter> : <ServerSwitch open />}
+  </CacheProvider>)
+})

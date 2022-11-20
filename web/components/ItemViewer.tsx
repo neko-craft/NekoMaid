@@ -5,7 +5,7 @@ import { useTheme } from '@mui/material/styles'
 import { useGlobalData, usePlugin } from '../Context'
 import { parseComponent, stringifyTextComponent } from '../utils'
 import MojangSON, { parse, stringify, Int, Byte, Short } from 'nbt-ts'
-import lang, { minecraft } from '../../languages'
+import { lang, minecraft } from '../../languages'
 import set from 'lodash/set'
 import icons from '../../minecraftIcons.json'
 

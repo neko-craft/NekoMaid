@@ -1,10 +1,8 @@
 import React from 'react'
-import language from '../languages/index'
+import { lang, minecraft } from '../languages/index'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
 import Tooltip from '@mui/material/Tooltip'
 import type { GlobalInfo } from './Plugin'
-
-const { minecraft } = language
 
 export interface ObjectColor { color?: { r: number, g: number, b: number, alpha: number }, name?: string }
 export interface TextComponent {
@@ -235,7 +233,7 @@ const classesNameMap: Record<string, string> = {
 }
 
 export const getClassName = (it: string) => {
-  if (it === 'others') return language.others
+  if (it === 'others') return lang.others
   let i = 0
   while (it[i] === '[' && i < it.length) i++
   const name = it.slice(i)
@@ -249,11 +247,11 @@ export const getCurrentTime = () => {
 }
 
 export const formatMS = (time: number) => {
-  if (time < 10) return time.toFixed(2) + ' ' + language.ms
-  if (time < 100) return time.toFixed(1) + ' ' + language.ms
-  if (time < 5000) return (time | 0) + ' ' + language.ms
-  if (time <= 60000) return (time / 1000).toFixed(2) + language.secound
-  return (time / 1000 | 0) + ' ' + language.secound
+  if (time < 10) return time.toFixed(2) + ' ' + lang.ms
+  if (time < 100) return time.toFixed(1) + ' ' + lang.ms
+  if (time < 5000) return (time | 0) + ' ' + lang.ms
+  if (time <= 60000) return (time / 1000).toFixed(2) + lang.secound
+  return (time / 1000 | 0) + ' ' + lang.secound
 }
 
 export const getSkin = (data: Partial<GlobalInfo> | null | undefined, name: any, isHead = false) => {

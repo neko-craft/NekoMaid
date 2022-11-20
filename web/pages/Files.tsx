@@ -18,7 +18,7 @@ import 'codemirror/addon/search/search'
 
 import React, { useEffect, useState, useRef } from 'react'
 import toast, { action, failed, success } from '../toast'
-import lang, { minecraft } from '../../languages'
+import { minecraft, lang } from '../../languages'
 import icons from '../../icons.json'
 import { styled, alpha, useTheme } from '@mui/material/styles'
 import { iconClasses } from '@mui/material/Icon'

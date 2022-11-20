@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTheme } from '@mui/material/styles'
-import lang from '../../languages'
+import { lang } from '../../languages'
 
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react'
-import lang from '../../languages'
+import { lang } from '../../languages'
 import Box, { BoxProps } from '@mui/material/Box'
 
 const SRC = 1000

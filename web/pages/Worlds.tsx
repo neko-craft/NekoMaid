@@ -5,7 +5,7 @@ import { success } from '../toast'
 import { Countdown } from '../components/Uptime'
 import { usePlugin, useGlobalData } from '../Context'
 import { cardActionStyles } from '../theme'
-import lang, { minecraft } from '../../languages'
+import { lang, minecraft } from '../../languages'
 
 import Grid from '@mui/material/Grid'
 import Toolbar from '@mui/material/Toolbar'

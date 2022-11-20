@@ -7,7 +7,7 @@ import Send from '@mui/icons-material/Send'
 import toast, { action, success } from '../toast'
 import More from '../components/More'
 import dialog from '../dialog'
-import lang from '../../languages'
+import { lang } from '../../languages'
 
 import TextField from '@mui/material/TextField'
 import Toolbar from '@mui/material/Toolbar'

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import ValidInput, { ValidInputProps } from './components/ValidInput'
-import lang, { minecraft } from '../languages'
+import { lang, minecraft } from '../languages'
 
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
