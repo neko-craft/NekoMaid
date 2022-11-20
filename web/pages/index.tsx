@@ -47,7 +47,7 @@ export default (p: Plugin) => p.addPages(
   { component: Dashboard, path: 'dashboard', icon: <DashboardIcon />, title: lang.dashboard.title },
   { component: Terminal, path: 'terminal', icon: <DoubleArrow />, title: lang.terminal.title },
   { component: loadable(() => import('./PlayerList')), path: ['playerList', 'playerList/:name'], icon: <People />, title: minecraft['entity.minecraft.player'] },
-  { component: Files, path: 'files', icon: <Description />, title: lang.files.title },
+  { component: Files, path: 'files/*', icon: <Description />, title: lang.files.title },
   { component: Plugins, path: 'plugins', icon: <Extension />, title: lang.plugins.title },
   { component: Worlds, path: 'worlds', icon: <Public />, title: lang.worlds.title },
   { component: BlockEditor, path: 'block', icon: <Widgets />, title: lang.blockEditor.title },

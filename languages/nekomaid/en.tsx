@@ -1,5 +1,5 @@
 import React from 'react'
-import * as minecraft from '../minecraft/en_us.json'
+import minecraft from '../minecraft/en_us.json'
 import type { Language } from '../index'
 
 const lang: Language = {
@@ -20,7 +20,7 @@ const lang: Language = {
   history: 'History',
   unknown: 'unknown',
   more: 'More...',
-  refresh: 'REFRESH',
+  refresh: 'Refresh',
   reason: 'Reason',
   operations: 'Operations',
   unrecoverable: 'UNRECOVERABLE!',

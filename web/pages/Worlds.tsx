@@ -212,7 +212,7 @@ const Worlds: React.FC = () => {
                     <ListItemText primary={minecraft['selectWorld.gameRules']} />
                     {open ? <ExpandLess /> : <ExpandMore />}
                   </ListItemButton>
-                  <Collapse in={open} timeout="auto" unmountOnExit>
+                  <Collapse in={open} timeout='auto' unmountOnExit>
                     <List component='div' dense disablePadding>
                       {sw.rules.map(([key, value]) => {
                         const isTrue = value === 'true'
