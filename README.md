@@ -23,10 +23,10 @@ A bukkit plugin that can manage your server through web pages.
 - **/nekomaid reload**: Reload Configuration
 - **/nekomaid diagnostic**: Diagnostic the hostname in configuration file.
 - **/nekomaid block**: Edit the block you are facing in the web page. (opening the **Block** web page allows you to select the block directly, and also generates a management link)
-- **/nekomaid block <WORLD> <X> <Y> <Z>**: Edit the block you are facing in the web page. (opening the **Block** web page allows you to select the block directly, and also generates a management link)
+- **/nekomaid block (WORLD) (X) (Y) (Z)**: Edit the block you are facing in the web page. (opening the **Block** web page allows you to select the block directly, and also generates a management link)
 - **/nekomaid invalidate**: Invalidate all previously generated temporary management addresses.
 - **/nekomaid entity**: Edit the entity you are facing in the web page. (opening the **Entity** page allows you to directly select the entity directly, and also generates a management link)
-- **/nekomaid entity <UUID>**: Edit the entity you are facing in the web page. (opening the **Entity** page allows you to directly select the entity directly, and also generates a management link)
+- **/nekomaid entity (UUID)**: Edit the entity you are facing in the web page. (opening the **Entity** page allows you to directly select the entity directly, and also generates a management link)
 
 ## Configures
 
