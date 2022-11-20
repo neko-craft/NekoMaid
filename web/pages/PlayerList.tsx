@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState, useRef } from 'react'
-import Plugin, { PlayerData } from '../Plugin'
+import Plugin, { PlayerData, playerListActions } from '../Plugin'
 import dayjs from 'dayjs'
 import Empty from '../components/Empty'
 import dialog from '../dialog'
@@ -78,9 +78,6 @@ interface IPlayerInfo {
   entityKill: number
   tnt: number
 }
-
-export type ActionComponent = React.ComponentType<{ onClose: () => void, player: PlayerData | null }>
-export const actions: ActionComponent[] = []
 
 const banPlayer = (name: string, plugin: Plugin, refresh: () => void, isBan: boolean) => {
   const span = <span className='bold'>{name}</span>
@@ -322,7 +319,7 @@ const Players: React.FC = () => {
                     <Block color={it.ban == null ? undefined : 'error'} />
                   </IconButton>
                 </Tooltip>
-                {actions.length
+                {playerListActions.length
                   ? <IconButton onClick={e => {
                     setActivedPlayer(anchorEl ? null : it)
                     setAnchorEl(anchorEl ? null : e.currentTarget)
@@ -346,7 +343,7 @@ const Players: React.FC = () => {
       anchorEl={anchorEl}
       open={Boolean(anchorEl)}
       onClose={() => setAnchorEl(null)}
-    >{actions.map((It, i) => <It key={i} onClose={close} player={activedPlayer} />)}</Menu>
+    >{playerListActions.map((It, i) => <It key={i} onClose={close} player={activedPlayer} />)}</Menu>
   </Card>
 }
 

@@ -1,7 +1,6 @@
 import React from 'react'
 import { Socket } from 'socket.io-client'
 import { pages, update } from './App'
-import { actions, ActionComponent } from './pages/PlayerList'
 
 export interface Page {
   component: React.ComponentType<any>
@@ -55,6 +54,9 @@ const mapArgs = (args: any[]) => args.map(it => typeof it === 'string'
       : it
   : it)
 
+
+export type PlayerListActionComponent = React.ComponentType<{ onClose: () => void, player: PlayerData | null }>
+export const playerListActions: PlayerListActionComponent[] = []
 export const configs: Array<{ title (): string, component: React.ComponentType }> = []
 
 let flag = 0
@@ -77,8 +79,8 @@ export default class Plugin {
     return this
   }
 
-  public addPlayerAction (component: ActionComponent) {
-    actions.push(component)
+  public addPlayerAction (component: PlayerListActionComponent) {
+    playerListActions.push(component)
     return this
   }
 

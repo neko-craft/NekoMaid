@@ -2,16 +2,16 @@ import React, { useState, useEffect, useMemo } from 'react'
 import lang, { minecraft } from '../../languages'
 import ReactECharts from 'echarts-for-react'
 import prettyBytes from 'pretty-bytes'
+import snakeCase from 'lodash/snakeCase'
 import Empty from '../components/Empty'
-import decamelize from 'decamelize'
 import { useTheme } from '@mui/material/styles'
 import { getClassName, getCurrentTime, formatMS } from '../utils'
 import { useGlobalData, usePlugin } from '../Context'
 import { CircularLoading } from '../components/Loading'
+import { cardActionStyles } from '../theme'
 import { DataGrid, GridColDef, GridRowModel, GridRowId, GridSortItem } from '@mui/x-data-grid'
 import TreeView from '@mui/lab/TreeView'
 import TreeItem from '@mui/lab/TreeItem'
-import { cardActionStyles } from '../theme'
 import dialog from '../dialog'
 
 import Box from '@mui/material/Box'
@@ -20,7 +20,6 @@ import Tab from '@mui/material/Tab'
 import Toolbar from '@mui/material/Toolbar'
 import Paper from '@mui/material/Paper'
 import Fab from '@mui/material/Fab'
-import Badge from '@mui/material/Badge'
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import Card from '@mui/material/Card'
@@ -40,7 +39,6 @@ import Checkbox from '@mui/material/Checkbox'
 
 import PlayArrow from '@mui/icons-material/PlayArrow'
 import Stop from '@mui/icons-material/Stop'
-import Equalizer from '@mui/icons-material/Equalizer'
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import ChevronRight from '@mui/icons-material/ChevronRight'
 import ViewList from '@mui/icons-material/ViewList'
@@ -49,19 +47,6 @@ import Refresh from '@mui/icons-material/Refresh'
 const MB = 1024 * 1024
 const GB = MB * 1024
 const NS = 1000 * 1000 * 30
-
-export const ProfilerIcon: React.FC = () => {
-  const plugin = usePlugin()
-  const globalData = useGlobalData()
-  const [status, setStatus] = useState(!!globalData.profilerStarted)
-  useEffect(() => {
-    const off = plugin.on('profiler:status', (res: boolean) => {
-      setStatus(globalData.profilerStarted = res)
-    })
-    return () => { off() }
-  })
-  return <Badge color='secondary' variant='dot' invisible={!status}><Equalizer /></Badge>
-}
 
 interface Status {
   time: number
@@ -322,7 +307,7 @@ const Timings: React.FC = React.memo(() => {
       if (isTimingsV1) {
         if (name.startsWith('tickEntity - ')) {
           const came = name.slice(13).replace(/^Entity(Mob)?/, '')
-          const entity = decamelize(came)
+          const entity = snakeCase(came)
           const node = entitiesTickMap[entity]
           if (node) {
             node.count += count
@@ -330,7 +315,7 @@ const Timings: React.FC = React.memo(() => {
           } else entitiesTickMap[entity] = { count, value: time, name: minecraft['entity.minecraft.' + entity] || came }
         } else if (name.startsWith('tickTileEntity - ')) {
           const came = name.slice(17).replace(/^TileEntity(Mob)?/, '')
-          const entity = decamelize(came)
+          const entity = snakeCase(came)
           const node = tilesTickMap[entity]
           if (node) {
             node.count += count
@@ -350,7 +335,7 @@ const Timings: React.FC = React.memo(() => {
         } else if (name.startsWith('tickTileEntity - ')) {
           const arr = name.split('.')
           const came = arr[arr.length - 1].replace(/^TileEntity(Mob)?/, '')
-          const tile = decamelize(came)
+          const tile = snakeCase(came)
           const node = tilesTickMap[tile]
           if (node) {
             node.count += count

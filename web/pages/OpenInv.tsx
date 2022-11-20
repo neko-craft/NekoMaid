@@ -3,12 +3,12 @@ import { action, failed, success } from '../toast'
 import Backpack from '@mui/icons-material/Backpack'
 import Refresh from '@mui/icons-material/Refresh'
 import { useGlobalData, usePlugin } from '../Context'
-import { ActionComponent } from './PlayerList'
 import { useNavigate, useParams } from 'react-router-dom'
 import { cardActionStyles } from '../theme'
 import ItemViewer, { Item, InvType } from '../components/ItemViewer'
 import Empty from '../components/Empty'
 import lang, { minecraft } from '../../languages'
+import type { PlayerListActionComponent } from '../Plugin'
 
 import Box from '@mui/material/Box'
 import Toolbar from '@mui/material/Toolbar'
@@ -22,7 +22,7 @@ import ListItemIcon from '@mui/material/ListItemIcon'
 import MenuItem from '@mui/material/MenuItem'
 import CardContent from '@mui/material/CardContent'
 
-export const playerAction: ActionComponent = ({ onClose, player }) => {
+export const playerAction: PlayerListActionComponent = ({ onClose, player }) => {
   const navigate = useNavigate()
   const globalData = useGlobalData()
   return <MenuItem disabled={!player || (!globalData.hasOpenInv && !player.online)} onClick={() => {
