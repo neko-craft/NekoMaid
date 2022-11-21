@@ -39,7 +39,6 @@ const lang: Language = {
   itemEditor: {
     title: 'Item Editor',
     itemType: 'type',
-    unknownEnchantment: 'unknown enchantment',
     baseAttribute: 'Attributes',
     count: 'Amount',
     damage: 'Damage',
@@ -149,7 +148,7 @@ const lang: Language = {
     uploadTooBig: 'File exceed 128MB!',
     confirmDelete: (file: any) => <>Are you sure to delete {file} ?</>
   },
-  openInv: {
+  inventory: {
     title: 'Inventory',
     notSelected: 'Select a player first!',
     whosBackpack: (name: string) => name + "'s inventory",

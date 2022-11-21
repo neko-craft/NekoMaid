@@ -55,7 +55,6 @@ dependencies {
     compileOnly 'org.apache.logging.log4j:log4j-core:2.19.0'
     compileOnly 'com.github.Apisium:Uniporter:1.3.4-SNAPSHOT'
     compileOnly 'com.github.jikoo.OpenInv:openinvapi:2f36a4d4dc'
-    compileOnly 'com.github.Jannyboy11:InvSee-plus-plus:v0.13.0'
     compileOnly 'me.clip:placeholderapi:2.11.2'
     compileOnly 'de.tr7zw:item-nbt-api-plugin:2.8.0'
     compileOnly 'com.rylinaux:PlugMan:2.2.9'
@@ -108,6 +107,7 @@ shadowJar {
     relocate('io.netty.handler.codec.http.websocketx', 'cn.apisium.nekomaid.libs.io.netty.handler.codec.http.websocketx')
     relocate('io.netty.handler.codec.http.multipart', 'cn.apisium.nekomaid.libs.io.netty.handler.codec.http.multipart')
     exclude 'io/papermc/**'
+    exclude 'com/janboerman/**'
     exclude 'io/netty/handler/codec/http/*'
 
     archiveClassifier.set('')

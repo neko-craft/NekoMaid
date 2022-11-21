@@ -23,7 +23,7 @@ export interface GlobalInfo extends Record<string, any> {
   hasVaultPermission?: boolean
   hasVaultGroups?: boolean
   hasVaultChat?: boolean
-  hasOpenInv?: boolean
+  hasOfflineInventorySupport?: boolean
   hasNBTAPI?: boolean
   hasMultiverse?: boolean
   hasGeoIP?: boolean

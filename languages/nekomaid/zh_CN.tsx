@@ -39,7 +39,6 @@ export default {
   itemEditor: {
     title: '物品编辑器',
     itemType: '类型',
-    unknownEnchantment: '未知附魔',
     baseAttribute: '基础属性',
     count: '数量',
     damage: '耐久值',
@@ -149,7 +148,7 @@ export default {
     uploadTooBig: '文件超过128MB!',
     confirmDelete: (file: any) => <>确认要删除 {file} 吗?</>
   },
-  openInv: {
+  inventory: {
     title: '背包',
     notSelected: '请先选择一名玩家!',
     whosBackpack: (name: string) => name + '的背包',

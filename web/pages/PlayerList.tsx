@@ -213,7 +213,7 @@ const PlayerActions: React.FC = () => {
   }, [ref.current, name, theme.palette.mode, globalData])
 
   return <Card>
-    <CardHeader title={name ? lang.playerList.whosDetails(name) : lang.openInv.notSelected} />
+    <CardHeader title={name ? lang.playerList.whosDetails(name) : lang.inventory.notSelected} />
     <Divider />
     <Box sx={{ position: 'relative', '& canvas': { width: '100%!important' } }}>
       {name

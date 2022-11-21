@@ -19,7 +19,7 @@ public final class BuiltinPlugins {
             scheduler = new Scheduler(main);
             PluginManager pm = main.getServer().getPluginManager();
             if (pm.getPlugin("Vault") != null) new Vault(main);
-            new OpenInv(main);
+            new PlayerInventory(main);
             new Worlds(main);
             new Editors(main);
             profiler = new Profiler(main);

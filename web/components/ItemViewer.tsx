@@ -80,7 +80,8 @@ export interface Item {
 export const isBlock = (name: string) => ('item.minecraft.' + name) in minecraft
 export const getName = (name: string) => minecraft['item.minecraft.' + name] || minecraft['block.minecraft.' + name] || ''
 export const getEnchantmentName = (it: string | Enchantment) => {
-  const name = minecraft['enchantment.' + (typeof it === 'string' ? it : it.id).replace(/:/g, '.')] || lang.itemEditor.unknownEnchantment
+  const tmpName = typeof it === 'string' ? it : it.id
+  const name = minecraft['enchantment.' + tmpName.replace(/:/g, '.')] || tmpName
   return typeof it === 'string' ? name : name + ' ' + it.lvl.value
 }
 

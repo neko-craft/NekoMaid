@@ -25,44 +25,44 @@ import CardContent from '@mui/material/CardContent'
 export const playerAction: PlayerListActionComponent = ({ onClose, player }) => {
   const navigate = useNavigate()
   const globalData = useGlobalData()
-  return <MenuItem disabled={!player || (!globalData.hasOpenInv && !player.online)} onClick={() => {
+  return <MenuItem disabled={!player || (!globalData.hasOfflineInventorySupport && !player.online)} onClick={() => {
     onClose()
-    if (player) navigate('/NekoMaid/openInv/' + player.name)
+    if (player) navigate('/NekoMaid/inventory/' + player.name)
   }}>
-    <ListItemIcon><Backpack /></ListItemIcon>{lang.openInv.title}
+    <ListItemIcon><Backpack /></ListItemIcon>{lang.inventory.title}
   </MenuItem>
 }
 
-const OpenInv: React.FC = () => {
+const Inventory: React.FC = () => {
   const plugin = usePlugin()
   const [inv, setInv] = useState<Array<Item | null>>([])
   const [ender, setEnder] = useState<Array<Item | null>>([])
   const { name: player } = useParams<{ name: string }>()
   useEffect(() => {
-    if (player) plugin.emit('openInv:fetchInv', setInv, player).emit('openInv:fetchEnderChest', setEnder, player)
+    if (player) plugin.emit('inventory:fetchInv', setInv, player).emit('inventory:fetchEnderChest', setEnder, player)
   }, [player])
 
   const mapToInv = (inv: Array<Item | null>, type: InvType) => {
     const update = (res: boolean) => {
       if (!res) failed()
-      if (type === InvType.PLAYER) plugin.emit('openInv:fetchInv', setInv, player)
-      else plugin.emit('openInv:fetchEnderChest', setEnder, player)
+      if (type === InvType.PLAYER) plugin.emit('inventory:fetchInv', setInv, player)
+      else plugin.emit('inventory:fetchEnderChest', setEnder, player)
     }
     const updateWithAction = (res: boolean) => {
       action(res)
-      if (type === InvType.PLAYER) plugin.emit('openInv:fetchInv', setInv, player)
-      else plugin.emit('openInv:fetchEnderChest', setEnder, player)
+      if (type === InvType.PLAYER) plugin.emit('inventory:fetchInv', setInv, player)
+      else plugin.emit('inventory:fetchEnderChest', setEnder, player)
     }
     return player
       ? inv.map((it, i) => <React.Fragment key={i}><ItemViewer
         item={it}
         data={{ type, solt: i, player }}
-        onDrag={() => plugin.emit('openInv:set', update, type, player, i, null, -1)}
-        onDrop={(item, obj) => plugin.emit('openInv:set', update, type,
+        onDrag={() => plugin.emit('inventory:set', update, type, player, i, null, -1)}
+        onDrop={(item, obj) => plugin.emit('inventory:set', update, type,
           player, i, JSON.stringify(item), obj?.type === type && obj?.player === player ? obj.solt : -1)}
-        onEdit={item => item !== false && plugin.emit('openInv:set', updateWithAction, type, player, i, item && JSON.stringify(item), -1)}
+        onEdit={item => item !== false && plugin.emit('inventory:set', updateWithAction, type, player, i, item && JSON.stringify(item), -1)}
       />{!((i + 1) % 9) && <br />}</React.Fragment>)
-      : <Empty title={lang.openInv.notSelected} />
+      : <Empty title={lang.inventory.notSelected} />
   }
 
   return <Box sx={{ minHeight: '100%', py: 3 }}>
@@ -72,7 +72,7 @@ const OpenInv: React.FC = () => {
         <Grid item lg={6} md={12} xl={6} xs={12}>
           <Card>
             <CardHeader
-              title={lang.openInv.whosBackpack(player || minecraft['entity.minecraft.player'])}
+              title={lang.inventory.whosBackpack(player || minecraft['entity.minecraft.player'])}
               sx={{ position: 'relative' }}
               action={<IconButton
                 size='small'
@@ -80,7 +80,7 @@ const OpenInv: React.FC = () => {
                 sx={cardActionStyles}
                 onClick={() => {
                   success()
-                  plugin.emit('openInv:fetchInv', setInv, player)
+                  plugin.emit('inventory:fetchInv', setInv, player)
                 }}
               ><Refresh /></IconButton>}
             />
@@ -91,7 +91,7 @@ const OpenInv: React.FC = () => {
         <Grid item lg={6} md={12} xl={6} xs={12}>
           <Card>
             <CardHeader
-              title={lang.openInv.whosEnderChest(player || minecraft['entity.minecraft.player'])}
+              title={lang.inventory.whosEnderChest(player || minecraft['entity.minecraft.player'])}
               sx={{ position: 'relative' }}
               action={<IconButton
                 size='small'
@@ -99,7 +99,7 @@ const OpenInv: React.FC = () => {
                 sx={cardActionStyles}
                 onClick={() => {
                   success()
-                  plugin.emit('openInv:fetchEnderChest', setEnder, player)
+                  plugin.emit('inventory:fetchEnderChest', setEnder, player)
                 }}
               ><Refresh /></IconButton>}
             />
@@ -112,4 +112,4 @@ const OpenInv: React.FC = () => {
   </Box>
 }
 
-export default OpenInv
+export default Inventory

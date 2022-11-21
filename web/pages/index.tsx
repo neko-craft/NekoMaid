@@ -28,7 +28,7 @@ import Worlds from './Worlds'
 import BlockEditor from './BlockEditor'
 import EntityEditor from './EntityEditor'
 import Config from './Config'
-import OpenInv, { playerAction } from './OpenInv'
+import Inventory, { playerAction } from './Inventory'
 
 export const ProfilerIcon: React.FC = () => {
   const plugin = usePlugin()
@@ -54,7 +54,7 @@ export default (p: Plugin) => p.addPages(
   { component: EntityEditor, path: ['entity', 'entity/:id'], icon: <Pets />, title: lang.entityEditor.title },
   { component: loadable(() => import('./Profiler')), path: 'profiler', icon: ProfilerIcon, title: lang.profiler.title },
   { component: loadable(() => import('./Scheduler')), path: 'scheduler', icon: <Schedule />, title: lang.scheduler.title },
-  { component: OpenInv, path: ['openInv', 'openInv/:name'], icon: <Backpack />, title: lang.openInv.title },
+  { component: Inventory, path: ['inventory', 'inventory/:name'], icon: <Backpack />, title: lang.inventory.title },
   { component: Config, path: 'config', icon: <Settings />, title: lang.config.title }
 ).addPlayerAction(playerAction)
 
