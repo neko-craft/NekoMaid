@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import Plugin, { PlayerData, playerListActions } from '../Plugin'
 import dayjs from 'dayjs'
 import Empty from '../components/Empty'
@@ -233,8 +233,9 @@ const Players: React.FC = () => {
   const plugin = usePlugin()
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [state, setState] = useState<number | null>(null)
-  const [activedPlayer, setActivedPlayer] = useState<PlayerData | null>(null)
+  const [state, setState] = useState<number>(0)
+  const [filter, setFilter] = useState<string | null>(null)
+  const [activePlayer, setActivePlayer] = useState<PlayerData | null>(null)
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
   const [data, setData] = useState<{ count: number, players: PlayerData[] }>(() => ({ count: 0, players: [] }))
   const globalData = useGlobalData()
@@ -245,12 +246,12 @@ const Players: React.FC = () => {
       if (it.players == null) it.players = []
       setData(it)
       setLoading(false)
-    }, page, state === 1 || state === 2 ? state : 0, null)
+    }, page, state, filter)
   }
-  useMemo(refresh, [page, state])
+  useEffect(refresh, [page, state])
   const close = () => {
     setAnchorEl(null)
-    setActivedPlayer(null)
+    setActivePlayer(null)
   }
 
   return <Card>
@@ -264,8 +265,9 @@ const Players: React.FC = () => {
           exclusive
           onChange={(_, it) => {
             if (it === 3) return
-            setState(it)
-            if (state === 3) refresh()
+            setState(it || 0)
+            setFilter(null)
+            setPage(0)
           }}
         >
           <ToggleButton disabled={loading} value={1}><Star /></ToggleButton>
@@ -276,12 +278,8 @@ const Players: React.FC = () => {
               navigate('/NekoMaid/playerList/' + filter)
               setState(3)
               setLoading(true)
-              plugin.emit('playerList:fetchPage', (it: any) => {
-                if (it.players == null) it.players = []
-                setPage(0)
-                setData(it)
-                setLoading(false)
-              }, page, 0, filter.toLowerCase())
+              setPage(0)
+              setFilter(filter.toLowerCase())
             })}><Search /></ToggleButton>
         </ToggleButtonGroup>
       }
@@ -321,7 +319,7 @@ const Players: React.FC = () => {
                 </Tooltip>
                 {playerListActions.length
                   ? <IconButton onClick={e => {
-                    setActivedPlayer(anchorEl ? null : it)
+                    setActivePlayer(anchorEl ? null : it)
                     setAnchorEl(anchorEl ? null : e.currentTarget)
                   }}><MoreHoriz /></IconButton>
                   : null}
@@ -343,7 +341,7 @@ const Players: React.FC = () => {
       anchorEl={anchorEl}
       open={Boolean(anchorEl)}
       onClose={() => setAnchorEl(null)}
-    >{playerListActions.map((It, i) => <It key={i} onClose={close} player={activedPlayer} />)}</Menu>
+    >{playerListActions.map((It, i) => <It key={i} onClose={close} player={activePlayer} />)}</Menu>
   </Card>
 }
 

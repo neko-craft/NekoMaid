@@ -13,10 +13,14 @@ import org.bukkit.plugin.Plugin;
 import java.util.Collections;
 
 final class OpenInv {
-    private boolean hasOpenInv;
+    private boolean hasOpenInv, hasInvSee;
     public OpenInv(NekoMaid main) {
-        Plugin plugin = main.getServer().getPluginManager().getPlugin("OpenInv");
-        if (plugin != null) {
+        if (main.getServer().getPluginManager().getPlugin("OpenInv") == null) {
+            if (main.getServer().getPluginManager().getPlugin("InvSeePlusPlus") != null) {
+                hasInvSee = true;
+                main.GLOBAL_DATA.put("hasOpenInv", true);
+            }
+        } else {
             hasOpenInv = true;
             main.GLOBAL_DATA.put("hasOpenInv", true);
         }
@@ -61,7 +65,8 @@ final class OpenInv {
         OfflinePlayer player = Bukkit.getOfflinePlayer(name);
         if (!player.hasPlayedBefore()) return null;
         return player.isOnline() ? player.getPlayer() : hasOpenInv
-                ? ((IOpenInv) Bukkit.getPluginManager().getPlugin("OpenInv")).loadPlayer(player) : null;
+                ? ((IOpenInv) Bukkit.getPluginManager().getPlugin("OpenInv")).loadPlayer(player)
+                : null;
     }
 
     @SuppressWarnings("ConstantConditions")

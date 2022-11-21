@@ -1,7 +1,10 @@
 package cn.apisium.nekomaid.builtin;
 
 import cn.apisium.nekomaid.NekoMaid;
+import cn.apisium.nekomaid.utils.Utils;
 import com.rylinaux.plugman.util.PluginUtil;
+import net.frankheijden.serverutils.bukkit.ServerUtils;
+import net.frankheijden.serverutils.bukkit.managers.BukkitPluginManager;
 import org.apache.commons.lang.ObjectUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -18,21 +21,26 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Stream;
 
 final class Plugins implements Listener {
-    private final static boolean HAS_PLUGMAN;
+    private final static boolean HAS_PLUGMAN, HAS_SERVER_UTILS;
     private final static SimplePluginManager pm = (SimplePluginManager) Bukkit.getPluginManager();
     private final Path pluginsDir;
 
     private final NekoMaid main;
 
     static {
-        boolean flag = false;
+        boolean flag = false, flag2 = false;
         try {
             Class.forName("com.rylinaux.plugman.util.PluginUtil");
             flag = true;
         } catch (Throwable ignored) { }
+        if (!flag && pm.getPlugin("ServerUtils") != null) {
+            flag2 = true;
+        }
         HAS_PLUGMAN = flag;
+        HAS_SERVER_UTILS = flag2;
     }
 
     @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "unused"})
@@ -59,7 +67,7 @@ final class Plugins implements Listener {
 
     public Plugins(NekoMaid main) {
         this.main = main;
-        main.GLOBAL_DATA.put("canLoadPlugin", HAS_PLUGMAN);
+        main.GLOBAL_DATA.put("canLoadPlugin", HAS_PLUGMAN || HAS_SERVER_UTILS);
         File dir;
         try {
             dir = (File) SimplePluginManager.class.getDeclaredField("pluginsDirectory").get(pm);
@@ -68,24 +76,31 @@ final class Plugins implements Listener {
         }
         pluginsDir = ((File) ObjectUtils.defaultIfNull(dir, new File("plugins"))).toPath();
         main.onConnected(main, client -> client.on("plugins:fetch", () -> client.emit("plugins:list", getPluginsData()))
-                .onWithAck("plugins:enable", args -> {
+                .onWithAck("plugins:enable", args -> (boolean) Utils.sync(() -> {
                     try {
                         String it = (String) args[0], name = it.replaceAll("\\.jar$", "");
                         Plugin pl = getPlugin(it);
                         if (pl == null) {
-                            if (!HAS_PLUGMAN) return false;
-                            PluginUtil.load(name);
+                            if (HAS_SERVER_UTILS) getServerUtilsManager().loadPlugin(new File(new File("plugins"), name + ".jar"));
+                            else if (HAS_PLUGMAN) PluginUtil.load(name);
+                            else return false;
                             return pm.getPlugin((String) args[1]) != null;
                         } else if (pm.isPluginEnabled(pl)) {
-                            if (HAS_PLUGMAN) PluginUtil.unload(pl);
+                            if (HAS_SERVER_UTILS) getServerUtilsManager().unloadPlugin(pl);
+                            else if (HAS_PLUGMAN) PluginUtil.unload(pl);
                             else pm.disablePlugin(pl);
                         } else {
-                            if (HAS_PLUGMAN) PluginUtil.load(name);
+                            if (HAS_SERVER_UTILS) getServerUtilsManager().enablePlugin(pl);
+                            else if (HAS_PLUGMAN) PluginUtil.load(name);
                             else pm.enablePlugin(pl);
                         }
+                        refresh();
                         return true;
-                    } catch (Throwable ignored) { return false; }
-                }).onWithAck("plugins:disableForever", args -> {
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                        return false;
+                    }
+                })).onWithAck("plugins:disableForever", args -> (boolean) Utils.sync(() -> {
                     try {
                         String it = (String) args[0];
                         Path file = pluginsDir.resolve(it);
@@ -93,15 +108,19 @@ final class Plugins implements Listener {
                         if (it.endsWith(".jar")) {
                             Plugin pl = getPlugin(it);
                             if (pl != null) {
-                                if (!HAS_PLUGMAN) return false;
-                                PluginUtil.unload(pl);
+                                if (HAS_SERVER_UTILS) getServerUtilsManager().unloadPlugin(pl);
+                                else if (HAS_PLUGMAN) PluginUtil.unload(pl);
+                                else return false;
                             }
                             Files.move(file, pluginsDir.resolve(it + ".disabled"));
                         } else Files.move(file, pluginsDir.resolve(it.replaceAll("\\.disabled$", "")));
                         refresh();
                         return true;
-                    } catch (Throwable ignored) { return false; }
-                }).onWithAck("plugins:delete", args -> {
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                        return false;
+                    }
+                })).onWithAck("plugins:delete", args -> {
                     try {
                         String it = (String) args[0];
                         Path file = pluginsDir.resolve(it);
@@ -109,13 +128,18 @@ final class Plugins implements Listener {
                         Files.delete(file);
                         refresh();
                         return true;
-                    } catch (Throwable ignored) {
+                    } catch (Throwable e) {
+                        e.printStackTrace();
                         return false;
                     }
                 })
         );
         main.getServer().getScheduler()
                 .runTask(main, () -> main.getServer().getPluginManager().registerEvents(this, main));
+    }
+
+    private static BukkitPluginManager getServerUtilsManager() {
+        return ServerUtils.getInstance().getPlugin().getPluginManager();
     }
 
     private Plugin getPlugin(String it) throws Exception {
@@ -138,18 +162,19 @@ final class Plugins implements Listener {
                 files.add(path.getFileName().toString());
                 list.add(new PluginInfo(desc, path.getFileName().toString(), it.isEnabled(), true));
             }
-            Files.list(pluginsDir)
-                    .filter(it -> {
-                        String fileName = it.getFileName().toString();
-                        return (fileName.endsWith(".jar") || fileName.endsWith(".jar.disabled")) &&
-                                 !files.contains(fileName) && Files.isRegularFile(it);
-                    })
-                    .forEach(it -> {
-                        try {
-                            list.add(new PluginInfo(main.getPluginLoader().getPluginDescription(it.toFile()),
-                                    it.getFileName().toString(), false, false));
-                        } catch (Throwable ignored) { }
-                    });
+            try (Stream<Path> fileList = Files.list(pluginsDir)) {
+                fileList.filter(it -> {
+                    String fileName = it.getFileName().toString();
+                    return (fileName.endsWith(".jar") || fileName.endsWith(".jar.disabled")) &&
+                            !files.contains(fileName) && Files.isRegularFile(it);
+                }).forEach(it -> {
+                    try {
+                        list.add(new PluginInfo(main.getPluginLoader().getPluginDescription(it.toFile()),
+                                it.getFileName().toString(), false, false));
+                    } catch (Throwable ignored) {
+                    }
+                });
+            }
         } catch (Throwable e) { e.printStackTrace(); }
         return list;
     }
