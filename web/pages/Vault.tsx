@@ -163,7 +163,7 @@ const Vault: React.FC = () => {
       width: 60,
       renderCell: (it: GridCellParams) => <Avatar
         src={getSkin(globalData, it.id, true)}
-        imgProps={{ crossOrigin: 'anonymous', onClick () { navigate('/NekoMaid/playerList/' + it.id) }, style: { width: 40, height: 40 } }}
+        imgProps={{ onClick () { navigate('/NekoMaid/playerList/' + it.id) }, style: { width: 40, height: 40 } }}
         variant='rounded'
         sx={{ cursor: 'pointer' }}
       />

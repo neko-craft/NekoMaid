@@ -178,8 +178,9 @@ const ItemViewer: React.FC<ItemViewerProps> = ({ item, data, onDrag, onDrop, onE
     >
       {item && (item.type === 'PLAYER_HEAD' && nbt?.tag?.SkullOwner?.Id
         ? <img
-          crossOrigin='anonymous'
-          src={`https://mc-heads.net/head/${nbt.tag.SkullOwner.Id.reduce((s, it) => s + (it >>> 0).toString(16), '')}/30`}
+          style={{ width: 30, height: 30 }}
+          src={`https://minotar.net/cube/${nbt.tag.SkullOwner.Id.reduce((s, it) => s + (it >>> 0).toString(16), '')}/30.png`}
+          onError={console.error}
         />
         : !(type in icons) && type !== 'air' && <HelpOutline sx={{ position: 'absolute', left: 8, top: 8 }} />)}
       {hasEnchants && type !== 'air' && <div style={{

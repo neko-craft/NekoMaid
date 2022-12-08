@@ -257,6 +257,6 @@ export const formatMS = (time: number) => {
 export const getSkin = (data: Partial<GlobalInfo> | null | undefined, name: any, isHead = false) => {
   const { headUrl, skinUrl } = data || { }
   return isHead
-    ? headUrl ? headUrl.replace(/{}/g, name) : `https://mc-heads.net/avatar/${name}/40`
-    : skinUrl ? skinUrl.replace(/{}/g, name) : `https://mc-heads.net/skin/${name}`
+    ? headUrl ? headUrl.replace(/{}/g, name) : `https://minotar.net/helm/${name}/40.png`
+    : skinUrl ? skinUrl.replace(/{}/g, name) : `https://minotar.net/skin/${name}`
 }

@@ -301,7 +301,7 @@ const Players: React.FC = () => {
           <TableBody>
             {data.players.map(it => <TableRow key={it.name}>
               <TableCell sx={{ cursor: 'pointer', padding: theme => theme.spacing(1, 1, 1, 2) }} onClick={() => navigate('/NekoMaid/playerList/' + it.name)}>
-                <Avatar src={getSkin(globalData, it.name, true)} imgProps={{ crossOrigin: 'anonymous', style: { width: 40, height: 40 } }} variant='rounded' />
+                <Avatar src={getSkin(globalData, it.name, true)} imgProps={{ style: { width: 40, height: 40 } }} variant='rounded' />
               </TableCell>
               <TableCell>{it.name}</TableCell>
               <TableCell align='right'>{dayjs.duration(it.playTime / 20, 'seconds').humanize()}</TableCell>

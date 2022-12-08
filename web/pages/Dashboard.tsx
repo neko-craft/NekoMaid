@@ -123,7 +123,7 @@ const Players: React.FC<{ players?: CurrentStatus['players'] }> = React.memo(({ 
                   <ListItemAvatar>
                     <Avatar
                       src={getSkin(globalData, name, true)}
-                      imgProps={{ crossOrigin: 'anonymous', onClick () { navigate('/NekoMaid/playerList/' + name) }, style: { width: 40, height: 40 } }}
+                      imgProps={{ onClick () { navigate('/NekoMaid/playerList/' + name) }, style: { width: 40, height: 40 } }}
                       sx={{ cursor: 'pointer' }}
                       variant='rounded'
                     />

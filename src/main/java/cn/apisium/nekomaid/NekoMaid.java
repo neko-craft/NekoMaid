@@ -12,8 +12,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ArrayListMultimap;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpContentCompressor;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.socket.engineio.server.EngineIoServer;
 import io.socket.socketio.server.SocketIoAdapter;
@@ -459,6 +458,17 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     private final class MainHandler implements UniporterHttpHandler {
         @Override
         public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
+            if (request.method() == HttpMethod.OPTIONS) {
+                DefaultFullHttpResponse res = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NO_CONTENT);
+                res.headers()
+                        .add("Access-Control-Allow-Private-Network", true)
+                        .add("Access-Control-Allow-Origin", request.headers().get("Origin"))
+                        .add("Access-Control-Allow-Credentials", true)
+                        .add("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE")
+                        .add("Access-Control-Allow-Headers", "origin, content-type, accept");
+                context.writeAndFlush(res);
+                return;
+            }
             if (route.isGzip()) context.pipeline().addLast(new HttpContentCompressor())
                     .addLast(new WebSocketServerCompressionHandler());
             context.channel().pipeline().addLast(new EngineIoHandler(engineIoServer, null,
