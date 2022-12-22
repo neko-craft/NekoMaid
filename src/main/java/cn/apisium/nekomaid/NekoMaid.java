@@ -11,6 +11,7 @@ import cn.apisium.uniporter.router.api.UniporterHttpHandler;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ArrayListMultimap;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
@@ -466,7 +467,7 @@ public final class NekoMaid extends JavaPlugin implements Listener {
                         .add("Access-Control-Allow-Credentials", true)
                         .add("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE")
                         .add("Access-Control-Allow-Headers", "origin, content-type, accept");
-                context.writeAndFlush(res);
+                context.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE);
                 return;
             }
             if (route.isGzip()) context.pipeline().addLast(new HttpContentCompressor())
