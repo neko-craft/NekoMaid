@@ -66,6 +66,7 @@ logger: # Logger configures
 ![4](https://user-images.githubusercontent.com/17093811/144084638-91393d37-61c4-4c2d-89df-90fda5b31f0b.png)
 ![5](https://user-images.githubusercontent.com/17093811/144084647-5763720d-5f50-4bf8-ad7a-e77daf339034.png)
 ![6](https://user-images.githubusercontent.com/17093811/144084651-26ea9f02-a145-4efe-9127-f5c4f1cb27fe.png)
+![Status](https://bstats.org/signatures/bukkit/NekoMaid.svg)
 
 ## License
 
