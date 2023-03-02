@@ -59,13 +59,13 @@ logger: # Logger configures
 
 ## Screenshot
 
-![0](https://user-images.githubusercontent.com/17093811/144084574-c0168d13-edba-4d9d-8db3-3a3712eada37.png)
-![1](https://user-images.githubusercontent.com/17093811/144084605-1cb11c44-182d-472f-9016-cd28aab40851.png)
-![2](https://user-images.githubusercontent.com/17093811/144084613-c2e17378-c360-48f0-ac1d-39a7df2ecc04.png)
-![3](https://user-images.githubusercontent.com/17093811/144084629-0b8e1179-8e25-4a44-9440-e921016fc86e.png)
-![4](https://user-images.githubusercontent.com/17093811/144084638-91393d37-61c4-4c2d-89df-90fda5b31f0b.png)
-![5](https://user-images.githubusercontent.com/17093811/144084647-5763720d-5f50-4bf8-ad7a-e77daf339034.png)
-![6](https://user-images.githubusercontent.com/17093811/144084651-26ea9f02-a145-4efe-9127-f5c4f1cb27fe.png)
+![0](screenshots/0.png)
+![1](screenshots/1.png)
+![2](screenshots/2.png)
+![3](screenshots/3.png)
+![4](screenshots/4.png)
+![5](screenshots/5.png)
+![6](screenshots/6.png)
 ![Status](https://bstats.org/signatures/bukkit/NekoMaid.svg)
 
 ## License
