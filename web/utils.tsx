@@ -153,7 +153,8 @@ export const parseStyledText = (it: string) => {
   return <>{a.slice(1)}{b && <span style={style}>{b[0] === '§' ? parseStyledText(b) : b}</span>}</>
 }
 export const parseMessage = (msg: string) => {
-  const arr = msg.replace(/§k/g, '').split(/(?=§[0-9a-fA-FxXrR])/g)
+  const msgClean = msg.replace(/\u007f(#[0-9a-f]{6}|.)/g, ''); // Let DEL symbol delete later character. Sometimes there would be hex color after DEL symbol.
+  const arr = msgClean.replace(/§k/g, '').split(/(?=§[0-9a-fA-FxXrR])/g)
   const res: JSX.Element[] = []
   let color = ''
   loop: for (let i = 0; i < arr.length; i++) {
