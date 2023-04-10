@@ -84,7 +84,7 @@ final class PlayerList {
                 String msg = ((String) it[1]).isEmpty() ? null : (String) it[1];
                 main.getServer().getBanList(BanList.Type.NAME).addBan((String) it[0], msg, null, "NekoMaid").save();
                 Player p = Bukkit.getPlayerExact((String) it[0]);
-                if (p != null) p.kickPlayer(msg);
+                if (p != null) main.getServer().getScheduler().runTask(main, () -> p.kickPlayer(msg));
                 main.getLogger().info("Banned " + it[0] + ": " + (msg == null ? "" : msg));
             } catch (Throwable e) {
                 e.printStackTrace();
