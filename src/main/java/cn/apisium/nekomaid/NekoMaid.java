@@ -459,17 +459,6 @@ public final class NekoMaid extends JavaPlugin implements Listener {
     private final class MainHandler implements UniporterHttpHandler {
         @Override
         public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
-            if (request.method() == HttpMethod.OPTIONS) {
-                DefaultFullHttpResponse res = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NO_CONTENT);
-                res.headers()
-                        .add("Access-Control-Allow-Private-Network", true)
-                        .add("Access-Control-Allow-Origin", request.headers().get("Origin"))
-                        .add("Access-Control-Allow-Credentials", true)
-                        .add("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE")
-                        .add("Access-Control-Allow-Headers", "origin, content-type, accept");
-                context.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE);
-                return;
-            }
             if (route.isGzip()) context.pipeline().addLast(new HttpContentCompressor())
                     .addLast(new WebSocketServerCompressionHandler());
             context.channel().pipeline().addLast(new EngineIoHandler(engineIoServer, null,
