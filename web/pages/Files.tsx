@@ -176,7 +176,7 @@ const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () 
             key={it}
             nodeId={path + '/' + it}
             label={<><Icon className='icon'>
-              <embed src={`/icons/material/${icons.icons[id] || 'file'}.svg`} />
+              <embed src={`./icons/material/${icons.icons[id] || 'file'}.svg`} />
             </Icon>{it}</>}
           />
         }))
@@ -186,7 +186,7 @@ const Item: React.FC<{ plugin: Plugin, path: string, loading: Record<string, () 
     return path
       ? <StyledTreeItem nodeId={path} onClick={() => setOpen(!open)} label={<>
         <Icon className='icon'>
-          <embed src={`/icons/material/${icons.icons[(icons as any).folders[name]] || 'folder'}${open ? '-open' : ''}.svg`} />
+          <embed src={`./icons/material/${icons.icons[(icons as any).folders[name]] || 'folder'}${open ? '-open' : ''}.svg`} />
         </Icon>{name}
       </>}>{children}</StyledTreeItem>
       : <>{children}</>
